@@ -1,11 +1,17 @@
-# Univariate Sample Statistics
-Mean  ← { (+´÷≠) 𝕩}
-Foo   ← { (𝕗+≠𝕩)÷˜+´𝕨⋆˜𝕩-(+´÷≠) 𝕩}
-Bar   ← { ((𝕨÷2)⋆˜2 𝔽 𝕩)÷˜𝕨 𝔽 𝕩}
+# Loading
+# )cs •Ex "../bqn-ws/src/math.bqn"
 
-Stdev ← { √ 2(¯1 Foo)     𝕩}
-Skew  ← {   3( 0 Foo) Bar 𝕩}
-Kurt  ← {   4( 0 Foo) Bar 𝕩}
+# Univariate Sample Statistics
+
+⟨Mean,Stdev,Skew,Kurt⟩ ← {
+    Mean  ← { (+´÷≠) 𝕩}
+    _foo  ← { (𝕗+≠𝕩)÷˜+´𝕨⋆˜𝕩-(+´÷≠) 𝕩}
+    _bar  ← { ((𝕨÷2)⋆˜2 𝔽 𝕩)÷˜𝕨 𝔽 𝕩}
+    Stdev ← { √ 2(¯1 _foo)      𝕩}
+    Skew  ← {   3( 0 _foo) _bar 𝕩}
+    Kurt  ← {   4( 0 _foo) _bar 𝕩}
+    ⟨Mean,Stdev,Skew,Kurt⟩
+}
 
 # tests
 #    Stdev ⟨2,3,4,6,13,2⟩
@@ -17,4 +23,4 @@ Kurt  ← {   4( 0 Foo) Bar 𝕩}
 
 # Univariate Population Statistics #TODO
 
-
+⍎
