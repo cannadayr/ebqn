@@ -21,11 +21,11 @@ keyb ← "
 
 ⟨Mean,Stdev,Skew,Kurt⟩ ← {
     Mean  ← { (+´÷≠) 𝕩}
-    _foo  ← { (𝕗 +≠ 𝕩) ÷˜ +´(𝕩 - Mean 𝕩) ⋆ 𝕨    }
+    _asop ← { (𝕗 +≠ 𝕩) ÷˜ +´(𝕩 - Mean 𝕩) ⋆ 𝕨    } # adjusted sum of powers
     _bar  ← { (𝕨 𝔽  𝕩) ÷    (2   𝔽    𝕩) ⋆ 𝕨 ÷ 2}
-    Stdev ← { √ 2(¯1 _foo)      𝕩}
-    Skew  ← {   3( 0 _foo) _bar 𝕩}
-    Kurt  ← {   4( 0 _foo) _bar 𝕩}
+    Stdev ← { √ 2(¯1 _asop)      𝕩}
+    Skew  ← {   3( 0 _asop) _bar 𝕩}
+    Kurt  ← {   4( 0 _asop) _bar 𝕩}
     ⟨Mean,Stdev,Skew,Kurt⟩
 }
 
