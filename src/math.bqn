@@ -50,20 +50,19 @@ keyb ← "
 }
 
 # PRNG
-# convert to binary
-Xor ← {
+# xoshiro256ss
+PRNG ← {
     Encode ← { (64⥊2) {𝕨|1↓⌊∘÷`⌾⌽𝕨∾<𝕩} 𝕩 }  # Base64 Encode
     Decode ← { 2 {+⟜(𝕨⊸×)´⌽𝕩} 𝕩 }           # Base64 Decode
     Rol64 ← ⌽
-    Shl ← { (𝕨⥊0)∾˜(𝕨-≠𝕩)↑ 𝕩}   # shift left
-    Shr ← {⌽(𝕨⥊0)∾˜(𝕨-≠𝕩)↑⌽𝕩}   # shift right
-    #{ 9 × 7 ⌽ ToBin 5×1⊑𝕩} {17 Shl 1 ⊑ 𝕩} 60‿120‿240‿480
-    Result ← { 9 × 7 ⌽ Encode 5×1⊑𝕩}
+    Shl ← { (𝕨⥊0)∾˜(𝕨-≠𝕩)↑ 𝕩}
+    Result ← { 9 × 7 Rol64 Encode 5×1⊑𝕩}
     T ← { 17 Shl Encode 1⊑𝕩}
-    S0 ← {(Encode 2⊑𝕩)≠ Encode 0⊑𝕩}
-    S1 ← {(Encode 3⊑𝕩)≠ Encode 1⊑𝕩}
-    S2 ← {(Encode 1⊑𝕩)≠ Encode 2⊑𝕩}
-    S3 ← {(Encode 0⊑𝕩)≠ Encode 3⊑𝕩}
+    _s ←  {(Encode 𝕨⊑𝕩)≠ Encode 𝕗⊑𝕩}
+    S0 ← { 2 (0 _s ) 𝕩}
+    S1 ← { 3 (1 _s ) 𝕩}
+    S2 ← { 1 (2 _s ) 𝕩}
+    S3 ← { 0 (3 _s ) 𝕩}
 
     ⟨(Decode Result 𝕩),⟨(Decode S0 𝕩),(Decode S1 𝕩),(Decode (T 𝕩) ≠ S2 𝕩),(Decode 45 Rol64 S3 𝕩)⟩⟩
 }
