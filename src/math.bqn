@@ -40,7 +40,33 @@ keyb ← "
 # Univariate Population Statistics #TODO
 
 # circle functions
-Cos ← { (↕18) {+´({×´1+↕𝕩}¨2×𝕨)÷˜(¯1⋆𝕨)×𝕩⋆2×𝕨} 𝕩 } # 18 → precision
+⟨Cos,Sin⟩ ← {
+    Factorial ← {×´1+↕𝕩}
+    _taylor ← {+´(Factorial¨𝕗+2×𝕨)÷˜(¯1⋆𝕨)×𝕩⋆𝕗+2×𝕨}
+    series ← ↕18 # 18 → precision
+    Cos ← { (series) (0 _taylor) 𝕩 }
+    Sin ← { (series) (1 _taylor) 𝕩 }
+    ⟨Cos,Sin⟩
+}
+
+# PRNG
+# convert to binary
+Xor ← {
+    Encode ← { (64⥊2) {𝕨|1↓⌊∘÷`⌾⌽𝕨∾<𝕩} 𝕩 }  # Base64 Encode
+    Decode ← { 2 {+⟜(𝕨⊸×)´⌽𝕩} 𝕩 }           # Base64 Decode
+    Rol64 ← ⌽
+    Shl ← { (𝕨⥊0)∾˜(𝕨-≠𝕩)↑ 𝕩}   # shift left
+    Shr ← {⌽(𝕨⥊0)∾˜(𝕨-≠𝕩)↑⌽𝕩}   # shift right
+    #{ 9 × 7 ⌽ ToBin 5×1⊑𝕩} {17 Shl 1 ⊑ 𝕩} 60‿120‿240‿480
+    Result ← { 9 × 7 ⌽ Encode 5×1⊑𝕩}
+    T ← { 17 Shl Encode 1⊑𝕩}
+    S0 ← {(Encode 2⊑𝕩)≠ Encode 0⊑𝕩}
+    S1 ← {(Encode 3⊑𝕩)≠ Encode 1⊑𝕩}
+    S2 ← {(Encode 1⊑𝕩)≠ Encode 2⊑𝕩}
+    S3 ← {(Encode 0⊑𝕩)≠ Encode 3⊑𝕩}
+
+    ⟨(Decode Result 𝕩),⟨(Decode S0 𝕩),(Decode S1 𝕩),(Decode (T 𝕩) ≠ S2 𝕩),(Decode 45 Rol64 S3 𝕩)⟩⟩
+}
 
 # { {((¯2×⍟1⊃⍵)*0.5)×1○○2×2⊃⍵} ⍺ {⊂[1+⍳⍴,⍵](?(2,⍵)⍴⍺)÷⍺} ⍵} 
 #     (x y)←⊂[1+⍳⍴,N](?(2,N)⍴depth)÷depth  ⍝ two random variables within ]0;1]
