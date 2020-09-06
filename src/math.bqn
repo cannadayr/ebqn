@@ -22,7 +22,7 @@ keyb ← "
 ⟨Mean,Stdev,Skew,Kurt⟩ ← {
     Mean  ← { (+´÷≠) 𝕩}
     _asop ← { (𝕗 +≠ 𝕩) ÷˜ +´(𝕩 - Mean 𝕩) ⋆ 𝕨    } # adjusted sum of powers
-    _bar  ← { (𝕨 𝔽  𝕩) ÷    (2   𝔽    𝕩) ⋆ 𝕨 ÷ 2}
+    _bar  ← { (𝕨 𝔽  𝕩) ÷    (2   𝔽    𝕩) ⋆ 𝕨 ÷ 2} #TODO rewrite using tacit fns
     Stdev ← { √ 2(¯1 _asop)      𝕩}
     Skew  ← {   3( 0 _asop) _bar 𝕩}
     Kurt  ← {   4( 0 _asop) _bar 𝕩}
@@ -38,5 +38,13 @@ keyb ← "
 # 3.31301652892562
 
 # Univariate Population Statistics #TODO
+
+# circle functions
+Cos ← { (↕18) {+´({×´1+↕𝕩}¨2×𝕨)÷˜(¯1⋆𝕨)×𝕩⋆2×𝕨} 𝕩 } # 18 → precision
+
+# { {((¯2×⍟1⊃⍵)*0.5)×1○○2×2⊃⍵} ⍺ {⊂[1+⍳⍴,⍵](?(2,⍵)⍴⍺)÷⍺} ⍵} 
+#     (x y)←⊂[1+⍳⍴,N](?(2,N)⍴depth)÷depth  ⍝ two random variables within ]0;1]
+#     Z←((¯2×⍟x)*0.5)×1○○2×y               ⍝ Box-Muller distribution
+
 
 ⍎
