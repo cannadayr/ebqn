@@ -53,11 +53,10 @@ keyb ← "
 ⟨Enc,Dec,Ladd,Badd,Bmult,Prng⟩ ← {
     Enc   ← { (64⥊2) {𝕨|1↓⌊∘÷`⌾⌽𝕨∾<𝕩} 𝕩 }   # Base64 Encode
     Dec   ← { 2 {+⟜(𝕨⊸×)´⌽𝕩} 𝕩 }            # Base64 Decode
-    _add  ← {𝔽(𝔽𝕨) (2|⌊∘÷⟜2⊸+`∘+) 𝔽 𝕩}      # binary adder
-    Ladd  ← { 𝕨 ⊢ _add 𝕩}                   # little endian adder
+    _add  ← { 𝔽 (𝔽𝕨) (2|⌊∘÷⟜2⊸+`∘+) 𝔽𝕩}      # binary adder
     Badd  ← { 𝕨 ⌽ _add 𝕩}                   # big endian adder
     Shl   ← { (𝕨⥊0)∾˜(𝕨-≠𝕩)↑ 𝕩}             # shift left
-    Bmult ← {Badd´(↕≠𝕨)Shl¨⌽(<⎉1) 𝕨×⌜𝕩}     # big endian multiply
+    #Bmult ← {Badd´(↕≠𝕨)Shl¨⌽(<⎉1) 𝕨×⌜𝕩}     # big endian multiply
 
     # usage
     # rng ← Prng Enc¨60‿120‿240‿480
