@@ -56,6 +56,14 @@ reorder(F,G) ->
         (X,W) ->
             G(X,W)
     end.
+tr3o(H,G,undefined) ->
+    fun(X,W) ->
+        G(H(X,W),undefined)
+    end;
+tr3o(H,G,F) ->
+    fun(X,W) ->
+        G(H(X,W),F(X,W))
+    end.
 fns() -> list(fixed([nullfn,nullfn,nullfn,nullfn,nullfn,
                      nullfn,nullfn,nullfn,nullfn,nullfn,
                      nullfn,nullfn,nullfn,nullfn,nullfn,
@@ -101,6 +109,8 @@ pe(_B,P,14) ->
     {undefined,P};
 pe(B,P,15) ->
     num(B,P);
+pe(_B,P,19) ->
+    {undefined,P};
 pe(B,P,21) ->
     {X,Xp} = num(B,P),
     {Y,Yp} = num(B,Xp),
@@ -132,6 +142,11 @@ se(_O,_D,_H,_E0,S,undefined,14) ->
 se(_O,D,H,E0,S,X,15) ->
     F = element(1+X,D),
     cons(F(H,E0),S);
+se(_O,_D,H,_E0,S,undefined,19) ->
+    F = head(S),
+    G = head(tail(S)),
+    J = head(tail(tail(S))),
+    cons(tr3o(J,G,F),S);
 se(_O,_D,H,E0,S,{X,Y},21) ->
     {T,#e{s=V}} = ge(X,E0,H),
     false = (null =:= array:get(Y,V)),
@@ -158,6 +173,8 @@ he(H,_S,14) ->
     H;
 he(H,_S,15) ->
     H;
+he(H,_S,19) ->
+    H;
 he(H,_S,21) ->
     H;
 he(H,_S,22) ->
@@ -178,6 +195,8 @@ ce(_S,11) ->
 ce(_S,14) ->
     cont;
 ce(_S,15) ->
+    cont;
+ce(_S,19) ->
     cont;
 ce(_S,21) ->
     cont;
