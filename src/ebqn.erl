@@ -23,7 +23,7 @@ concat(X,W) ->
     Z = resize(Xs+array:size(W),X),
     foldl(fun(I,V,A) -> set(Xs+I,V,A) end,Z,W).
 
-fns() -> [].
+fns() -> array:new(21,fixed).
 
 num(Binary,Ptr) ->
     {Size,Bitstring} = num(Binary,Ptr,0,<<>>),
@@ -37,23 +37,41 @@ num(_Binary,_Ptr,Size,Chunk,Acc,0) ->
 num(Binary,Ptr,Size,Chunk,Acc,1) ->
     num(Binary,Ptr+1,Size+7,<<Chunk/bitstring,Acc/bitstring>>).
 
+ge(H,E,I) when I =:= 0 ->
+    {E,gb_trees:get(E,H)};
+ge(H,E,I) ->
+    #e{p=P} = gb_trees:get(E,H),
+    ge(H,P,I-1).
+
 pe(B,P,15) ->
     num(B,P);
+pe(B,P,21) ->
+    {X,Xp} = num(B,P),
+    {Y,Yp} = num(B,Xp),
+    {{X,Y},Yp};
 pe(_B,P,25) ->
     {undefined,P}.
 
 se(_O,D,H,E,S,Arg,15) ->
     F = element(1+Arg,D),
     cons(F(H,E),S);
+se(_O,_D,H,E0,S,{X,Y},21) ->
+    {T,#e{s=V}} = ge(H,E0,X),
+    false = (undefined =:= array:get(Y,V)),
+    cons({T,Y},S);
 se(_O,_D,_H,_E,S,_Arg,25) ->
      S.
 
 he(H,_S,15) ->
     H;
+he(H,_S,21) ->
+    H;
 he(H,_S,25) ->
     H.
 
 ce(_S,15) ->
+    cont;
+ce(_S,21) ->
     cont;
 ce(S,25) ->
     1 = len(S),
@@ -114,7 +132,7 @@ run(B,O,S) ->
     F3(B,O,D).
 
 runtime(b) ->
-    <<15,1,25,21,0,1>>;
+    <<15,1,25,21,0,1,22,0,3>>;
 runtime(o) ->
     {0,1,2,32,3,8,infinity,neg_infinity,-1};
 runtime(s) ->
