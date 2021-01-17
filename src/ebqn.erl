@@ -241,6 +241,7 @@ vm_switch(B,O,D,P,H,E,S,cont) ->
         dbg({he,Hn}),
     Ctrln = ce(S,Op),
         dbg({ctrl,Ctrln}),
+    dbg({memory,erlang:memory(processes)/(1024*1024)}),
     vm_switch(B,O,D,ArgEnd,Hn,E,Sn,Ctrln);
 vm_switch(_B,_O,_D,_P,_H,_E,_S,Rtn) ->
     Rtn.
@@ -258,6 +259,7 @@ run_env(H0,E0,V,ST) ->
 run_block(T,I,ST,L) ->
     fun (H,E) ->
         dbg({block,{T,I,ST,L}}),
+        dbg({memory,erlang:memory(processes)/(1024*1024)}),
         kill({1,0,2972,9},{T,I,ST,L}),
         V0 = case L of
             0 -> nil;
