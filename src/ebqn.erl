@@ -252,14 +252,18 @@ vm(H,E,P) ->
 run_env(H0,E0,V,ST) ->
     fun (SV) ->
         E = make_ref(),
-        H = gb_trees:insert(E,#e{s=concat(SV,V),p=E0},H0),
+        H = [{E,#e{s=concat(SV,V),p=E0}}] ++ H0,
         vm(H,E,ST)
     end.
 run_block(T,I,ST,L) ->
     fun (H,E) ->
         dbg({block,{T,I,ST,L}}),
         dbg({memory,erlang:memory(processes)/(1024*1024)}),
-        kill({1,0,2972,9},{T,I,ST,L}),
+        kill({1,0,2972,9},{T,I,ST,L}), % between these two is when it explodes
+        kill({0,0,3092,3},{T,I,ST,L}),
+        kill({1,0,3137,4},{T,I,ST,L}),
+        kill({1,1,3220,4},{T,I,ST,L}),
+        kill({1,1,3296,3},{T,I,ST,L}),
         V0 = case L of
             0 -> nil;
             _ -> new(L,{default,null})
