@@ -16,6 +16,12 @@
 
 dbg(X) ->
     io:format("~p~n",[X]).
+kill() ->
+    exit(self(),kill).
+kill(A,B) when A =:= B ->
+    exit(self(),kill);
+kill(_A,_B) ->
+    ok.
 
 fixed(X) ->
     fix(resize(length(X),from_list(X))).
@@ -30,7 +36,6 @@ tail(L,A,S) ->
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
 list(A) -> arr(A,[array:size(A)]).
-
 fns() -> array:new(21,fixed).
 
 num(Binary,Ptr) ->
@@ -41,10 +46,9 @@ num(Binary,Ptr,Size,Acc) ->
     <<H:1,Chunk:7/bitstring>> = binary_part(Binary,Ptr,1),
     num(Binary,Ptr,Size,Chunk,Acc,H).
 num(_Binary,_Ptr,Size,Chunk,Acc,0) ->
-    {Size+7,<<Chunk/bitstring, Acc/bitstring>>};
+    {Size+7,<<Chunk/bitstring,Acc/bitstring>>};
 num(Binary,Ptr,Size,Chunk,Acc,1) ->
     num(Binary,Ptr+1,Size+7,<<Chunk/bitstring,Acc/bitstring>>).
-
 ge(I,E,H) when I =:= 0 ->
     {E,gb_trees:get(E,H)};
 ge(I,E,H) ->
@@ -133,7 +137,7 @@ run_env(H0,E0,V,ST) ->
     end.
 run_block(T,I,ST,L) ->
     fun (H,E) ->
-        dbg({section,{T,I,ST,L}}),
+        dbg({block,{T,I,ST,L}}),
         V0 = new(L,fixed),
         C = run_env(H,E,V0,ST),
         F = case T of
