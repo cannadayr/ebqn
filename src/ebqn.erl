@@ -41,33 +41,46 @@ tail(L,A,S) when L =:= -1 ->
     {A,S};
 tail(L,A,S) ->
     tail(L-1,set(L,head(S),A),tail(S)).
+call(F,undefined,_W) ->
+    undefined;
+call(F,_X,_W) when not is_function(F) ->
+    F;
+call(F,X,W) ->
+    false = (is_record(F,m1) or is_record(F,m2)),
+    F(X,W).
 resolve({R,I},H) when is_reference(R) ->
     #e{s=E} = gb_trees:get(R,H),
-    array:get(I,E).
+    array:get(I,E);
+resolve(X,_H) when is_function(X) ->
+    X;
+resolve(X,_H) when is_record (X,v) ->
+    X.
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
 list(A) -> arr(A,[array:size(A)]).
 m1(F) -> #m1{f=F}.
 m2(F) -> #m2{f=F}.
+subtract(X,undefined) -> -1*X;
+subtract(X,W)  -> W-X.
 reorder(F,G) ->
     fun
         (X,undefined) ->
-            F(X,undefined);
+            call(F,X,undefined);
         (X,W) ->
-            G(X,W)
+            call(G,X,W)
     end.
 tr3o(H,G,undefined) ->
     fun(X,W) ->
-        G(H(X,W),undefined)
+        call(G,H(X,W),undefined)
     end;
 tr3o(H,G,F) ->
     fun(X,W) ->
-        G(H(X,W),F(X,W))
+        call(G,H(X,W),F(X,W))
     end.
-fns() -> list(fixed([nullfn,nullfn,nullfn,nullfn,nullfn,
-                     nullfn,nullfn,nullfn,nullfn,nullfn,
-                     nullfn,nullfn,nullfn,nullfn,nullfn,
-                     nullfn,nullfn,nullfn,nullfn,nullfn,m2(fun reorder/2)])).
+fns() -> list(fixed([nullfn0,nullfn1,nullfn2,nullfn3,nullfn4,
+                     nullfn5,nullfn6,fun subtract/2,nullfn8,nullfn9,
+                     nullfn10,nullfn11,nullfn12,nullfn13,nullfn14,
+                     nullfn15,nullfn16,nullfn17,nullfn18,nullfn19,m2(fun reorder/2)])).
 
 num(Binary,Ptr) ->
     {Size,Bitstring} = num(Binary,Ptr,0,<<>>),
@@ -101,6 +114,8 @@ pe(B,P,3) ->
     num(B,P);
 pe(B,P,4) ->
     num(B,P);
+pe(_B,P,7) ->
+    {undefined,P};
 pe(_B,P,8) ->
     {undefined,P};
 pe(_B,P,11) ->
@@ -130,11 +145,15 @@ se(_O,_D,_H,_E0,S,X,3) ->
 se(_O,_D,_H,_E0,S,X,4) ->
     {T,Si} = tail(X-1,new(X),S),
     cons(list(T),Si);
+se(_O,_D,H,_E0,S,undefined,7) ->
+    F = head(S),
+    #m1{f=M} = resolve(head(tail(S)),H),
+    cons(M(F),S);
 se(_O,_D,H,_E0,S,undefined,8) ->
     F = head(S),
     #m2{f=M} = resolve(head(tail(S)),H),
-    G = head(tail(tail(S))),
-    cons(M(F,G),S);
+    G = resolve(head(tail(tail(S))),H),
+    cons(M(F,G),tail(tail(tail(S))));
 se(_O,_D,_H,_E0,S,undefined,11) ->
     tail(S);
 se(_O,_D,_H,_E0,S,undefined,14) ->
@@ -146,7 +165,7 @@ se(_O,_D,H,_E0,S,undefined,19) ->
     F = head(S),
     G = head(tail(S)),
     J = head(tail(tail(S))),
-    cons(tr3o(J,G,F),S);
+    cons(tr3o(J,G,F),tail(tail(tail(S))));
 se(_O,_D,H,E0,S,{X,Y},21) ->
     {T,#e{s=V}} = ge(X,E0,H),
     false = (null =:= array:get(Y,V)),
@@ -162,6 +181,8 @@ he(H,_S,0) ->
 he(H,_S,3) ->
     H;
 he(H,_S,4) ->
+    H;
+he(H,_S,7) ->
     H;
 he(H,_S,8) ->
     H;
@@ -188,6 +209,8 @@ ce(_S,3) ->
     cont;
 ce(_S,4) ->
     cont;
+ce(_S,7) ->
+    cont;
 ce(_S,8) ->
     cont;
 ce(_S,11) ->
@@ -213,7 +236,7 @@ vm_switch(B,O,D,P,H,E,S,cont) ->
     {Arg,ArgEnd} = pe(B,ArgStart,Op),
         dbg({args,{Arg,ArgEnd}}),
     Sn = se(O,D,H,E,S,Arg,Op),
-        dbg({se,Sn}),
+        dbg({se,len(Sn),Sn}),
     Hn = he(H,S,Op),
         dbg({he,Hn}),
     Ctrln = ce(S,Op),
@@ -235,6 +258,7 @@ run_env(H0,E0,V,ST) ->
 run_block(T,I,ST,L) ->
     fun (H,E) ->
         dbg({block,{T,I,ST,L}}),
+        kill({1,0,2972,9},{T,I,ST,L}),
         V0 = case L of
             0 -> nil;
             _ -> new(L,{default,null})
