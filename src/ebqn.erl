@@ -41,7 +41,7 @@ tail(L,A,S) when L =:= -1 ->
     {A,S};
 tail(L,A,S) ->
     tail(L-1,set(L,head(S),A),tail(S)).
-call(F,undefined,_W) ->
+call(_F,undefined,_W) ->
     undefined;
 call(F,_X,_W) when not is_function(F) ->
     F;
@@ -161,7 +161,7 @@ se(_O,_D,_H,_E0,S,undefined,14) ->
 se(_O,D,H,E0,S,X,15) ->
     F = element(1+X,D),
     cons(F(H,E0),S);
-se(_O,_D,H,_E0,S,undefined,19) ->
+se(_O,_D,_H,_E0,S,undefined,19) ->
     F = head(S),
     G = head(tail(S)),
     J = head(tail(tail(S))),
