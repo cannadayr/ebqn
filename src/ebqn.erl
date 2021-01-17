@@ -89,6 +89,8 @@ hset(H,1,{E,I},V) ->
 
 pe(B,P,0) ->
     num(B,P);
+pe(B,P,3) ->
+    num(B,P);
 pe(B,P,4) ->
     num(B,P);
 pe(_B,P,8) ->
@@ -112,6 +114,9 @@ pe(_B,P,25) ->
 
 se(O,_D,_H,_E0,S,X,0) ->
     cons(element(1+X,O),S);
+se(_O,_D,_H,_E0,S,X,3) ->
+    {T,Si} = tail(X-1,new(X),S),
+    cons(list(T),Si);
 se(_O,_D,_H,_E0,S,X,4) ->
     {T,Si} = tail(X-1,new(X),S),
     cons(list(T),Si);
@@ -139,6 +144,8 @@ se(_O,_D,_H,_E0,S,undefined,25) ->
 
 he(H,_S,0) ->
     H;
+he(H,_S,3) ->
+    H;
 he(H,_S,4) ->
     H;
 he(H,_S,8) ->
@@ -159,6 +166,8 @@ he(H,_S,25) ->
     H.
 
 ce(_S,0) ->
+    cont;
+ce(_S,3) ->
     cont;
 ce(_S,4) ->
     cont;
