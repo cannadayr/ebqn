@@ -5,13 +5,14 @@
 -import(gb_trees,[insert/3,empty/0]).
 -import(array,[new/2,resize/2,foldl/3,set/3,from_list/1,fix/1]).
 -import(lists,[map/2]).
--import(queue,[cons/2,len/1,head/1]).
+-import(queue,[cons/2,len/1,head/1,tail/1]).
 -export([runtime/1]).
 -export([run/3,concat/2,fixed/1,num/2,dbg/1]).
 
 -record(e,{s,p}). % slots, parent
 -record(m1,{f}).
 -record(m2,{f}).
+-record(v,{r,sh}).
 
 dbg(X) ->
     io:format("~p~n",[X]).
@@ -22,6 +23,13 @@ concat(X,W) ->
     Xs = array:size(X),
     Z = resize(Xs+array:size(W),X),
     foldl(fun(I,V,A) -> set(Xs+I,V,A) end,Z,W).
+tail(L,A,S) when L =:= -1 ->
+    {A,S};
+tail(L,A,S) ->
+    tail(L-1,set(L,head(S),A),tail(S)).
+
+arr(R,Sh) -> #v{r=R,sh=Sh}.
+list(A) -> arr(A,[array:size(A)]).
 
 fns() -> array:new(21,fixed).
 
@@ -43,6 +51,8 @@ ge(I,E,H) ->
     #e{p=P} = gb_trees:get(E,H),
     ge(I-1,P,H).
 
+pe(B,P,4) ->
+    num(B,P);
 pe(B,P,15) ->
     num(B,P);
 pe(B,P,21) ->
@@ -56,8 +66,11 @@ pe(B,P,22) ->
 pe(_B,P,25) ->
     {undefined,P}.
 
-se(_O,D,H,E0,S,Arg,15) ->
-    F = element(1+Arg,D),
+se(_O,D,H,E0,S,X,4) ->
+    {T,Si} = tail(X-1,array:new(X,fixed),S),
+    cons(T,Si);
+se(_O,D,H,E0,S,X,15) ->
+    F = element(1+X,D),
     cons(F(H,E0),S);
 se(_O,_D,H,E0,S,{X,Y},21) ->
     {T,#e{s=V}} = ge(X,E0,H),
@@ -69,6 +82,8 @@ se(_O,_D,H,E0,S,{X,Y},22) ->
 se(_O,_D,_H,_E0,S,_Arg,25) ->
      S.
 
+he(H,_S,4) ->
+    H;
 he(H,_S,15) ->
     H;
 he(H,_S,21) ->
@@ -78,6 +93,8 @@ he(H,_S,22) ->
 he(H,_S,25) ->
     H.
 
+ce(_S,4) ->
+    cont;
 ce(_S,15) ->
     cont;
 ce(_S,21) ->
@@ -143,7 +160,7 @@ run(B,O,S) ->
     F3(B,O,D).
 
 runtime(b) ->
-    <<15,1,25,21,0,1,22,0,3,22,0,4,22,0,5,22,0,6,22,0,7,22,0,8,22,0,9,22,0,10,22,0,11,22,0,12,22,0,13,22,0,14,22,0,15,22,0,16,22,0,17,22,0,18,22,0,19,22,0,20,22,0,21,22,0,22,22,0,23,4,21>>;
+    <<15,1,25,21,0,1,22,0,3,22,0,4,22,0,5,22,0,6,22,0,7,22,0,8,22,0,9,22,0,10,22,0,11,22,0,12,22,0,13,22,0,14,22,0,15,22,0,16,22,0,17,22,0,18,22,0,19,22,0,20,22,0,21,22,0,22,22,0,23,4,21,11,14,15>>;
 runtime(o) ->
     {0,1,2,32,3,8,infinity,neg_infinity,-1};
 runtime(s) ->
