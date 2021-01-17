@@ -37,11 +37,11 @@ num(_Binary,_Ptr,Size,Chunk,Acc,0) ->
 num(Binary,Ptr,Size,Chunk,Acc,1) ->
     num(Binary,Ptr+1,Size+7,<<Chunk/bitstring,Acc/bitstring>>).
 
-ge(H,E,I) when I =:= 0 ->
+ge(I,E,H) when I =:= 0 ->
     {E,gb_trees:get(E,H)};
-ge(H,E,I) ->
+ge(I,E,H) ->
     #e{p=P} = gb_trees:get(E,H),
-    ge(H,P,I-1).
+    ge(I-1,P,H).
 
 pe(B,P,15) ->
     num(B,P);
@@ -49,22 +49,31 @@ pe(B,P,21) ->
     {X,Xp} = num(B,P),
     {Y,Yp} = num(B,Xp),
     {{X,Y},Yp};
+pe(B,P,22) ->
+    {X,Xp} = num(B,P),
+    {Y,Yp} = num(B,Xp),
+    {{X,Y},Yp};
 pe(_B,P,25) ->
     {undefined,P}.
 
-se(_O,D,H,E,S,Arg,15) ->
+se(_O,D,H,E0,S,Arg,15) ->
     F = element(1+Arg,D),
-    cons(F(H,E),S);
+    cons(F(H,E0),S);
 se(_O,_D,H,E0,S,{X,Y},21) ->
-    {T,#e{s=V}} = ge(H,E0,X),
+    {T,#e{s=V}} = ge(X,E0,H),
     false = (undefined =:= array:get(Y,V)),
     cons({T,Y},S);
-se(_O,_D,_H,_E,S,_Arg,25) ->
+se(_O,_D,H,E0,S,{X,Y},22) ->
+    {T,_} = ge(X,E0,H),
+    cons({T,Y},S);
+se(_O,_D,_H,_E0,S,_Arg,25) ->
      S.
 
 he(H,_S,15) ->
     H;
 he(H,_S,21) ->
+    H;
+he(H,_S,22) ->
     H;
 he(H,_S,25) ->
     H.
@@ -72,6 +81,8 @@ he(H,_S,25) ->
 ce(_S,15) ->
     cont;
 ce(_S,21) ->
+    cont;
+ce(_S,22) ->
     cont;
 ce(S,25) ->
     1 = len(S),
@@ -132,7 +143,7 @@ run(B,O,S) ->
     F3(B,O,D).
 
 runtime(b) ->
-    <<15,1,25,21,0,1,22,0,3>>;
+    <<15,1,25,21,0,1,22,0,3,22,0,4,22,0,5,22,0,6,22,0,7,22,0,8,22,0,9,22,0,10,22,0,11,22,0,12,22,0,13,22,0,14,22,0,15,22,0,16,22,0,17,22,0,18,22,0,19,22,0,20,22,0,21,22,0,22,22,0,23,4,21>>;
 runtime(o) ->
     {0,1,2,32,3,8,infinity,neg_infinity,-1};
 runtime(s) ->
