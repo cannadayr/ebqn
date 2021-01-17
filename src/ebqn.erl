@@ -3,7 +3,7 @@
 % ebqn:run(ebqn:runtime(b),ebqn:runtime(o),ebqn:runtime(s)).
 
 -import(gb_trees,[insert/3,empty/0]).
--import(array,[new/2,resize/2,foldl/3,set/3,from_list/1,fix/1]).
+-import(array,[new/1,new/2,resize/2,foldl/3,set/3,from_list/1,fix/1]).
 -import(lists,[map/2]).
 -import(queue,[cons/2,len/1,head/1,tail/1]).
 -export([runtime/1]).
@@ -44,7 +44,7 @@ tail(L,A,S) ->
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
 list(A) -> arr(A,[array:size(A)]).
-fns() -> list(array:new(21,fixed)).
+fns() -> list(new(21,{default,null})).
 
 num(Binary,Ptr) ->
     {Size,Bitstring} = num(Binary,Ptr,0,<<>>),
@@ -69,8 +69,8 @@ hset(H,1,#v{r=IdR,sh=IdSh} = Id,{T,Z}) when is_record(Id,v) ->
     foldl(fun(J,N,A) -> hset(A,1,N,array:get(J,VdR)) end,H,IdR);
 hset(H,1,{E,I},V) ->
     #e{s=A} = gb_trees:get(E,H),
-    true = (array:get(I,A) =:= undefined),
-    gb_trees:update(E,#e{s=array:set(I,V,E)},H).
+    true = (array:get(I,A) =:= null),
+    gb_trees:update(E,#e{s=array:set(I,V,A)},H).
 
 pe(B,P,4) ->
     num(B,P);
@@ -90,7 +90,7 @@ pe(_B,P,25) ->
     {undefined,P}.
 
 se(_O,D,H,E0,S,X,4) ->
-    {T,Si} = tail(X-1,array:new(X,fixed),S),
+    {T,Si} = tail(X-1,new(X),S),
     cons(list(T),Si);
 se(_O,_D,_H,_E0,S,undefined,11) ->
     tail(S);
@@ -99,7 +99,7 @@ se(_O,D,H,E0,S,X,15) ->
     cons(F(H,E0),S);
 se(_O,_D,H,E0,S,{X,Y},21) ->
     {T,#e{s=V}} = ge(X,E0,H),
-    false = (undefined =:= array:get(Y,V)),
+    false = (null =:= array:get(Y,V)),
     cons({T,Y},S);
 se(_O,_D,H,E0,S,{X,Y},22) ->
     {T,_} = ge(X,E0,H),
@@ -123,6 +123,8 @@ he(H,_S,25) ->
     H.
 
 ce(_S,4) ->
+    cont;
+ce(_S,11) ->
     cont;
 ce(_S,15) ->
     cont;
