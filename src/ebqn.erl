@@ -49,7 +49,7 @@ call(F,X,W) ->
     false = (is_record(F,m1) or is_record(F,m2)),
     F(X,W).
 resolve({R,I},H) when is_reference(R) ->
-    #e{s=E} = gb_trees:get(R,H),
+    #e{s=E} = dict:fetch(R,H),
     array:get(I,E);
 resolve(X,_H) when is_function(X) ->
     X;
@@ -94,19 +94,19 @@ num(_Binary,_Ptr,Size,Chunk,Acc,0) ->
 num(Binary,Ptr,Size,Chunk,Acc,1) ->
     num(Binary,Ptr+1,Size+7,<<Chunk/bitstring,Acc/bitstring>>).
 ge(I,E,H) when I =:= 0 ->
-    {E,gb_trees:get(E,H)};
+    {E,dict:fetch(E,H)};
 ge(I,E,H) ->
-    #e{p=P} = gb_trees:get(E,H),
+    #e{p=P} = dict:fetch(E,H),
     ge(I-1,P,H).
 hset(H,1,#v{r=IdR,sh=IdSh} = Id,{T,Z}) when is_record(Id,v) ->
-    #e{s=Vd} = gb_trees:get(T,H),
+    #e{s=Vd} = dict:fetch(T,H),
     #v{r=VdR,sh=VdSh} = array:get(Z,Vd),
     true = (IdSh =:= VdSh),
     foldl(fun(J,N,A) -> hset(A,1,N,array:get(J,VdR)) end,H,IdR);
 hset(H,1,{E,I},V) ->
-    #e{s=A} = gb_trees:get(E,H),
+    #e{s=A} = dict:fetch(E,H),
     true = (array:get(I,A) =:= null),
-    gb_trees:update(E,#e{s=array:set(I,V,A)},H).
+    dict:store(E,#e{s=array:set(I,V,A)},H).
 
 pe(B,P,0) ->
     num(B,P);
@@ -253,7 +253,7 @@ vm(H,E,P) ->
 run_env(H0,E0,V,ST) ->
     fun (SV) ->
         E = make_ref(),
-        H = insert(E,#e{s=concat(SV,V),p=E0},H0),
+        H = dict:store(E,#e{s=concat(SV,V),p=E0},H0),
         vm(H,E,ST)
     end.
 run_block(T,I,ST,L) ->
@@ -281,7 +281,7 @@ run_init(S) ->
     list_to_tuple(map(fun({T,I,ST,L}) -> run_block(T,I,ST,L) end,S)).
 run(B,O,S) ->
     E = make_ref(),
-    H = insert(E,#e{},empty()),
+    H = dict:store(E,#e{},dict:new()),
     D = run_init(S),
     F0 = element(1,D),
     F1 = F0(H,E),
