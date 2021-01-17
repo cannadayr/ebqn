@@ -23,8 +23,16 @@ kill(A,B) when A =:= B ->
 kill(_A,_B) ->
     ok.
 
+fixed([nil]) ->
+    nil;
 fixed(X) ->
     fix(resize(length(X),from_list(X))).
+concat(nil,nil) ->
+    nil;
+concat(X,nil) when X =/= nil ->
+    X;
+concat(nil,W) when W =/= nil ->
+    W;
 concat(X,W) ->
     Xs = array:size(X),
     Z = resize(Xs+array:size(W),X),
@@ -155,10 +163,13 @@ run_env(H0,E0,V,ST) ->
 run_block(T,I,ST,L) ->
     fun (H,E) ->
         dbg({block,{T,I,ST,L}}),
-        V0 = new(L,fixed),
+        V0 = case L of
+            0 -> nil;
+            _ -> new(L,{default,null})
+        end,
         C = run_env(H,E,V0,ST),
         F = case T of
-            0 -> fun(N) -> N(new(0,fixed)) end;
+            0 -> fun(N) -> N(nil) end;
             1 -> fun(N) -> R = fun R(F  ) -> N(fixed([R,F  ])) end,#m1{f=R} end;
             2 -> fun(N) -> R = fun R(F,G) -> N(fixed([R,F,G])) end,#m2{f=R} end
         end,
