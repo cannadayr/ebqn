@@ -5,7 +5,7 @@
 -import(gb_trees,[insert/3,empty/0]).
 -import(array,[new/2,resize/2,foldl/3,set/3,from_list/1,fix/1]).
 -import(lists,[map/2,nth/2]).
--import(queue,[cons/2]).
+-import(queue,[cons/2,len/1,head/1]).
 -export([runtime/1]).
 -export([run/3,concat/2,fixed/1,num/2,dbg/1]).
 
@@ -23,6 +23,8 @@ concat(X,W) ->
     Z = resize(Xs+array:size(W),X),
     foldl(fun(I,V,A) -> set(Xs+I,V,A) end,Z,W).
 
+fns() -> [].
+
 num(Binary,Ptr) ->
     {Size,Bitstring} = num(Binary,Ptr,0,<<>>),
     <<Value:Size/unsigned-integer>> = Bitstring,
@@ -36,12 +38,26 @@ num(Binary,Ptr,Size,Chunk,Acc,1) ->
     num(Binary,Ptr+1,Size+7,<<Chunk/bitstring,Acc/bitstring>>).
 
 pe(B,P,15) ->
-    num(B,P).
+    num(B,P);
+pe(_B,P,25) ->
+    {undefined,P}.
+
 se(_O,D,H,E,S,Arg,15) ->
     F = nth(1+Arg,D),
-    cons(F(H,E),S).
-he(H,_S,15) -> H.
-ce(_S,15) -> cont.
+    cons(F(H,E),S);
+se(_O,_D,_H,_E,S,_Arg,25) ->
+     S.
+
+he(H,_S,15) ->
+    H;
+he(H,_S,25) ->
+    H.
+
+ce(_S,15) ->
+    cont;
+ce(S,25) ->
+    1 = len(S),
+    head(S).
 
 vm_switch(B,O,D,P,H,E,S,cont) ->
     ArgStart = P+1,
@@ -55,7 +71,9 @@ vm_switch(B,O,D,P,H,E,S,cont) ->
     dbg({he,Hn}),
     Ctrln = ce(S,Op),
     dbg({ctrl,Ctrln}),
-    vm_switch(B,O,D,ArgEnd,Hn,E,Sn,Ctrln).
+    vm_switch(B,O,D,ArgEnd,Hn,E,Sn,Ctrln);
+vm_switch(_B,_O,_D,_P,_H,_E,_S,Rtn) ->
+    Rtn.
 vm(H,E,P) ->
     fun(B,O,D) ->
         vm_switch(B,O,D,P,H,E,queue:new(),cont)
@@ -88,12 +106,14 @@ run_init(S) ->
 run(B,O,S) ->
     E = make_ref(),
     H = insert(E,#e{},empty()),
-    [F|_] = D = run_init(S),
-    G = F(H,E),
-    G(B,O,D).
+    [F0|_] = D = run_init(S),
+    F1 = F0(H,E),
+    F2 = F1(B,O,D),
+    F3 = F2(fns(),undefined),
+    F3(B,O,D).
 
 runtime(b) ->
-    <<15,1,25>>;
+    <<15,1,25,21,0,1>>;
 runtime(o) ->
     {0,1,2,32,3,8,infinity,neg_infinity,-1};
 runtime(s) ->
