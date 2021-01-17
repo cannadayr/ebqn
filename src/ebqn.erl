@@ -36,7 +36,7 @@ tail(L,A,S) ->
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
 list(A) -> arr(A,[array:size(A)]).
-fns() -> array:new(21,fixed).
+fns() -> list(array:new(21,fixed)).
 
 num(Binary,Ptr) ->
     {Size,Bitstring} = num(Binary,Ptr,0,<<>>),
@@ -54,9 +54,20 @@ ge(I,E,H) when I =:= 0 ->
 ge(I,E,H) ->
     #e{p=P} = gb_trees:get(E,H),
     ge(I-1,P,H).
+hset(H,1,#v{r=IdR,sh=IdSh} = Id,{T,Z}) when is_record(Id,v) ->
+    #e{s=Vd} = gb_trees:get(T,H),
+    #v{r=VdR,sh=VdSh} = array:get(Z,Vd),
+    true = (IdSh =:= VdSh),
+    foldl(fun(J,N,A) -> hset(A,1,N,array:get(J,VdR)) end,H,IdR);
+hset(H,1,{E,I},V) ->
+    #e{s=A} = gb_trees:get(E,H),
+    true = (array:get(I,A) =:= undefined),
+    gb_trees:update(E,#e{s=array:set(I,V,E)},H).
 
 pe(B,P,4) ->
     num(B,P);
+pe(_B,P,11) ->
+    {undefined,P};
 pe(B,P,15) ->
     num(B,P);
 pe(B,P,21) ->
@@ -72,7 +83,9 @@ pe(_B,P,25) ->
 
 se(_O,D,H,E0,S,X,4) ->
     {T,Si} = tail(X-1,array:new(X,fixed),S),
-    cons(T,Si);
+    cons(list(T),Si);
+se(_O,_D,_H,_E0,S,undefined,11) ->
+    tail(S);
 se(_O,D,H,E0,S,X,15) ->
     F = element(1+X,D),
     cons(F(H,E0),S);
@@ -83,11 +96,15 @@ se(_O,_D,H,E0,S,{X,Y},21) ->
 se(_O,_D,H,E0,S,{X,Y},22) ->
     {T,_} = ge(X,E0,H),
     cons({T,Y},S);
-se(_O,_D,_H,_E0,S,_Arg,25) ->
+se(_O,_D,_H,_E0,S,undefined,25) ->
      S.
 
 he(H,_S,4) ->
     H;
+he(H,S,11) ->
+    I = head(S),
+    V = head(tail(S)),
+    hset(H,1,I,V);
 he(H,_S,15) ->
     H;
 he(H,_S,21) ->
