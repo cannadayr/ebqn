@@ -2,7 +2,6 @@
 
 % ebqn:run(ebqn:runtime(b),ebqn:runtime(o),ebqn:runtime(s)).
 
--import(gb_trees,[insert/3,empty/0]).
 -import(array,[new/1,new/2,resize/2,foldl/3,set/3,from_list/1,fix/1]).
 -import(lists,[map/2]).
 -import(queue,[cons/2,len/1,head/1,tail/1,liat/1]).
@@ -253,7 +252,7 @@ vm(H,E,P) ->
 run_env(H0,E0,V,ST) ->
     fun (SV) ->
         E = make_ref(),
-        H = insert(E,#e{s=concat(SV,V),p=E0},H0),
+        H = gb_trees:insert(E,#e{s=concat(SV,V),p=E0},H0),
         vm(H,E,ST)
     end.
 run_block(T,I,ST,L) ->
@@ -281,7 +280,7 @@ run_init(S) ->
     list_to_tuple(map(fun({T,I,ST,L}) -> run_block(T,I,ST,L) end,S)).
 run(B,O,S) ->
     E = make_ref(),
-    H = insert(E,#e{},empty()),
+    H = gb_trees:insert(E,#e{},gb_trees:empty()),
     D = run_init(S),
     F0 = element(1,D),
     F1 = F0(H,E),
