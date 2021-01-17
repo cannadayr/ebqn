@@ -41,10 +41,25 @@ tail(L,A,S) when L =:= -1 ->
     {A,S};
 tail(L,A,S) ->
     tail(L-1,set(L,head(S),A),tail(S)).
+resolve({R,I},H) when is_reference(R) ->
+    #e{s=E} = gb_trees:get(R,H),
+    array:get(I,E).
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
 list(A) -> arr(A,[array:size(A)]).
-fns() -> list(new(21,{default,nullfn})).
+m1(F) -> #m1{f=F}.
+m2(F) -> #m2{f=F}.
+reorder(F,G) ->
+    fun
+        (X,undefined) ->
+            F(X,undefined);
+        (X,W) ->
+            G(X,W)
+    end.
+fns() -> list(fixed([nullfn,nullfn,nullfn,nullfn,nullfn,
+                     nullfn,nullfn,nullfn,nullfn,nullfn,
+                     nullfn,nullfn,nullfn,nullfn,nullfn,
+                     nullfn,nullfn,nullfn,nullfn,nullfn,m2(fun reorder/2)])).
 
 num(Binary,Ptr) ->
     {Size,Bitstring} = num(Binary,Ptr,0,<<>>),
@@ -74,6 +89,8 @@ hset(H,1,{E,I},V) ->
 
 pe(B,P,4) ->
     num(B,P);
+pe(_B,P,8) ->
+    {undefined,P};
 pe(_B,P,11) ->
     {undefined,P};
 pe(B,P,14) ->
@@ -94,6 +111,11 @@ pe(_B,P,25) ->
 se(_O,_D,_H,_E0,S,X,4) ->
     {T,Si} = tail(X-1,new(X),S),
     cons(list(T),Si);
+se(_O,_D,H,_E0,S,X,8) ->
+    F = head(S),
+    #m2{f=M} = resolve(head(tail(S)),H),
+    G = head(tail(tail(S))),
+    cons(M(F,G),S);
 se(_O,_D,_H,_E0,S,undefined,11) ->
     tail(S);
 se(_O,_D,_H,_E0,S,undefined,14) ->
@@ -113,6 +135,8 @@ se(_O,_D,_H,_E0,S,undefined,25) ->
 
 he(H,_S,4) ->
     H;
+he(H,_S,8) ->
+    H;
 he(H,S,11) ->
     I = head(S),
     V = head(tail(S)),
@@ -129,6 +153,8 @@ he(H,_S,25) ->
     H.
 
 ce(_S,4) ->
+    cont;
+ce(_S,8) ->
     cont;
 ce(_S,11) ->
     cont;
