@@ -4,7 +4,7 @@
 
 -import(gb_trees,[insert/3,empty/0]).
 -import(array,[new/2,resize/2,foldl/3,set/3,from_list/1,fix/1]).
--import(lists,[map/2,nth/2]).
+-import(lists,[map/2]).
 -import(queue,[cons/2,len/1,head/1]).
 -export([runtime/1]).
 -export([run/3,concat/2,fixed/1,num/2,dbg/1]).
@@ -43,7 +43,7 @@ pe(_B,P,25) ->
     {undefined,P}.
 
 se(_O,D,H,E,S,Arg,15) ->
-    F = nth(1+Arg,D),
+    F = element(1+Arg,D),
     cons(F(H,E),S);
 se(_O,_D,_H,_E,S,_Arg,25) ->
      S.
@@ -62,15 +62,15 @@ ce(S,25) ->
 vm_switch(B,O,D,P,H,E,S,cont) ->
     ArgStart = P+1,
     {Op,ArgStart} = num(B,P),
-    dbg({op,{Op,P}}),
+        dbg({op,{Op,P}}),
     {Arg,ArgEnd} = pe(B,ArgStart,Op),
-    dbg({args,{Arg,ArgEnd}}),
+        dbg({args,{Arg,ArgEnd}}),
     Sn = se(O,D,H,E,S,Arg,Op),
-    dbg({se,Sn}),
+        dbg({se,Sn}),
     Hn = he(H,S,Op),
-    dbg({he,Hn}),
+        dbg({he,Hn}),
     Ctrln = ce(S,Op),
-    dbg({ctrl,Ctrln}),
+        dbg({ctrl,Ctrln}),
     vm_switch(B,O,D,ArgEnd,Hn,E,Sn,Ctrln);
 vm_switch(_B,_O,_D,_P,_H,_E,_S,Rtn) ->
     Rtn.
@@ -102,11 +102,12 @@ run_block(T,I,ST,L) ->
         F(G)
     end.
 run_init(S) ->
-    map(fun({T,I,ST,L}) -> run_block(T,I,ST,L) end,S).
+    list_to_tuple(map(fun({T,I,ST,L}) -> run_block(T,I,ST,L) end,S)).
 run(B,O,S) ->
     E = make_ref(),
     H = insert(E,#e{},empty()),
-    [F0|_] = D = run_init(S),
+    D = run_init(S),
+    F0 = element(1,D),
     F1 = F0(H,E),
     F2 = F1(B,O,D),
     F3 = F2(fns(),undefined),
