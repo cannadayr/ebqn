@@ -259,6 +259,12 @@ run_block(T,I,ST,L) ->
     fun (H,E) ->
         dbg({block,{T,I,ST,L}}),
         dbg({memory,erlang:memory(processes)/(1024*1024)}),
+        %kill({2,0,2865,6},{T,I,ST,L}), % seems normal
+        %kill({2,0,2887,6},{T,I,ST,L}), % it starts increasing after this block
+        kill({2,0,2909,6},{T,I,ST,L}),
+        kill({0,0,2942,3},{T,I,ST,L}),
+        kill({0,0,2954,3},{T,I,ST,L}),
+        kill({0,0,2963,3},{T,I,ST,L}),
         kill({1,0,2972,9},{T,I,ST,L}), % between these two is when it explodes
         kill({0,0,3092,3},{T,I,ST,L}),
         kill({1,0,3137,4},{T,I,ST,L}),
