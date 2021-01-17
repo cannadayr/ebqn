@@ -6,7 +6,7 @@
 -import(array,[new/2,resize/2,foldl/3,set/3,from_list/1,fix/1]).
 -import(lists,[map/2]).
 -export([runtime/1]).
--export([run/3,concat/2,fixed/1]).
+-export([run/3,concat/2,fixed/1,num/2]).
 
 -record(e,{s,p}). % slots, parent
 -record(m1,{f}).
@@ -18,6 +18,18 @@ concat(X,W) ->
     Xs = array:size(X),
     Z = resize(Xs+array:size(W),X),
     foldl(fun(I,V,A) -> set(Xs+I,V,A) end,Z,W).
+
+num(Binary,Ptr) ->
+    {Size,Bitstring} = num(Binary,Ptr,0,<<>>),
+    <<Value:Size/unsigned-integer>> = Bitstring,
+    {Value,Ptr+trunc(Size/7)}.
+num(Binary,Ptr,Size,Acc) ->
+    <<H:1,Chunk:7/bitstring>> = binary_part(Binary,Ptr,1),
+    num(Binary,Ptr,Size,Chunk,Acc,H).
+num(_Binary,_Ptr,Size,Chunk,Acc,0) ->
+    {Size+7,<<Chunk/bitstring, Acc/bitstring>>};
+num(Binary,Ptr,Size,Chunk,Acc,1) ->
+    num(Binary,Ptr+1,Size+7,<<Chunk/bitstring,Acc/bitstring>>).
 
 vm_switch(B,O,D,P,H,E,S,cont) ->
     {B,O,D,P,H,E,S,cont}.
@@ -35,14 +47,16 @@ run_block(T,I,ST,L) ->
     fun (H,E) ->
         V0 = new(L,fixed),
         C = run_env(H,E,V0,ST),
-        apply(case T of
+        F = case T of
             0 -> fun(N) -> N(new(0,fixed)) end;
             1 -> fun(N) -> R = fun R(F  ) -> N(fixed([R,F  ])) end,#m1{f=R} end;
             2 -> fun(N) -> R = fun R(F,G) -> N(fixed([R,F,G])) end,#m2{f=R} end
-        end,[case I of
+        end,
+        G = case I of
             0 -> fun(V) -> fun R(X,W) -> C(concat(fixed([R,X,W]),fixed([V]))) end end;
             1 -> C
-        end])
+        end,
+        F(G)
     end.
 run_init(S) ->
     map(fun({T,I,ST,L}) -> run_block(T,I,ST,L) end,S).
