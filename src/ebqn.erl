@@ -4,13 +4,17 @@
 
 -import(gb_trees,[insert/3,empty/0]).
 -import(array,[new/2,resize/2,foldl/3,set/3,from_list/1,fix/1]).
--import(lists,[map/2]).
+-import(lists,[map/2,nth/2]).
+-import(queue,[cons/2]).
 -export([runtime/1]).
--export([run/3,concat/2,fixed/1,num/2]).
+-export([run/3,concat/2,fixed/1,num/2,dbg/1]).
 
 -record(e,{s,p}). % slots, parent
 -record(m1,{f}).
 -record(m2,{f}).
+
+dbg(X) ->
+    io:format("~p~n",[X]).
 
 fixed(X) ->
     fix(resize(length(X),from_list(X))).
@@ -31,12 +35,32 @@ num(_Binary,_Ptr,Size,Chunk,Acc,0) ->
 num(Binary,Ptr,Size,Chunk,Acc,1) ->
     num(Binary,Ptr+1,Size+7,<<Chunk/bitstring,Acc/bitstring>>).
 
+pe(B,P,15) ->
+    num(B,P).
+se(_O,D,H,E,S,Arg,15) ->
+    F = nth(1+Arg,D),
+    cons(F(H,E),S).
+he(H,_S,15) -> H.
+ce(_S,15) -> cont.
+
 vm_switch(B,O,D,P,H,E,S,cont) ->
-    {B,O,D,P,H,E,S,cont}.
+    ArgStart = P+1,
+    {Op,ArgStart} = num(B,P),
+    dbg({op,{Op,P}}),
+    {Arg,ArgEnd} = pe(B,ArgStart,Op),
+    dbg({args,{Arg,ArgEnd}}),
+    Sn = se(O,D,H,E,S,Arg,Op),
+    dbg({se,Sn}),
+    Hn = he(H,S,Op),
+    dbg({he,Hn}),
+    Ctrln = ce(S,Op),
+    dbg({ctrl,Ctrln}),
+    vm_switch(B,O,D,ArgEnd,Hn,E,Sn,Ctrln).
 vm(H,E,P) ->
     fun(B,O,D) ->
         vm_switch(B,O,D,P,H,E,queue:new(),cont)
     end.
+
 run_env(H0,E0,V,ST) ->
     fun (SV) ->
         E = make_ref(),
@@ -45,6 +69,7 @@ run_env(H0,E0,V,ST) ->
     end.
 run_block(T,I,ST,L) ->
     fun (H,E) ->
+        dbg({section,{T,I,ST,L}}),
         V0 = new(L,fixed),
         C = run_env(H,E,V0,ST),
         F = case T of
@@ -72,4 +97,4 @@ runtime(b) ->
 runtime(o) ->
     {0,1,2,32,3,8,infinity,neg_infinity,-1};
 runtime(s) ->
-    [{0,1,0,0}].
+    [{0,1,0,0},{0,0,3,149}].
