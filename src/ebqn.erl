@@ -2,7 +2,6 @@
 
 % ebqn:run(ebqn:runtime(b),ebqn:runtime(o),ebqn:runtime(s)).
 
--import(gb_trees,[insert/3,empty/0]).
 -import(array,[new/1,new/2,resize/2,foldl/3,set/3,from_list/1,fix/1]).
 -import(lists,[map/2]).
 -import(queue,[cons/2,len/1,head/1,tail/1,liat/1]).
@@ -260,7 +259,17 @@ run_block(T,I,ST,L) ->
     fun (H,E) ->
         dbg({block,{T,I,ST,L}}),
         dbg({memory,erlang:memory(processes)/(1024*1024)}),
-        kill({1,0,2972,9},{T,I,ST,L}),
+        %kill({2,0,2865,6},{T,I,ST,L}), % seems normal
+        %kill({2,0,2887,6},{T,I,ST,L}), % it starts increasing after this block
+        kill({2,0,2909,6},{T,I,ST,L}),
+        kill({0,0,2942,3},{T,I,ST,L}),
+        kill({0,0,2954,3},{T,I,ST,L}),
+        kill({0,0,2963,3},{T,I,ST,L}),
+        kill({1,0,2972,9},{T,I,ST,L}), % between these two is when it explodes
+        kill({0,0,3092,3},{T,I,ST,L}),
+        kill({1,0,3137,4},{T,I,ST,L}),
+        kill({1,1,3220,4},{T,I,ST,L}),
+        kill({1,1,3296,3},{T,I,ST,L}),
         V0 = case L of
             0 -> nil;
             _ -> new(L,{default,null})
