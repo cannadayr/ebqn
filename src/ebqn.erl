@@ -57,10 +57,10 @@ call(F,X,W) ->
     F(X,W).
 resolve({R,I},H) when is_reference(R) ->
     #e{s=E} = dict:fetch(R,H),
-    array:get(I,E);
+    resolve(array:get(I,E),H);
 resolve(X,_H) when is_function(X) ->
     X;
-resolve(X,_H) when is_record (X,v) ->
+resolve(X,_H) when is_record(X,v);is_record(X,m2);is_record(X,m1) ->
     X.
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
@@ -69,6 +69,11 @@ m1(F) -> #m1{f=F}.
 m2(F) -> #m2{f=F}.
 subtract(X,undefined) -> -1*X;
 subtract(X,W)  -> W-X.
+equals(_X,undefined) -> 0;
+equals(X,W) -> X =:= W.
+lesseq(X,W) when X =:= W -> true;
+lesseq(X,W) -> X > W.
+shape(#v{sh=Sh},undefined) -> list(Sh).
 reorder(F,G) ->
     fun
         (X,undefined) ->
@@ -86,7 +91,7 @@ tr3o(H,G,F) ->
     end.
 fns() -> list(fixed([nullfn0,nullfn1,nullfn2,nullfn3,nullfn4,
                      nullfn5,nullfn6,fun subtract/2,nullfn8,nullfn9,
-                     nullfn10,nullfn11,nullfn12,nullfn13,nullfn14,
+                     nullfn10,nullfn11,fun equals/2,fun lesseq/2,fun shape/2,
                      nullfn15,nullfn16,nullfn17,nullfn18,nullfn19,m2(fun reorder/2)])).
 
 num(Binary,Ptr) ->
