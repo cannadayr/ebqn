@@ -6,21 +6,29 @@
 -import(lists,[map/2]).
 -import(queue,[cons/2,len/1,head/1,tail/1,liat/1]).
 -export([runtime/1]).
--export([run/3,concat/2,fixed/1,num/2,dbg/1]).
+-export([run/3,concat/2,fixed/1,num/2,fmt/1]).
 
 -record(e,{s,p}). % slots, parent
 -record(m1,{f}).
 -record(m2,{f}).
--record(v,{r,sh}).
+-record(v,{r,sh}). % ravel, shape
 
-dbg(X) ->
+fmt(X) ->
     io:format("~p~n",[X]).
 kill() ->
-    exit(self(),kill).
+    halt(erlang:pid_to_list(self())).
 kill(A,B) when A =:= B ->
-    exit(self(),kill);
+    halt(erlang:pid_to_list(self()));
 kill(_A,_B) ->
     ok.
+dbg(A,B,C,D) when A =:= B ->
+    fmt({C,D()});
+dbg(_A,_B,_C,_D) ->
+    ok.
+mem() ->
+    fmt({memory,erlang:memory(processes)/(1024*1024)}),
+    fmt(process_info(self(),[heap_size,stack_size])),
+    fmt(erlang:system_info(allocated_areas)).
 
 fixed([nil]) ->
     nil;
@@ -231,16 +239,17 @@ ce(S,25) ->
 vm_switch(B,O,D,P,H,E,S,cont) ->
     ArgStart = P+1,
     {Op,ArgStart} = num(B,P),
-        dbg({op,{Op,P}}),
+        %fmt({op,{Op,P}}),
     {Arg,ArgEnd} = pe(B,ArgStart,Op),
-        dbg({args,{Arg,ArgEnd}}),
+        %fmt({args,{Arg,ArgEnd}}),
     Sn = se(O,D,H,E,S,Arg,Op),
-        dbg({se,len(Sn),Sn}),
+        %fmt({se,len(Sn),Sn}),
     Hn = he(H,S,Op),
-        dbg({he,Hn}),
+        %fmt({he,Hn}),
     Ctrln = ce(S,Op),
-        dbg({ctrl,Ctrln}),
-    dbg({memory,erlang:memory(processes)/(1024*1024)}),
+        %fmt({ctrl,Ctrln}),
+    %mem(),
+    %garbage_collect(),
     vm_switch(B,O,D,ArgEnd,Hn,E,Sn,Ctrln);
 vm_switch(_B,_O,_D,_P,_H,_E,_S,Rtn) ->
     Rtn.
@@ -257,19 +266,19 @@ run_env(H0,E0,V,ST) ->
     end.
 run_block(T,I,ST,L) ->
     fun (H,E) ->
-        dbg({block,{T,I,ST,L}}),
-        dbg({memory,erlang:memory(processes)/(1024*1024)}),
+        %fmt({block,{T,I,ST,L}}),
+        %mem(),
         %kill({2,0,2865,6},{T,I,ST,L}), % seems normal
         %kill({2,0,2887,6},{T,I,ST,L}), % it starts increasing after this block
-        kill({2,0,2909,6},{T,I,ST,L}),
-        kill({0,0,2942,3},{T,I,ST,L}),
-        kill({0,0,2954,3},{T,I,ST,L}),
-        kill({0,0,2963,3},{T,I,ST,L}),
-        kill({1,0,2972,9},{T,I,ST,L}), % between these two is when it explodes
-        kill({0,0,3092,3},{T,I,ST,L}),
-        kill({1,0,3137,4},{T,I,ST,L}),
-        kill({1,1,3220,4},{T,I,ST,L}),
-        kill({1,1,3296,3},{T,I,ST,L}),
+        %kill({2,0,2909,6},{T,I,ST,L}),
+        %kill({0,0,2942,3},{T,I,ST,L}),
+        %kill({0,0,2954,3},{T,I,ST,L}),
+        %kill({0,0,2963,3},{T,I,ST,L}),
+        %kill({1,0,2972,9},{T,I,ST,L}), % between these two is when it explodes
+        %kill({0,0,3092,3},{T,I,ST,L}),
+        %kill({1,0,3137,4},{T,I,ST,L}),
+        %kill({1,1,3220,4},{T,I,ST,L}),
+        %kill({1,1,3296,3},{T,I,ST,L}),
         V0 = case L of
             0 -> nil;
             _ -> new(L,{default,null})
