@@ -15,15 +15,11 @@
 
 fmt(X) ->
     io:format("~p~n",[X]).
-kill() ->
+dbg() ->
     halt(erlang:pid_to_list(self())).
-kill(A,B) when A =:= B ->
+dbg(A,B) when A =:= B ->
     halt(erlang:pid_to_list(self()));
-kill(_A,_B) ->
-    ok.
-dbg(A,B,C,D) when A =:= B ->
-    fmt({C,D()});
-dbg(_A,_B,_C,_D) ->
+dbg(_A,_B) ->
     ok.
 mem() ->
     fmt({memory,erlang:memory(processes)/(1024*1024)}),
@@ -67,6 +63,8 @@ arr(R,Sh) -> #v{r=R,sh=Sh}.
 list(A) -> arr(A,[array:size(A)]).
 m1(F) -> #m1{f=F}.
 m2(F) -> #m2{f=F}.
+is_array(X,_W) when is_record(X,v) -> 1;
+is_array(_X,_W) -> 0.
 subtract(X,undefined) -> -1*X;
 subtract(X,W)  -> W-X.
 equals(_X,undefined) -> 0;
@@ -89,7 +87,7 @@ tr3o(H,G,F) ->
     fun(X,W) ->
         call(G,H(X,W),F(X,W))
     end.
-fns() -> list(fixed([nullfn0,nullfn1,nullfn2,nullfn3,nullfn4,
+fns() -> list(fixed([fun is_array/2,nullfn1,nullfn2,nullfn3,nullfn4,
                      nullfn5,nullfn6,fun subtract/2,nullfn8,nullfn9,
                      nullfn10,nullfn11,fun equals/2,fun lesseq/2,fun shape/2,
                      nullfn15,nullfn16,nullfn17,nullfn18,nullfn19,m2(fun reorder/2)])).
@@ -244,13 +242,14 @@ ce(S,25) ->
 vm_switch(B,O,D,P,H,E,S,cont) ->
     ArgStart = P+1,
     {Op,ArgStart} = num(B,P),
-        %fmt({op,{Op,P}}),
+        io:format("    "),fmt({op,{Op,P}}),
     {Arg,ArgEnd} = pe(B,ArgStart,Op),
-        %fmt({args,{Arg,ArgEnd}}),
+        io:format("        "),fmt({args,{Arg,ArgEnd}}),
+        %dbg({Op,P},{7,491}),
     Sn = se(O,D,H,E,S,Arg,Op),
-        %fmt({se,len(Sn),Sn}),
+        %io:format("        "),fmt({se,len(Sn),queue:to_list(Sn)}),
     Hn = he(H,S,Op),
-        %fmt({he,Hn}),
+        %io:format("        "),fmt({he,Hn}),
     Ctrln = ce(S,Op),
         %fmt({ctrl,Ctrln}),
     %mem(),
@@ -271,9 +270,9 @@ run_env(H0,E0,V,ST) ->
     end.
 run_block(T,I,ST,L) ->
     fun (H,E) ->
-        %fmt({block,{T,I,ST,L}}),
+        fmt({block,{T,I,ST,L}}),
         %mem(),
-        kill({0,0,3376,5},{T,I,ST,L}),
+        %dbg({0,1,0,0},{T,I,ST,L}),
         V0 = case L of
             0 -> nil;
             _ -> new(L,{default,null})
