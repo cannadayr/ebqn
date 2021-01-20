@@ -54,9 +54,11 @@ call(F,X,W) ->
 resolve({R,I},H) when is_reference(R) ->
     #e{s=E} = fetch(R,H),
     array:get(I,E);
-resolve(X,_H) when is_function(X) ->
-    X;
-resolve(X,_H) when is_record(X,v);is_record(X,m2);is_record(X,m1) ->
+resolve(X,_H) when is_function(X);
+                   is_record(X,v);
+                   is_record(X,m1);
+                   is_record(X,m2);
+                   is_atom(X) -> % TODO is_atom/1 is temporary until core fns are complete
     X.
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
@@ -108,7 +110,7 @@ ge(I,E,H) when I =:= 0 ->
 ge(I,E,H) ->
     #e{p=P} = fetch(E,H),
     ge(I-1,P,H).
-hset(H,1,#v{r=IdR,sh=IdSh} = Id,{T,Z}) when is_record(Id,v) ->
+hset(H,1,#v{r=IdR,sh=IdSh} = Id,{T,Z}) when is_record(Id,v),is_reference(T),is_integer(Z) ->
     #e{s=Vd} = fetch(T,H),
     #v{r=VdR,sh=VdSh} = array:get(Z,Vd),
     true = (IdSh =:= VdSh),
@@ -116,7 +118,7 @@ hset(H,1,#v{r=IdR,sh=IdSh} = Id,{T,Z}) when is_record(Id,v) ->
 hset(H,1,{E,I},V) ->
     #e{s=A} = fetch(E,H),
     true = (array:get(I,A) =:= null),
-    store(E,#e{s=set(I,V,A)},H).
+    store(E,#e{s=set(I,resolve(V,H),A)},H).
 
 pe(B,P,0) ->
     num(B,P);
