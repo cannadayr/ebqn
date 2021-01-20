@@ -160,7 +160,7 @@ se(_O,_D,_H,_E0,S,X,4) ->
 se(_O,_D,H,_E0,S,undefined,7) ->
     F = head(S),
     #m1{f=M} = resolve(head(tail(S)),H),
-    cons(M(F),S);
+    cons(M(F),tail(tail(S)));
 se(_O,_D,H,_E0,S,undefined,8) ->
     F = head(S),
     #m2{f=M} = resolve(head(tail(S)),H),
