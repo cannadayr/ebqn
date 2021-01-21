@@ -3,9 +3,10 @@
 % ebqn:run(ebqn:rtb(),ebqn:rto(),ebqn:rts())).
 
 -import(array,[new/1,new/2,resize/2,foldl/3,set/3,from_list/1,fix/1]).
--import(lists,[map/2]).
+-import(lists,[map/2,seq/2]).
 -import(queue,[cons/2,len/1,head/1,tail/1,liat/1]).
 -import(dict,[fetch/2,store/3]).
+-import(math,[log/1,exp/1,pow/2]).
 -export([run/3,rtb/0,rto/0,rts/0,ge/3,concat/2,fixed/1,num/2,fmt/1]).
 
 -record(e,{s,p}). % environment (slots, parent)
@@ -67,8 +68,8 @@ m2(F) -> #m2{f=F}.
 is_array(X,_W) when is_record(X,v) -> 1;
 is_array(_X,_W) -> 0.
 type(_X,_W) -> 0.
-log(X,undefined) -> math:log(X);
-log(X,W) -> math:log(X) / math:log(W).
+log(X,undefined) -> log(X);
+log(X,W) -> log(X) / log(W).
 group_len(#v{r=X},_W) ->
     L = foldl(fun(_I,V,A) -> max(A,V) end,-1,X),
     R = new(L+1,{default,0}),
@@ -96,14 +97,18 @@ subtract(X,W)  -> W-X.
 multiply(X,W) -> X*W.
 divide(X,undefined)  -> 1 / X;
 divide(X,W) -> W / X.
-power(X,undefined) -> math:exp(X);
-power(X,W)  -> math:pow(X,W).
-minimum(X,_W) -> math:floor(X).
+power(X,undefined) -> exp(X);
+power(X,W)  -> pow(X,W).
+minimum(X,_W) -> floor(X).
 equals(_X,undefined) -> 0;
 equals(X,W) -> X =:= W.
 lesseq(X,W) when X =:= W -> true;
 lesseq(X,W) -> X > W.
 shape(#v{sh=Sh},undefined) -> list(Sh).
+reshape(#v{r=X},undefined) -> arr(X,array:size(X));
+reshape(#v{r=X},W) -> arr(X,W).
+pick(#v{r=X},W) -> array:get(W,X).
+window(X,_W) -> list(fixed(seq(0,X-1))).
 reorder(F,G) ->
     fun
         (X,undefined) ->
@@ -122,7 +127,7 @@ tr3o(H,G,F) ->
 fns() -> list(fixed([fun is_array/2,fun type/2,fun log/2,fun group_len/2,fun group_ord/2,
                      fun assert/2,fun add/2,fun subtract/2,fun multiply/2,fun divide/2,
                      fun power/2,fun minimum/2,fun equals/2,fun lesseq/2,fun shape/2,
-                     nullfn15,nullfn16,nullfn17,nullfn18,nullfn19,m2(fun reorder/2)])).
+                     fun reshape/2,fun pick/2,fun window/2,nullfn18,nullfn19,m2(fun reorder/2)])).
 
 num(Binary,Ptr) ->
     {Size,Bitstring} = num(Binary,Ptr,0,<<>>),
