@@ -69,6 +69,13 @@ is_array(_X,_W) -> 0.
 type(_X,_W) -> 0.
 log(X,undefined) -> math:log(X);
 log(X,W) -> math:log(X) / math:log(W).
+group_len(#v{r=X},_W) ->
+    L = foldl(fun(_I,V,A) -> max(A,V) end,-1,X),
+    R = new(L+1,{default,0}),
+    F = fun (_I,E,A) when E >= 0 -> set(E,1+array:get(E,A),A);
+            (_I,_E,A)            -> A
+    end,
+    list(foldl(F,R,X)).
 subtract(X,undefined) -> -1*X;
 subtract(X,W)  -> W-X.
 equals(_X,undefined) -> 0;
@@ -91,7 +98,7 @@ tr3o(H,G,F) ->
     fun(X,W) ->
         call(G,H(X,W),F(X,W))
     end.
-fns() -> list(fixed([fun is_array/2,fun type/2,fun log/2,nullfn3,nullfn4,
+fns() -> list(fixed([fun is_array/2,fun type/2,fun log/2,fun group_len/2,nullfn4,
                      nullfn5,nullfn6,fun subtract/2,nullfn8,nullfn9,
                      nullfn10,nullfn11,fun equals/2,fun lesseq/2,fun shape/2,
                      nullfn15,nullfn16,nullfn17,nullfn18,nullfn19,m2(fun reorder/2)])).
@@ -172,7 +179,7 @@ se(_O,_D,H,_E0,S,undefined,8) ->
     #m2{f=M} = resolve(head(tail(S)),H),
     G = resolve(head(tail(tail(S))),H),
     cons(M(F,G),tail(tail(tail(S))));
-se(_O,_D,H,_E0,S,undefined,9) ->
+se(_O,_D,_H,_E0,S,undefined,9) ->
     G = head(S),
     J = head(tail(S)),
     cons(fun(X,W) -> call(G,call(J,X,W),undefined) end,tail(tail(S)));
@@ -183,7 +190,7 @@ se(_O,_D,_H,_E0,S,undefined,14) ->
 se(_O,D,H,E0,S,X,15) ->
     F = element(1+X,D),
     cons(F(H,E0),S);
-se(_O,_D,H,_E0,S,undefined,16) ->
+se(_O,_D,_H,_E0,S,undefined,16) ->
     F = head(S),
     X = head(tail(S)),
     cons(call(F,X,undefined),tail(tail(S)));
