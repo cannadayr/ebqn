@@ -57,8 +57,7 @@ resolve({R,I},H) when is_reference(R) ->
 resolve(X,_H) when is_function(X);
                    is_record(X,v);
                    is_record(X,m1);
-                   is_record(X,m2);
-                   is_atom(X) -> % TODO is_atom/1 is temporary until core fns are complete
+                   is_record(X,m2) ->
     X.
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
@@ -67,6 +66,9 @@ m1(F) -> #m1{f=F}.
 m2(F) -> #m2{f=F}.
 is_array(X,_W) when is_record(X,v) -> 1;
 is_array(_X,_W) -> 0.
+type(_X,_W) -> 0.
+log(X,undefined) -> math:log(X);
+log(X,W) -> math:log(X) / math:log(W).
 subtract(X,undefined) -> -1*X;
 subtract(X,W)  -> W-X.
 equals(_X,undefined) -> 0;
@@ -89,7 +91,7 @@ tr3o(H,G,F) ->
     fun(X,W) ->
         call(G,H(X,W),F(X,W))
     end.
-fns() -> list(fixed([fun is_array/2,nullfn1,nullfn2,nullfn3,nullfn4,
+fns() -> list(fixed([fun is_array/2,fun type/2,fun log/2,nullfn3,nullfn4,
                      nullfn5,nullfn6,fun subtract/2,nullfn8,nullfn9,
                      nullfn10,nullfn11,fun equals/2,fun lesseq/2,fun shape/2,
                      nullfn15,nullfn16,nullfn17,nullfn18,nullfn19,m2(fun reorder/2)])).
@@ -138,6 +140,8 @@ pe(_B,P,14) ->
     {undefined,P};
 pe(B,P,15) ->
     num(B,P);
+pe(_B,P,16) ->
+    {undefined,P};
 pe(_B,P,19) ->
     {undefined,P};
 pe(B,P,21) ->
@@ -179,6 +183,10 @@ se(_O,_D,_H,_E0,S,undefined,14) ->
 se(_O,D,H,E0,S,X,15) ->
     F = element(1+X,D),
     cons(F(H,E0),S);
+se(_O,_D,H,_E0,S,undefined,16) ->
+    F = head(S),
+    X = head(tail(S)),
+    cons(call(F,X,undefined),tail(tail(S)));
 se(_O,_D,_H,_E0,S,undefined,19) ->
     F = head(S),
     G = head(tail(S)),
@@ -214,6 +222,8 @@ he(H,_S,14) ->
     H;
 he(H,_S,15) ->
     H;
+he(H,_S,16) ->
+    H;
 he(H,_S,19) ->
     H;
 he(H,_S,21) ->
@@ -240,6 +250,8 @@ ce(_S,11) ->
 ce(_S,14) ->
     cont;
 ce(_S,15) ->
+    cont;
+ce(_S,16) ->
     cont;
 ce(_S,19) ->
     cont;
