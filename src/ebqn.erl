@@ -130,6 +130,8 @@ pe(_B,P,7) ->
     {undefined,P};
 pe(_B,P,8) ->
     {undefined,P};
+pe(_B,P,9) ->
+    {undefined,P};
 pe(_B,P,11) ->
     {undefined,P};
 pe(_B,P,14) ->
@@ -166,6 +168,10 @@ se(_O,_D,H,_E0,S,undefined,8) ->
     #m2{f=M} = resolve(head(tail(S)),H),
     G = resolve(head(tail(tail(S))),H),
     cons(M(F,G),tail(tail(tail(S))));
+se(_O,_D,H,_E0,S,undefined,9) ->
+    G = head(S),
+    J = head(tail(S)),
+    cons(fun(X,W) -> call(G,call(J,X,W),undefined) end,tail(tail(S)));
 se(_O,_D,_H,_E0,S,undefined,11) ->
     tail(S);
 se(_O,_D,_H,_E0,S,undefined,14) ->
@@ -198,6 +204,8 @@ he(H,_S,7) ->
     H;
 he(H,_S,8) ->
     H;
+he(H,_S,9) ->
+    H;
 he(H,S,11) ->
     I = head(S),
     V = head(tail(S)),
@@ -224,6 +232,8 @@ ce(_S,4) ->
 ce(_S,7) ->
     cont;
 ce(_S,8) ->
+    cont;
+ce(_S,9) ->
     cont;
 ce(_S,11) ->
     cont;
