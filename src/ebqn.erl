@@ -76,6 +76,18 @@ group_len(#v{r=X},_W) ->
             (_I,_E,A)            -> A
     end,
     list(foldl(F,R,X)).
+group_ord(#v{r=X},#v{r=W}) ->
+    {S,L} = foldl(fun(_I,V,{Si,Li}) -> {concat(Si,fixed([Li])),Li+V} end,{nil,0},W),
+    R = new(L),
+    F = fun
+        (I,V,{Si,Ri}) when V >= 0 ->
+            {set(V,1+array:get(V,Si),Si),
+                set(array:get(V,Si),I,Ri)};
+        (_I,_V,A) ->
+            A
+    end,
+    {_, O} = foldl(F,{S,R},X),
+    list(O).
 subtract(X,undefined) -> -1*X;
 subtract(X,W)  -> W-X.
 equals(_X,undefined) -> 0;
@@ -98,7 +110,7 @@ tr3o(H,G,F) ->
     fun(X,W) ->
         call(G,H(X,W),F(X,W))
     end.
-fns() -> list(fixed([fun is_array/2,fun type/2,fun log/2,fun group_len/2,nullfn4,
+fns() -> list(fixed([fun is_array/2,fun type/2,fun log/2,fun group_len/2,fun group_ord/2,
                      nullfn5,nullfn6,fun subtract/2,nullfn8,nullfn9,
                      nullfn10,nullfn11,fun equals/2,fun lesseq/2,fun shape/2,
                      nullfn15,nullfn16,nullfn17,nullfn18,nullfn19,m2(fun reorder/2)])).
