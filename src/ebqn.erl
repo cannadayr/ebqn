@@ -88,8 +88,17 @@ group_ord(#v{r=X},#v{r=W}) ->
     end,
     {_, O} = foldl(F,{S,R},X),
     list(O).
+assert(X,_W) -> true = (X=:=1).
+add(X,undefined) -> X;
+add(X,W)  -> W + X.
 subtract(X,undefined) -> -1*X;
 subtract(X,W)  -> W-X.
+multiply(X,W) -> X*W.
+divide(X,undefined)  -> 1 / X;
+divide(X,W) -> W / X.
+power(X,undefined) -> math:exp(X);
+power(X,W)  -> math:pow(X,W).
+minimum(X,_W) -> math:floor(X).
 equals(_X,undefined) -> 0;
 equals(X,W) -> X =:= W.
 lesseq(X,W) when X =:= W -> true;
@@ -111,8 +120,8 @@ tr3o(H,G,F) ->
         call(G,H(X,W),F(X,W))
     end.
 fns() -> list(fixed([fun is_array/2,fun type/2,fun log/2,fun group_len/2,fun group_ord/2,
-                     nullfn5,nullfn6,fun subtract/2,nullfn8,nullfn9,
-                     nullfn10,nullfn11,fun equals/2,fun lesseq/2,fun shape/2,
+                     fun assert/2,fun add/2,fun subtract/2,fun multiply/2,fun divide/2,
+                     fun power/2,fun minimum/2,fun equals/2,fun lesseq/2,fun shape/2,
                      nullfn15,nullfn16,nullfn17,nullfn18,nullfn19,m2(fun reorder/2)])).
 
 num(Binary,Ptr) ->
