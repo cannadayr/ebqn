@@ -2,8 +2,8 @@
 
 % ebqn:run(ebqn:rtb(),ebqn:rto(),ebqn:rts())).
 
--import(array,[new/1,new/2,resize/2,foldl/3,set/3,from_list/1,fix/1]).
--import(lists,[map/2,seq/2]).
+-import(array,[new/1,new/2,resize/2,map/2,foldl/3,set/3,from_list/1,fix/1]).
+-import(lists,[seq/2,flatten/1]).
 -import(queue,[cons/2,len/1,head/1,tail/1,liat/1]).
 -import(dict,[fetch/2,store/3]).
 -import(math,[log/1,exp/1,pow/2]).
@@ -58,7 +58,8 @@ resolve({R,I},H) when is_reference(R) ->
 resolve(X,_H) when is_function(X);
                    is_record(X,v);
                    is_record(X,m1);
-                   is_record(X,m2) ->
+                   is_record(X,m2);
+                   is_number(X) ->
     X.
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
@@ -89,7 +90,7 @@ group_ord(#v{r=X},#v{r=W}) ->
     end,
     {_, O} = foldl(F,{S,R},X),
     list(O).
-assert(X,_W) -> true = (X=:=1).
+assert(X,undefined) -> true = (X=:=1).
 add(X,undefined) -> X;
 add(X,W)  -> W + X.
 subtract(X,undefined) -> -1*X;
@@ -108,7 +109,40 @@ shape(#v{sh=Sh},undefined) -> list(Sh).
 reshape(#v{r=X},undefined) -> arr(X,array:size(X));
 reshape(#v{r=X},W) -> arr(X,W).
 pick(#v{r=X},W) -> array:get(W,X).
-window(X,_W) -> list(fixed(seq(0,X-1))).
+window(X,undefined) -> list(fixed(seq(0,X-1))).
+table(F) ->
+    fun
+        (#v{r=R,sh=Sh},undefined) ->
+            arr(map(fun(_I,E) -> call(F,E,undefined) end,R),Sh);
+        (#v{r=Xr,sh=Xsh},#v{r=Wr,sh=Wsh}) ->
+            arr(concat(nil,map(fun(_J,D) -> map(fun(_I,E) -> call(F,E,D) end,Xr) end,Wr)),flatten([Wsh,Xsh]))
+    end.
+scan(F) ->
+    fun
+        (#v{r=X,sh=S},undefined) when length(S) > 0 ->
+            L = array:size(X),
+            R = new(L),
+            H = fun
+                (Ri,Li) when Li > 0 ->
+                    C = lists:foldl(fun(E,A) -> A*E end,1,lists:nthtail(1,S)),
+                    G = fun
+                        G(I,Ci,Rn) when I =/= Ci ->
+                            G(I+1,Ci,set(I,array:get(I,X),Rn));
+                        G(I,Ci,Rn) when I =:= Ci ->
+                            Rn
+                    end,
+                    J = fun
+                        J(I,Ci,Rn,Ln) when I =/= Ln ->
+                            J(I+1,Ci,set(I,call(F,array:get(I,X),array:get(I-C,Rn)),Rn),Ln);
+                        J(I,_Ci,Rn,Ln) when I =:= Ln ->
+                            Rn
+                    end,
+                    J(C,C,G(0,C,Ri),L);
+                (Ri,_Li) ->
+                    Ri
+            end,
+            arr(H(R,L),S)
+    end.
 reorder(F,G) ->
     fun
         (X,undefined) ->
@@ -127,7 +161,7 @@ tr3o(H,G,F) ->
 fns() -> list(fixed([fun is_array/2,fun type/2,fun log/2,fun group_len/2,fun group_ord/2,
                      fun assert/2,fun add/2,fun subtract/2,fun multiply/2,fun divide/2,
                      fun power/2,fun minimum/2,fun equals/2,fun lesseq/2,fun shape/2,
-                     fun reshape/2,fun pick/2,fun window/2,nullfn18,nullfn19,m2(fun reorder/2)])).
+                     fun reshape/2,fun pick/2,fun window/2,m1(fun table/1),m1(fun scan/1),m2(fun reorder/2)])).
 
 num(Binary,Ptr) ->
     {Size,Bitstring} = num(Binary,Ptr,0,<<>>),
@@ -302,7 +336,7 @@ vm_switch(B,O,D,P,H,E,S,cont) ->
         io:format("    "),fmt({op,{Op,P}}),
     {Arg,ArgEnd} = pe(B,ArgStart,Op),
         io:format("        "),fmt({args,{Arg,ArgEnd}}),
-        %dbg({Op,P},{7,491}),
+        %dbg({Op,P},{15,0}),
     Sn = se(O,D,H,E,S,Arg,Op),
         %io:format("        "),fmt({se,len(Sn),queue:to_list(Sn)}),
     Hn = he(H,S,Op),
@@ -327,7 +361,7 @@ run_env(H0,E0,V,ST) ->
     end.
 run_block(T,I,ST,L) ->
     fun (H,E) ->
-        fmt({block,{T,I,ST,L}}),
+        %fmt({block,{T,I,ST,L}}),
         %mem(),
         %dbg({0,1,0,0},{T,I,ST,L}),
         V0 = case L of
@@ -347,7 +381,7 @@ run_block(T,I,ST,L) ->
         F(G)
     end.
 run_init(S) ->
-    list_to_tuple(map(fun({T,I,ST,L}) -> run_block(T,I,ST,L) end,S)).
+    list_to_tuple(lists:map(fun({T,I,ST,L}) -> run_block(T,I,ST,L) end,S)).
 run(B,O,S) ->
     E = make_ref(),
     H = store(E,#e{},dict:new()),
