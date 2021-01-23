@@ -7,7 +7,7 @@
 -import(queue,[cons/2,len/1,head/1,tail/1,liat/1]).
 -import(dict,[fetch/2,store/3]).
 -import(math,[log/1,exp/1,pow/2]).
--export([run/3,rtb/0,rto/0,rts/0,ge/3,concat/2,fixed/1,num/2,fmt/1]).
+-export([run/3,rtb/0,rto/0,rts/0,ge/2,concat/2,fixed/1,num/2,fmt/1]).
 
 -record(e,{s,p}). % environment (slots, parent)
 -record(m1,{f}).  % 1-modifier
@@ -52,14 +52,14 @@ call(F,_X,_W) when not is_function(F) ->
 call(F,X,W) ->
     false = (is_record(F,m1) or is_record(F,m2)),
     F(X,W).
-resolve({R,I},H) when is_reference(R) ->
-    #e{s=E} = fetch(R,H),
+resolve({R,I}) when is_reference(R) ->
+    #e{s=E} = fetch(R,hget()),
     array:get(I,E);
-resolve(X,_H) when is_function(X);
-                   is_record(X,v);
-                   is_record(X,m1);
-                   is_record(X,m2);
-                   is_number(X) ->
+resolve(X) when is_function(X);
+                is_record(X,v);
+                is_record(X,m1);
+                is_record(X,m2);
+                is_number(X) ->
     X.
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
@@ -174,20 +174,22 @@ num(_Binary,_Ptr,Size,Chunk,Acc,0) ->
     {Size+7,<<Chunk/bitstring,Acc/bitstring>>};
 num(Binary,Ptr,Size,Chunk,Acc,1) ->
     num(Binary,Ptr+1,Size+7,<<Chunk/bitstring,Acc/bitstring>>).
-ge(I,E,H) when I =:= 0 ->
-    {E,fetch(E,H)};
-ge(I,E,H) ->
-    #e{p=P} = fetch(E,H),
-    ge(I-1,P,H).
-hset(H,1,#v{r=IdR,sh=IdSh} = Id,{T,Z}) when is_record(Id,v),is_reference(T),is_integer(Z) ->
-    #e{s=Vd} = fetch(T,H),
+ge(I,E) when I =:= 0 ->
+    {E,fetch(E,hget())};
+ge(I,E) ->
+    #e{p=P} = fetch(E,hget()),
+    ge(I-1,P).
+hset(1,#v{r=IdR,sh=IdSh} = Id,{T,Z}) when is_record(Id,v),is_reference(T),is_integer(Z) ->
+    #e{s=Vd} = fetch(T,hget()),
     #v{r=VdR,sh=VdSh} = array:get(Z,Vd),
     true = (IdSh =:= VdSh),
-    foldl(fun(J,N,A) -> hset(A,1,N,array:get(J,VdR)) end,H,IdR);
-hset(H,1,{E,I},V) ->
-    #e{s=A} = fetch(E,H),
+    foldl(fun(J,N,_A) -> ok = hset(1,N,array:get(J,VdR)),ok end,ok,IdR);
+hset(1,{E,I},V) ->
+    #e{s=A} = fetch(E,hget()),
     true = (array:get(I,A) =:= null),
-    store(E,#e{s=set(I,resolve(V,H),A)},H).
+    ok = hput(store(E,#e{s=set(I,resolve(V),A)},hget())).
+hget() -> get(h).
+hput(X) -> _ = put(h,X),ok.
 
 pe(B,P,0) ->
     num(B,P);
@@ -224,90 +226,90 @@ pe(B,P,22) ->
 pe(_B,P,25) ->
     {undefined,P}.
 
-se(O,_D,_H,_E0,S,X,0) ->
+se(O,_D,_E0,S,X,0) ->
     cons(element(1+X,O),S);
-se(_O,_D,_H,_E0,S,X,3) ->
+se(_O,_D,_E0,S,X,3) ->
     {T,Si} = tail(X-1,new(X),S),
     cons(list(T),Si);
-se(_O,_D,_H,_E0,S,X,4) ->
+se(_O,_D,_E0,S,X,4) ->
     {T,Si} = tail(X-1,new(X),S),
     cons(list(T),Si);
-se(_O,_D,H,_E0,S,undefined,7) ->
+se(_O,_D,_E0,S,undefined,7) ->
     F = head(S),
-    #m1{f=M} = resolve(head(tail(S)),H),
+    #m1{f=M} = resolve(head(tail(S))),
     cons(M(F),tail(tail(S)));
-se(_O,_D,H,_E0,S,undefined,8) ->
+se(_O,_D,_E0,S,undefined,8) ->
     F = head(S),
-    #m2{f=M} = resolve(head(tail(S)),H),
-    G = resolve(head(tail(tail(S))),H),
+    #m2{f=M} = resolve(head(tail(S))),
+    G = resolve(head(tail(tail(S)))),
     cons(M(F,G),tail(tail(tail(S))));
-se(_O,_D,_H,_E0,S,undefined,9) ->
+se(_O,_D,_E0,S,undefined,9) ->
     G = head(S),
     J = head(tail(S)),
     cons(fun(X,W) -> call(G,call(J,X,W),undefined) end,tail(tail(S)));
-se(_O,_D,_H,_E0,S,undefined,11) ->
+se(_O,_D,_E0,S,undefined,11) ->
     tail(S);
-se(_O,_D,_H,_E0,S,undefined,14) ->
+se(_O,_D,_E0,S,undefined,14) ->
     liat(S);
-se(_O,D,H,E0,S,X,15) ->
+se(_O,D,E0,S,X,15) ->
     F = element(1+X,D),
-    cons(F(H,E0),S);
-se(_O,_D,_H,_E0,S,undefined,16) ->
+    cons(F(E0),S);
+se(_O,_D,_E0,S,undefined,16) ->
     F = head(S),
     X = head(tail(S)),
     cons(call(F,X,undefined),tail(tail(S)));
-se(_O,_D,H,_E0,S,undefined,17) ->
+se(_O,_D,_E0,S,undefined,17) ->
     W = head(S),
-    F = resolve(head(tail(S)),H),
+    F = resolve(head(tail(S))),
     X = head(tail(tail(S))),
     cons(call(F,X,W),tail(tail(tail(S))));
-se(_O,_D,_H,_E0,S,undefined,19) ->
+se(_O,_D,_E0,S,undefined,19) ->
     F = head(S),
     G = head(tail(S)),
     J = head(tail(tail(S))),
     cons(tr3o(J,G,F),tail(tail(tail(S))));
-se(_O,_D,H,E0,S,{X,Y},21) ->
-    {T,#e{s=V}} = ge(X,E0,H),
+se(_O,_D,E0,S,{X,Y},21) ->
+    {T,#e{s=V}} = ge(X,E0),
     false = (null =:= array:get(Y,V)),
     cons({T,Y},S);
-se(_O,_D,H,E0,S,{X,Y},22) ->
-    {T,_} = ge(X,E0,H),
+se(_O,_D,E0,S,{X,Y},22) ->
+    {T,_} = ge(X,E0),
     cons({T,Y},S);
-se(_O,_D,_H,_E0,S,undefined,25) ->
+se(_O,_D,_E0,S,undefined,25) ->
      S.
 
-he(H,_S,0) ->
-    H;
-he(H,_S,3) ->
-    H;
-he(H,_S,4) ->
-    H;
-he(H,_S,7) ->
-    H;
-he(H,_S,8) ->
-    H;
-he(H,_S,9) ->
-    H;
-he(H,S,11) ->
+he(_S,0) ->
+    ok;
+he(_S,3) ->
+    ok;
+he(_S,4) ->
+    ok;
+he(_S,7) ->
+    ok;
+he(_S,8) ->
+    ok;
+he(_S,9) ->
+    ok;
+he(S,11) ->
     I = head(S),
     V = head(tail(S)),
-    hset(H,1,I,V);
-he(H,_S,14) ->
-    H;
-he(H,_S,15) ->
-    H;
-he(H,_S,16) ->
-    H;
-he(H,_S,17) ->
-    H;
-he(H,_S,19) ->
-    H;
-he(H,_S,21) ->
-    H;
-he(H,_S,22) ->
-    H;
-he(H,_S,25) ->
-    H.
+    hset(1,I,V);
+he(_S,14) ->
+    ok;
+he(_S,15) ->
+    ok;
+he(_S,16) ->
+    ok;
+he(_S,17) ->
+    ok;
+he(_S,19) ->
+    ok;
+he(_S,21) ->
+    ok;
+he(_S,22) ->
+    ok;
+he(_S,25) ->
+    ok.
 
 ce(_S,0) ->
     cont;
@@ -341,37 +343,35 @@ ce(S,25) ->
     1 = len(S),
     head(S).
 
-vm_switch(B,O,D,P,H,E,S,cont) ->
+vm_switch(B,O,D,P,E,S,cont) ->
     ArgStart = P+1,
     {Op,ArgStart} = num(B,P),
-        io:format("    "),fmt({op,{Op,P}}),
+        %io:format("    "),fmt({op,{Op,P}}),
     {Arg,ArgEnd} = pe(B,ArgStart,Op),
-        io:format("        "),fmt({args,{Arg,ArgEnd}}),
+        %io:format("        "),fmt({args,{Arg,ArgEnd}}),
         %dbg({Op,P},{15,0}),
-    Sn = se(O,D,H,E,S,Arg,Op),
+    Sn = se(O,D,E,S,Arg,Op),
         %io:format("        "),fmt({se,len(Sn),queue:to_list(Sn)}),
-    Hn = he(H,S,Op),
+    ok = he(S,Op),
         %io:format("        "),fmt({he,Hn}),
     Ctrln = ce(S,Op),
         %fmt({ctrl,Ctrln}),
-    %mem(),
-    %garbage_collect(),
-    vm_switch(B,O,D,ArgEnd,Hn,E,Sn,Ctrln);
-vm_switch(_B,_O,_D,_P,_H,_E,_S,Rtn) ->
+    vm_switch(B,O,D,ArgEnd,E,Sn,Ctrln);
+vm_switch(_B,_O,_D,_P,_E,_S,Rtn) ->
     Rtn.
-vm(H,E,P) ->
+vm(E,P) ->
     fun(B,O,D) ->
-        vm_switch(B,O,D,P,H,E,queue:new(),cont)
+        vm_switch(B,O,D,P,E,queue:new(),cont)
     end.
 
-run_env(H0,E0,V,ST) ->
+run_env(E0,V,ST) ->
     fun (SV) ->
         E = make_ref(),
-        H = store(E,#e{s=concat(SV,V),p=E0},H0),
-        vm(H,E,ST)
+        ok = hput(store(E,#e{s=concat(SV,V),p=E0},hget())),
+        vm(E,ST)
     end.
 run_block(T,I,ST,L) ->
-    fun (H,E) ->
+    fun (E) ->
         %fmt({block,{T,I,ST,L}}),
         %mem(),
         %dbg({0,1,0,0},{T,I,ST,L}),
@@ -379,7 +379,7 @@ run_block(T,I,ST,L) ->
             0 -> nil;
             _ -> new(L,{default,null})
         end,
-        C = run_env(H,E,V0,ST),
+        C = run_env(E,V0,ST),
         F = case T of
             0 -> fun(N) -> N(nil) end;
             1 -> fun(N) -> R = fun R(F  ) -> N(fixed([R,F  ])) end,#m1{f=R} end;
@@ -395,10 +395,10 @@ run_init(S) ->
     list_to_tuple(lists:map(fun({T,I,ST,L}) -> run_block(T,I,ST,L) end,S)).
 run(B,O,S) ->
     E = make_ref(),
-    H = store(E,#e{},dict:new()),
+    ok = hput(store(E,#e{},dict:new())),
     D = run_init(S),
     RunBlock = element(1,D),
-    Vm0 = RunBlock(H,E),
+    Vm0 = RunBlock(E),
     Run = Vm0(B,O,D),
     Vm1 = Run(fns(),undefined),
     Vm1(B,O,D).
