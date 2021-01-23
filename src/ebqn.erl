@@ -357,6 +357,9 @@ vm_switch(B,O,D,P,E,S,cont) ->
     Ctrln = ce(S,Op),
         %fmt({ctrl,Ctrln}),
     vm_switch(B,O,D,ArgEnd,E,Sn,Ctrln);
+vm_switch(_B,_O,_D,_P,_E,_S,Rtn) when is_record(Rtn,v) ->
+    #v{r=R} = Rtn,
+    Rtn#v{r=map(fun(_I,V) -> resolve(V) end,R)};
 vm_switch(_B,_O,_D,_P,_E,_S,Rtn) ->
     Rtn.
 vm(E,P) ->
