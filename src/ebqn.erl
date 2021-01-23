@@ -64,6 +64,7 @@ resolve(X) when is_function(X);
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
 list(A) -> arr(A,[array:size(A)]).
+str(S) -> list(fixed(S)).
 m1(F) -> #m1{f=F}.
 m2(F) -> #m2{f=F}.
 is_array(X,_W) when is_record(X,v) -> 1;
