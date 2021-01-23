@@ -209,6 +209,8 @@ pe(B,P,15) ->
     num(B,P);
 pe(_B,P,16) ->
     {undefined,P};
+pe(_B,P,17) ->
+    {undefined,P};
 pe(_B,P,19) ->
     {undefined,P};
 pe(B,P,21) ->
@@ -254,6 +256,11 @@ se(_O,_D,_H,_E0,S,undefined,16) ->
     F = head(S),
     X = head(tail(S)),
     cons(call(F,X,undefined),tail(tail(S)));
+se(_O,_D,H,_E0,S,undefined,17) ->
+    W = head(S),
+    F = resolve(head(tail(S)),H),
+    X = head(tail(tail(S))),
+    cons(call(F,X,W),tail(tail(tail(S))));
 se(_O,_D,_H,_E0,S,undefined,19) ->
     F = head(S),
     G = head(tail(S)),
@@ -291,6 +298,8 @@ he(H,_S,15) ->
     H;
 he(H,_S,16) ->
     H;
+he(H,_S,17) ->
+    H;
 he(H,_S,19) ->
     H;
 he(H,_S,21) ->
@@ -319,6 +328,8 @@ ce(_S,14) ->
 ce(_S,15) ->
     cont;
 ce(_S,16) ->
+    cont;
+ce(_S,17) ->
     cont;
 ce(_S,19) ->
     cont;
