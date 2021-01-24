@@ -243,17 +243,17 @@ se(_B,_O,_D,_E0,S,X,4) ->
     {T,Si} = tail(X-1,new(X),S),
     cons(list(T),Si);
 se(_B,_O,_D,_E0,S,undefined,7) ->
-    F = head(S),
+    F = resolve(head(S)),
     #m1{f=M} = resolve(head(tail(S))),
     cons(M(F),tail(tail(S)));
 se(_B,_O,_D,_E0,S,undefined,8) ->
-    F = head(S),
+    F = resolve(head(S)),
     #m2{f=M} = resolve(head(tail(S))),
     G = resolve(head(tail(tail(S)))),
     cons(M(F,G),tail(tail(tail(S))));
 se(_B,_O,_D,_E0,S,undefined,9) ->
-    G = head(S),
-    J = head(tail(S)),
+    G = resolve(head(S)),
+    J = resolve(head(tail(S))),
     cons(fun(X,W) -> call(G,call(J,X,W),undefined) end,tail(tail(S)));
 se(_B,_O,_D,_E0,S,undefined,11) ->
     tail(S);
@@ -263,18 +263,18 @@ se(B,O,D,E0,S,X,15) ->
     F = element(1+X,D),
     cons(F(B,O,D,E0),S);
 se(_B,_O,_D,_E0,S,undefined,16) ->
-    F = head(S),
-    X = head(tail(S)),
+    F = resolve(head(S)),
+    X = resolve(head(tail(S))),
     cons(call(F,X,undefined),tail(tail(S)));
 se(_B,_O,_D,_E0,S,undefined,17) ->
-    W = head(S),
+    W = resolve(head(S)),
     F = resolve(head(tail(S))),
-    X = head(tail(tail(S))),
+    X = resolve(head(tail(tail(S)))),
     cons(call(F,X,W),tail(tail(tail(S))));
 se(_B,_O,_D,_E0,S,undefined,19) ->
-    F = head(S),
-    G = head(tail(S)),
-    J = head(tail(tail(S))),
+    F = resolve(head(S)),
+    G = resolve(head(tail(S))),
+    J = resolve(head(tail(tail(S)))),
     cons(tr3o(J,G,F),tail(tail(tail(S))));
 se(_B,_O,_D,E0,S,{X,Y},21) ->
     {T,#e{s=V}} = ge(X,E0),
