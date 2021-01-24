@@ -162,11 +162,11 @@ reorder(F,G) ->
     end.
 tr3o(H,G,undefined) ->
     fun(X,W) ->
-        call(G,H(X,W),undefined)
+        call(G,call(H,X,W),undefined)
     end;
 tr3o(H,G,F) ->
     fun(X,W) ->
-        call(G,H(X,W),F(X,W))
+        call(G,call(H,X,W),call(F,X,W))
     end.
 fns() -> list(fixed([fun is_array/2,fun type/2,fun log/2,fun group_len/2,fun group_ord/2,
                      fun assert/2,fun add/2,fun subtract/2,fun multiply/2,fun divide/2,
