@@ -361,8 +361,7 @@ vm_switch(B,O,D,P,E,S,cont) ->
         %fmt({ctrl,Ctrln}),
     vm_switch(B,O,D,ArgEnd,E,Sn,Ctrln);
 vm_switch(_B,_O,_D,_P,_E,_S,Rtn) when is_record(Rtn,v) ->
-    #v{r=R} = Rtn,
-    Rtn#v{r=map(fun(_I,V) -> resolve(V) end,R)};
+    Rtn;
 vm_switch(_B,_O,_D,_P,_E,_S,Rtn) ->
     Rtn.
 vm(E,P) ->
@@ -410,7 +409,7 @@ run(B,O,S) ->
     Vm1(B,O,D).
 runc(B,O,S) ->
     E = make_ref(),
-    ok = hput(store(E,#e{},dict:new())),
+    ok = hput(store(E,#e{},hget())),
     D = run_init(S),
     RunBlock = element(1,D),
     Vm0 = RunBlock(E),
