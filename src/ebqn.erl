@@ -9,7 +9,7 @@
 -import(dict,[fetch/2,store/3]).
 -import(math,[log/1,exp/1,pow/2]).
 -export([run/3,rtb/0,rto/0,rts/0,cb/0,co/1,cs/0]). % core api
--export([fmt/1,fns/0,fixed/1]). % utils
+-export([fmt/1,fns/0,fixed/1,concat/2]). % utils
 -export([is_array/2,type/2,log/2,group_len/2,group_ord/2,
          assert/2,add/2,subtract/2,multiply/2,divide/2,
          power/2,minimum/2,equals/2,lesseq/2,shape/2,
@@ -35,8 +35,10 @@ mem() ->
 
 fixed([nil]) ->
     nil;
+fixed(X) when is_list(X) ->
+    fix(resize(length(X),from_list(X)));
 fixed(X) ->
-    fix(resize(length(X),from_list(X))).
+    X.
 concat(nil,nil) ->
     nil;
 concat(X,nil) when X =/= nil ->
@@ -278,7 +280,7 @@ se(_B,_O,_D,_E0,S,undefined,19) ->
     cons(tr3o(J,G,F),tail(tail(tail(S))));
 se(_B,_O,_D,E0,S,{X,Y},21) ->
     {T,#e{s=V}} = ge(X,E0),
-    false = (null =:= array:get(Y,V)),
+    true = (null =/= array:get(Y,V)),
     cons({T,Y},S);
 se(_B,_O,_D,E0,S,{X,Y},22) ->
     {T,_} = ge(X,E0),
@@ -394,7 +396,7 @@ run_block(T,I,ST,L) ->
             2 -> fun(N) -> R = fun R(F,G) -> N(fixed([R,F,G])) end,#m2{f=R} end
         end,
         G = case I of
-            0 -> fun(V) -> fun R(X,W) -> C(concat(fixed([R,X,W]),fixed([V]))) end end;
+            0 -> fun(V) -> R = fun R(X,W) -> C(concat(fixed([R,X,W]),fixed(V))) end,R end;
             1 -> C
         end,
         F(G)
