@@ -8,8 +8,12 @@
 -import(queue,[cons/2,len/1,head/1,tail/1,liat/1]).
 -import(dict,[fetch/2,store/3]).
 -import(math,[log/1,exp/1,pow/2]).
--export([run/3,runc/3,rtb/0,rto/0,rts/0,cb/0,co/1,cs/0]). % core api
--export([fmt/1]). % utils
+-export([run/3,rtb/0,rto/0,rts/0,cb/0,co/1,cs/0]). % core api
+-export([fmt/1,fns/0,fixed/1]). % utils
+-export([is_array/2,type/2,log/2,group_len/2,group_ord/2,
+         assert/2,add/2,subtract/2,multiply/2,divide/2,
+         power/2,minimum/2,equals/2,lesseq/2,shape/2,
+         reshape/2,pick/2,window/2,table/1,scan/1,reorder/2]). % core fns
 
 -record(e,{s,p}). % environment (slots, parent)
 -record(m1,{f}).  % 1-modifier
