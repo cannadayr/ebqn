@@ -229,56 +229,56 @@ pe(B,P,22) ->
 pe(_B,P,25) ->
     {undefined,P}.
 
-se(O,_D,_E0,S,X,0) ->
+se(_B,O,_D,_E0,S,X,0) ->
     cons(element(1+X,O),S);
-se(_O,_D,_E0,S,X,3) ->
+se(_B,_O,_D,_E0,S,X,3) ->
     {T,Si} = tail(X-1,new(X),S),
     cons(list(T),Si);
-se(_O,_D,_E0,S,X,4) ->
+se(_B,_O,_D,_E0,S,X,4) ->
     {T,Si} = tail(X-1,new(X),S),
     cons(list(T),Si);
-se(_O,_D,_E0,S,undefined,7) ->
+se(_B,_O,_D,_E0,S,undefined,7) ->
     F = head(S),
     #m1{f=M} = resolve(head(tail(S))),
     cons(M(F),tail(tail(S)));
-se(_O,_D,_E0,S,undefined,8) ->
+se(_B,_O,_D,_E0,S,undefined,8) ->
     F = head(S),
     #m2{f=M} = resolve(head(tail(S))),
     G = resolve(head(tail(tail(S)))),
     cons(M(F,G),tail(tail(tail(S))));
-se(_O,_D,_E0,S,undefined,9) ->
+se(_B,_O,_D,_E0,S,undefined,9) ->
     G = head(S),
     J = head(tail(S)),
     cons(fun(X,W) -> call(G,call(J,X,W),undefined) end,tail(tail(S)));
-se(_O,_D,_E0,S,undefined,11) ->
+se(_B,_O,_D,_E0,S,undefined,11) ->
     tail(S);
-se(_O,_D,_E0,S,undefined,14) ->
+se(_B,_O,_D,_E0,S,undefined,14) ->
     liat(S);
-se(_O,D,E0,S,X,15) ->
+se(B,O,D,E0,S,X,15) ->
     F = element(1+X,D),
-    cons(F(E0),S);
-se(_O,_D,_E0,S,undefined,16) ->
+    cons(F(B,O,D,E0),S);
+se(_B,_O,_D,_E0,S,undefined,16) ->
     F = head(S),
     X = head(tail(S)),
     cons(call(F,X,undefined),tail(tail(S)));
-se(_O,_D,_E0,S,undefined,17) ->
+se(_B,_O,_D,_E0,S,undefined,17) ->
     W = head(S),
     F = resolve(head(tail(S))),
     X = head(tail(tail(S))),
     cons(call(F,X,W),tail(tail(tail(S))));
-se(_O,_D,_E0,S,undefined,19) ->
+se(_B,_O,_D,_E0,S,undefined,19) ->
     F = head(S),
     G = head(tail(S)),
     J = head(tail(tail(S))),
     cons(tr3o(J,G,F),tail(tail(tail(S))));
-se(_O,_D,E0,S,{X,Y},21) ->
+se(_B,_O,_D,E0,S,{X,Y},21) ->
     {T,#e{s=V}} = ge(X,E0),
     false = (null =:= array:get(Y,V)),
     cons({T,Y},S);
-se(_O,_D,E0,S,{X,Y},22) ->
+se(_B,_O,_D,E0,S,{X,Y},22) ->
     {T,_} = ge(X,E0),
     cons({T,Y},S);
-se(_O,_D,_E0,S,undefined,25) ->
+se(_B,_O,_D,_E0,S,undefined,25) ->
      S.
 
 he(_S,0) ->
@@ -353,7 +353,7 @@ vm_switch(B,O,D,P,E,S,cont) ->
     {Arg,ArgEnd} = pe(B,ArgStart,Op),
         %io:format("        "),fmt({args,{Arg,ArgEnd}}),
         %dbg({Op,P},{15,0}),
-    Sn = se(O,D,E,S,Arg,Op),
+    Sn = se(B,O,D,E,S,Arg,Op),
         %io:format("        "),fmt({se,len(Sn),queue:to_list(Sn)}),
     ok = he(S,Op),
         %io:format("        "),fmt({he,Hn}),
@@ -364,27 +364,25 @@ vm_switch(_B,_O,_D,_P,_E,_S,Rtn) when is_record(Rtn,v) ->
     Rtn;
 vm_switch(_B,_O,_D,_P,_E,_S,Rtn) ->
     Rtn.
-vm(E,P) ->
-    fun(B,O,D) ->
-        vm_switch(B,O,D,P,E,queue:new(),cont)
-    end.
+vm(B,O,D,P,E) ->
+    vm_switch(B,O,D,P,E,queue:new(),cont).
 
-run_env(E0,V,ST) ->
+run_env(B,O,D,E0,V,ST) ->
     fun (SV) ->
         E = make_ref(),
         ok = hput(store(E,#e{s=concat(SV,V),p=E0},hget())),
-        vm(E,ST)
+        vm(B,O,D,ST,E)
     end.
 run_block(T,I,ST,L) ->
-    fun (E) ->
-        %fmt({block,{T,I,ST,L}}),
+    fun (B,O,D,E) ->
+        fmt({block,{T,I,ST,L}}),
         %mem(),
         %dbg({0,1,0,0},{T,I,ST,L}),
         V0 = case L of
             0 -> nil;
             _ -> new(L,{default,null})
         end,
-        C = run_env(E,V0,ST),
+        C = run_env(B,O,D,E,V0,ST),
         F = case T of
             0 -> fun(N) -> N(nil) end;
             1 -> fun(N) -> R = fun R(F  ) -> N(fixed([R,F  ])) end,#m1{f=R} end;
@@ -403,10 +401,8 @@ run(B,O,S) ->
     ok = hput(store(E,#e{},dict:new())),
     D = run_init(S),
     RunBlock = element(1,D),
-    Vm0 = RunBlock(E),
-    Run = Vm0(B,O,D),
-    Vm1 = Run(fns(),undefined),
-    Vm1(B,O,D).
+    Vm = RunBlock(B,O,D,E),
+    Vm(fns(),undefined).
 runc(B,O,S) ->
     E = make_ref(),
     ok = hput(store(E,#e{},hget())),
