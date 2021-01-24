@@ -108,8 +108,9 @@ divide(X,W) -> W / X.
 power(X,undefined) -> exp(X);
 power(X,W)  -> pow(X,W).
 minimum(X,_W) -> floor(X).
-equals(_X,undefined) -> 0;
-equals(X,W) -> X =:= W.
+equals(#v{sh=S} = X,undefined) when is_record(X,v),length(S) > 0 -> length(S);
+equals(X,undefined) when is_record(X,v) -> 0;
+equals(X,W) -> case X =:= W of true -> 1; false -> 0 end.
 lesseq(X,W) when X =:= W -> true;
 lesseq(X,W) -> X > W.
 shape(#v{sh=Sh},undefined) -> list(Sh).
