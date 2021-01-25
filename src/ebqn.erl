@@ -9,7 +9,7 @@
 -import(dict,[fetch/2,store/3]).
 -import(math,[log/1,exp/1,pow/2]).
 -export([run/3,rtb/0,rto/0,rts/0,cb/0,co/1,cs/0]). % core api
--export([fmt/1,fmt/2,fns/0,fixed/1,concat/2]). % utils
+-export([fmt/1,fmt/2,fns/0,fixed/1,concat/2,list/1]). % utils
 -export([is_array/2,type/2,log/2,group_len/2,group_ord/2,
          assert/2,add/2,subtract/2,multiply/2,divide/2,
          power/2,minimum/2,equals/2,lesseq/2,shape/2,
@@ -69,7 +69,8 @@ resolve(X) when is_function(X);
                 is_record(X,v);
                 is_record(X,m1);
                 is_record(X,m2);
-                is_number(X) ->
+                is_number(X);
+                X =:= undefined ->
     X.
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
@@ -134,7 +135,7 @@ lesseq(X,W) ->
             end
     end.
 shape(#v{sh=Sh},undefined) -> list(fixed(Sh)).
-reshape(#v{r=X},undefined) -> arr(X,array:size(X));
+reshape(#v{r=X},undefined) -> arr(X,[array:size(X)]);
 reshape(#v{r=X},W) -> arr(X,W).
 pick(#v{r=X},W) -> array:get(W,X).
 window(X,undefined) -> list(fixed(seq(0,X-1))).
