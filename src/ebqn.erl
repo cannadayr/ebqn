@@ -4,12 +4,12 @@
 % ebqn:run(ebqn:cb(),ebqn:co(X),ebqn:cs()).
 
 -import(array,[new/1,new/2,resize/2,map/2,foldl/3,set/3,from_list/1,fix/1]).
--import(lists,[seq/2,flatten/1]).
+-import(lists,[seq/2,flatten/1,duplicate/2,merge/1]).
 -import(queue,[cons/2,len/1,head/1,tail/1,liat/1]).
 -import(dict,[fetch/2,store/3]).
 -import(math,[log/1,exp/1,pow/2]).
 -export([run/3,rtb/0,rto/0,rts/0,cb/0,co/1,cs/0]). % core api
--export([fmt/1,fns/0,fixed/1,concat/2]). % utils
+-export([fmt/1,fmt/2,fns/0,fixed/1,concat/2]). % utils
 -export([is_array/2,type/2,log/2,group_len/2,group_ord/2,
          assert/2,add/2,subtract/2,multiply/2,divide/2,
          power/2,minimum/2,equals/2,lesseq/2,shape/2,
@@ -22,6 +22,8 @@
 
 fmt(X) ->
     io:format("~p~n",[X]).
+fmt(X,S) ->
+    io:format(merge(duplicate(S," "))),io:format("~p~n",[X]).
 dbg() ->
     halt(erlang:pid_to_list(self())).
 dbg(A,B) when A =:= B ->
