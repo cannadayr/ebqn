@@ -60,7 +60,7 @@ call(_F,undefined,_W) ->
 call(F,_X,_W) when not is_function(F) ->
     F;
 call(F,X,W) ->
-    false = (is_record(F,m1) or is_record(F,m2)),
+    true = (not is_record(F,m1) and not is_record(F,m2)),
     F(X,W).
 resolve({R,I}) when is_reference(R) ->
     #e{s=E} = fetch(R,hget()),
