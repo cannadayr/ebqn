@@ -73,6 +73,7 @@ resolve(X) when is_function(X);
     X.
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
+list(A) when is_record(A,v) -> A;
 list(A) -> arr(A,[array:size(A)]).
 str(S) -> list(fixed(S)).
 m1(F) -> #m1{f=F}.
@@ -115,9 +116,24 @@ minimum(X,_W) -> floor(X).
 equals(#v{sh=S} = X,undefined) when is_record(X,v),length(S) > 0 -> length(S);
 equals(X,undefined) when is_record(X,v) -> 0;
 equals(X,W) -> case X =:= W of true -> 1; false -> 0 end.
-lesseq(X,W) when X =:= W -> true;
-lesseq(X,W) -> X > W.
-shape(#v{sh=Sh},undefined) -> list(Sh).
+lesseq(X,W) when X =:= W -> 1;
+lesseq(X,W) ->
+    case {is_record(X,v),is_record(W,v)} of
+        {true,false}  -> 1;
+        {false,true}  -> 0;
+        {true,true}   ->
+            #v{sh=Xs} = X,#v{sh=Ws} = W,
+            case length(Xs) >= length(Ws) of
+                true -> 1;
+                false -> 0
+            end;
+        {false,false} ->
+            case X >= W of
+                true -> 1;
+                false -> 0
+            end
+    end.
+shape(#v{sh=Sh},undefined) -> list(fixed(Sh)).
 reshape(#v{r=X},undefined) -> arr(X,array:size(X));
 reshape(#v{r=X},W) -> arr(X,W).
 pick(#v{r=X},W) -> array:get(W,X).
