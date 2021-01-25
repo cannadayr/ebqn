@@ -234,6 +234,8 @@ pe(_B,P,9) ->
     {undefined,P};
 pe(_B,P,11) ->
     {undefined,P};
+pe(_B,P,12) ->
+    {undefined,P};
 pe(_B,P,14) ->
     {undefined,P};
 pe(B,P,15) ->
@@ -277,6 +279,8 @@ se(_B,_O,_D,_E0,S,undefined,9) ->
     J = resolve(head(tail(S))),
     cons(fun(X,W) -> call(G,call(J,X,W),undefined) end,tail(tail(S)));
 se(_B,_O,_D,_E0,S,undefined,11) ->
+    tail(S);
+se(_B,_O,_D,_E0,S,undefined,12) ->
     tail(S);
 se(_B,_O,_D,_E0,S,undefined,14) ->
     liat(S);
@@ -323,6 +327,10 @@ he(S,11) ->
     I = head(S),
     V = head(tail(S)),
     hset(true,I,V);
+he(S,12) ->
+    I = head(S),
+    V = head(tail(S)),
+    hset(false,I,V);
 he(_S,14) ->
     ok;
 he(_S,15) ->
@@ -353,6 +361,8 @@ ce(_S,8) ->
 ce(_S,9) ->
     cont;
 ce(_S,11) ->
+    cont;
+ce(_S,12) ->
     cont;
 ce(_S,14) ->
     cont;
