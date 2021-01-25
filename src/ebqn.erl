@@ -207,14 +207,14 @@ ge(I,E) when I =:= 0 ->
 ge(I,E) ->
     #e{p=P} = fetch(E,hget()),
     ge(I-1,P).
-hset(1,#v{r=IdR,sh=IdSh} = Id,{T,Z}) when is_record(Id,v),is_reference(T),is_integer(Z) ->
+hset(D,#v{r=IdR,sh=IdSh} = Id,{T,Z}) when is_record(Id,v),is_reference(T),is_integer(Z) ->
     #e{s=Vd} = fetch(T,hget()),
     #v{r=VdR,sh=VdSh} = array:get(Z,Vd),
     true = (IdSh =:= VdSh),
-    foldl(fun(J,N,_A) -> ok = hset(1,N,array:get(J,VdR)),ok end,ok,IdR);
-hset(1,{E,I},V) ->
+    foldl(fun(J,N,_A) -> ok = hset(D,N,array:get(J,VdR)),ok end,ok,IdR);
+hset(D,{E,I},V) ->
     #e{s=A} = E0 = fetch(E,hget()),
-    true = (array:get(I,A) =:= null),
+    D = (array:get(I,A) =:= null),
     ok = hput(store(E,E0#e{s=set(I,resolve(V),A)},hget())).
 hget() -> get(h).
 hput(X) -> _ = put(h,X),ok.
@@ -321,7 +321,7 @@ he(_S,9) ->
 he(S,11) ->
     I = head(S),
     V = head(tail(S)),
-    hset(1,I,V);
+    hset(true,I,V);
 he(_S,14) ->
     ok;
 he(_S,15) ->
