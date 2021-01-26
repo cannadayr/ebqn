@@ -61,7 +61,8 @@ call(F,_X,_W) when not is_function(F) ->
     F;
 call(F,X,W) ->
     true = (not is_record(F,m1) and not is_record(F,m2)),
-    F(X,W).
+    %fmt({call,erlang:fun_info(F,name)},8),
+    F(resolve(X),resolve(W)).
 resolve({R,I}) when is_reference(R) ->
     #e{s=E} = fetch(R,hget()),
     array:get(I,E);
