@@ -115,8 +115,8 @@ divide(X,W) -> W / X.
 power(X,undefined) -> exp(X);
 power(X,W)  -> pow(X,W).
 minimum(X,_W) -> floor(X).
-equals(#v{sh=S} = X,undefined) when is_record(X,v),length(S) > 0 -> length(S);
-equals(X,undefined) when is_record(X,v) -> 0;
+equals(#v{sh=S} = X,undefined) when is_record(X,v),is_list(S) -> length(S);
+equals(#v{sh=#v{r=R}} = X,undefined) when is_record(X,v) -> array:size(R);
 equals(X,W) -> case X =:= W of true -> 1; false -> 0 end.
 lesseq(X,W) when X =:= W -> 1;
 lesseq(X,W) ->
