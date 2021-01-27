@@ -63,17 +63,24 @@ call(F,_X,_W) when not is_function(F) ->
 call(F,X,W) ->
     true = (not is_record(F,m1) and not is_record(F,m2)),
     %fmt({call,erlang:fun_info(F,name)},8),
-    F(resolve(X),resolve(W)).
-resolve({R,I}) when is_reference(R) ->
+    fmt({call,erlang:fun_info(F,name),rfmt(X),rfmt(W)},8),
+    F(X,W).
+r({R,I}) when is_reference(R) -> % resolve heap reference
     #e{s=E} = fetch(R,hget()),
     array:get(I,E);
-resolve(X) when is_function(X);
+r(X) when is_function(X);
                 is_record(X,v);
                 is_record(X,m1);
                 is_record(X,m2);
                 is_number(X);
                 X =:= undefined ->
     X.
+rfmt({R,I}) when is_reference(R) ->
+    r({R,I});
+rfmt(R) when is_function(R) ->
+    erlang:fun_info(R,name);
+rfmt(R) ->
+    R.
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
 list(A) when is_record(A,v) -> A;
@@ -219,7 +226,7 @@ hset(D,#v{r=IdR,sh=IdSh} = Id,{T,Z}) when is_record(Id,v),is_reference(T),is_int
 hset(D,{E,I},V) ->
     #e{s=A} = E0 = fetch(E,hget()),
     D = (array:get(I,A) =:= null),
-    ok = hput(store(E,E0#e{s=set(I,resolve(V),A)},hget())).
+    ok = hput(store(E,E0#e{s=set(I,r(V),A)},hget())).
 hget() -> get(h).
 hput(X) -> _ = put(h,X),ok.
 
@@ -269,17 +276,17 @@ se(_B,_O,_D,_E0,S,X,4) ->
     {T,Si} = tail(X-1,new(X),S),
     cons(list(T),Si);
 se(_B,_O,_D,_E0,S,undefined,7) ->
-    F = resolve(head(S)),
-    #m1{f=M} = resolve(head(tail(S))),
+    F = r(head(S)),
+    #m1{f=M} = r(head(tail(S))),
     cons(M(F),tail(tail(S)));
 se(_B,_O,_D,_E0,S,undefined,8) ->
-    F = resolve(head(S)),
-    #m2{f=M} = resolve(head(tail(S))),
-    G = resolve(head(tail(tail(S)))),
+    F = r(head(S)),
+    #m2{f=M} = r(head(tail(S))),
+    G = r(head(tail(tail(S)))),
     cons(M(F,G),tail(tail(tail(S))));
 se(_B,_O,_D,_E0,S,undefined,9) ->
-    G = resolve(head(S)),
-    J = resolve(head(tail(S))),
+    G = r(head(S)),
+    J = r(head(tail(S))),
     cons(fun(X,W) -> call(G,call(J,X,W),undefined) end,tail(tail(S)));
 se(_B,_O,_D,_E0,S,undefined,11) ->
     tail(S);
@@ -291,18 +298,18 @@ se(B,O,D,E0,S,X,15) ->
     F = element(1+X,D),
     cons(F(B,O,D,E0),S);
 se(_B,_O,_D,_E0,S,undefined,16) ->
-    F = resolve(head(S)),
-    X = resolve(head(tail(S))),
+    F = r(head(S)),
+    X = r(head(tail(S))),
     cons(call(F,X,undefined),tail(tail(S)));
 se(_B,_O,_D,_E0,S,undefined,17) ->
-    W = resolve(head(S)),
-    F = resolve(head(tail(S))),
-    X = resolve(head(tail(tail(S)))),
+    W = r(head(S)),
+    F = r(head(tail(S))),
+    X = r(head(tail(tail(S)))),
     cons(call(F,X,W),tail(tail(tail(S))));
 se(_B,_O,_D,_E0,S,undefined,19) ->
-    F = resolve(head(S)),
-    G = resolve(head(tail(S))),
-    J = resolve(head(tail(tail(S)))),
+    F = r(head(S)),
+    G = r(head(tail(S))),
+    J = r(head(tail(tail(S)))),
     cons(tr3o(J,G,F),tail(tail(tail(S))));
 se(_B,_O,_D,E0,S,{X,Y},21) ->
     {T,#e{s=V}} = ge(X,E0),
@@ -383,24 +390,23 @@ ce(_S,22) ->
     cont;
 ce(S,25) ->
     1 = len(S),
-    head(S).
+    r(head(S)).
 
 vm_switch(B,O,D,P,E,S,cont) ->
     ArgStart = P+1,
     {Op,ArgStart} = num(B,P),
-        %io:format("    "),fmt({op,{Op,P}}),
+        fmt({op,{Op,ArgStart}},4),
     {Arg,ArgEnd} = pe(B,ArgStart,Op),
-        %io:format("        "),fmt({args,{Arg,ArgEnd}}),
+        fmt({args,{Arg,ArgEnd}},8),
         %dbg({Op,P},{15,0}),
     Sn = se(B,O,D,E,S,Arg,Op),
-        %io:format("        "),fmt({se,len(Sn),queue:to_list(Sn)}),
+        %fmt({se,len(Sn)},8),
+        fmt({se,len(Sn),lists:map(fun rfmt/1,lists:reverse(queue:to_list(Sn)))},8),
     ok = he(S,Op),
-        %io:format("        "),fmt({he,Hn}),
+        %fmt({he,hget()},8),
     Ctrln = ce(S,Op),
-        %fmt({ctrl,Ctrln}),
+        %fmt({ctrl,Ctrln},8),
     vm_switch(B,O,D,ArgEnd,E,Sn,Ctrln);
-vm_switch(_B,_O,_D,_P,_E,_S,Rtn) when is_record(Rtn,v) ->
-    Rtn;
 vm_switch(_B,_O,_D,_P,_E,_S,Rtn) ->
     Rtn.
 vm(B,O,D,P,E) ->
