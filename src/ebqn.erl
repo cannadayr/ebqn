@@ -112,7 +112,7 @@ group_ord(#v{r=X},#v{r=W}) ->
     end,
     {_, O} = foldl(F,{S,R},X),
     list(O).
-assert(X,undefined) -> true = (X=:=1).
+assert(X,undefined) -> case X=:=1 of true -> 1; false -> 0 end.
 add(X,undefined) -> X;
 add(X,W)  -> W + X.
 subtract(X,undefined) -> -1*X;
@@ -124,7 +124,6 @@ power(X,undefined) -> exp(X);
 power(X,W)  -> pow(X,W).
 minimum(X,_W) -> floor(X).
 equals(#v{sh=S} = X,undefined) when is_record(X,v),is_list(S) -> length(S);
-equals(#v{sh=#v{r=R}} = X,undefined) when is_record(X,v) -> array:size(R);
 equals(X,W) -> case X =:= W of true -> 1; false -> 0 end.
 lesseq(X,W) when X =:= W -> 1;
 lesseq(X,W) ->
