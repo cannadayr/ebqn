@@ -138,6 +138,7 @@ lesseq(X,W) ->
     end.
 shape(#v{sh=Sh},undefined) -> list(fixed(Sh)).
 reshape(#v{r=X},undefined) -> arr(X,[array:size(X)]);
+reshape(#v{r=X},#v{r=W}) -> arr(X,to_list(W));
 reshape(#v{r=X},W) -> arr(X,W).
 pick(#v{r=X},W) -> array:get(W,X).
 window(X,undefined) -> list(fixed(seq(0,trunc(X)-1))).
