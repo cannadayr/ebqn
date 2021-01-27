@@ -1,7 +1,8 @@
 -module(ebqn).
 
 % X = ebqn:run(ebqn:rtb(),ebqn:rto(),ebqn:rts()).
-% ebqn:run(ebqn:cb(),ebqn:co(X),ebqn:cs()).
+% Y = X(ebqn:fns(),undefined).
+% ebqn:run(ebqn:cb(),ebqn:co(Y),ebqn:cs()).
 
 -import(array,[new/1,new/2,resize/2,map/2,foldl/3,set/3,from_list/1,fix/1]).
 -import(lists,[seq/2,flatten/1,duplicate/2,merge/1]).
