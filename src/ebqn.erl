@@ -4,7 +4,7 @@
 % Y = X(ebqn:fns(),undefined).
 % ebqn:run(ebqn:cb(),ebqn:co(Y),ebqn:cs()).
 
--import(array,[new/1,new/2,resize/2,map/2,foldl/3,set/3,from_list/1,fix/1]).
+-import(array,[new/1,new/2,resize/2,map/2,foldl/3,set/3,from_list/1,to_list/1,fix/1]).
 -import(lists,[seq/2,flatten/1,duplicate/2,merge/1]).
 -import(queue,[cons/2,len/1,head/1,tail/1,liat/1]).
 -import(dict,[fetch/2,store/3]).
