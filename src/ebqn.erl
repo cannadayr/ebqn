@@ -69,11 +69,11 @@ r({R,I}) when is_reference(R) -> % resolve heap reference
     #e{s=E} = fetch(R,hget()),
     array:get(I,E);
 r(X) when is_function(X);
-                is_record(X,v);
-                is_record(X,m1);
-                is_record(X,m2);
-                is_number(X);
-                X =:= undefined ->
+          is_record(X,v);
+          is_record(X,m1);
+          is_record(X,m2);
+          is_number(X);
+          X =:= undefined ->
     X.
 rfmt({R,I}) when is_reference(R) ->
     r({R,I});
@@ -269,10 +269,16 @@ pe(_B,P,25) ->
 se(_B,O,_D,_E0,S,X,0) ->
     cons(element(1+X,O),S);
 se(_B,_O,_D,_E0,S,X,3) ->
-    {T,Si} = tail(X-1,new(X),S),
+    case X of
+        0 -> {T,Si} = {list(fixed([])),S};
+        _ -> {T,Si} = tail(X-1,new(X),S)
+    end,
     cons(list(T),Si);
 se(_B,_O,_D,_E0,S,X,4) ->
-    {T,Si} = tail(X-1,new(X),S),
+    case X of
+        0 -> {T,Si} = {list(fixed([])),S};
+        _ -> {T,Si} = tail(X-1,new(X),S)
+    end,
     cons(list(T),Si);
 se(_B,_O,_D,_E0,S,undefined,7) ->
     F = r(head(S)),
