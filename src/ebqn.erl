@@ -4,7 +4,7 @@
 % Y = X(ebqn:fns(),undefined).
 % ebqn:run(ebqn:cb(),ebqn:co(Y),ebqn:cs()).
 
--import(array,[new/1,new/2,resize/2,map/2,foldl/3,set/3,from_list/1,to_list/1,fix/1]).
+-import(array,[new/1,new/2,resize/2,map/2,foldl/3,set/3,from_list/1,to_list/1,fix/1,is_array/1]).
 -import(lists,[seq/2,flatten/1,duplicate/2,merge/1]).
 -import(queue,[cons/2,len/1,head/1,tail/1,liat/1]).
 -import(dict,[fetch/2,store/3]).
@@ -63,18 +63,38 @@ call(F,_X,_W) when not is_function(F) ->
 call(F,X,W) ->
     true = (not is_record(F,m1) and not is_record(F,m2)),
     %fmt({call,erlang:fun_info(F,name)},8),
-    fmt({call,erlang:fun_info(F,name),rfmt(X),rfmt(W)},8),
+    %fmt({call,erlang:fun_info(F,name),rfmt(X),rfmt(W)},8),
     F(X,W).
-r({R,I}) when is_reference(R) -> % resolve heap reference
+r({R,I}) when is_reference(R) -> % resolve heap reference when popping from stack
     #e{s=E} = fetch(R,hget()),
     array:get(I,E);
-r(X) when is_function(X);
+r(X) when is_function(X); % pass thru
           is_record(X,v);
           is_record(X,m1);
           is_record(X,m2);
           is_number(X);
           X =:= undefined ->
-    X.
+    X;
+r(X) -> % hacky
+    case is_array(X) of
+        true ->
+            X
+            %map(fun(_I,E) -> r(E) end,X)
+    end.
+rr({R,I}) when is_reference(R) -> % resolve heap reference when returning from callee
+    r({R,I});
+rr(X) when is_function(X); % pass thru
+           is_number(X) ->
+    X;
+rr(#v{r=R} = X) when is_record(X,v) ->
+    X#v{r=map(fun(_I,E) -> r(E) end,R)};
+rr(X) ->
+    case is_array(X) of
+        true ->
+            map(fun(_I,E) -> r(E) end,X)
+    end;
+rr(X) ->
+    fmt({rr,X}),dbg().
 rfmt({R,I}) when is_reference(R) ->
     r({R,I});
 rfmt(R) when is_function(R) ->
@@ -117,6 +137,9 @@ add(X,undefined) -> X;
 add(X,W)  -> W + X.
 subtract(X,undefined) -> -1*X;
 subtract(X,W)  -> W-X.
+multiply(X,undefined) when X < 0 -> -1;
+multiply(X,undefined) when X =:= 0 -> 0;
+multiply(X,undefined) when X > 0 -> 1;
 multiply(X,W) -> X*W.
 divide(X,undefined)  -> 1 / X;
 divide(X,W) -> W / X.
@@ -395,7 +418,8 @@ ce(_S,22) ->
     cont;
 ce(S,25) ->
     1 = len(S),
-    r(head(S)).
+    R = rr(head(S)),
+    fmt({ce25,R}),R.
 
 vm_switch(B,O,D,P,E,S,cont) ->
     ArgStart = P+1,
