@@ -153,7 +153,9 @@ table(F) ->
         (#v{r=R,sh=Sh},undefined) ->
             arr(map(fun(_I,E) -> call(F,E,undefined) end,R),Sh);
         (#v{r=Xr,sh=Xsh},#v{r=Wr,sh=Wsh}) ->
-            arr(concat(nil,map(fun(_J,D) -> map(fun(_I,E) -> call(F,E,D) end,Xr) end,Wr)),flatten([Wsh,Xsh]))
+            InitSize =  array:new(array:size(Xr)*array:size(Wr)),
+            Xs = array:size(Xr),
+            arr(foldl(fun(J,D,A1) -> foldl(fun(I,E,A2) -> array:set(J*Xs+I,call(F,E,D),A2) end, A1, Xr) end,InitSize, Wr),flatten(Wsh ++ Xsh))
     end.
 scan(F) ->
     fun
