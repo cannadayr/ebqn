@@ -216,11 +216,8 @@ ge(I,E) when I =:= 0 ->
 ge(I,E) ->
     #e{p=P} = fetch(E,hget()),
     ge(I-1,P).
-hset(D,#v{r=IdR,sh=IdSh} = Id,{T,Z}) when is_record(Id,v),is_reference(T),is_integer(Z) ->
-    #e{s=Vd} = fetch(T,hget()),
-    #v{r=VdR,sh=VdSh} = array:get(Z,Vd),
-    true = (IdSh =:= VdSh),
-    foldl(fun(J,N,_A) -> ok = hset(D,N,array:get(J,VdR)),ok end,ok,IdR);
+hset(D,#v{r=Id},#v{r=V}) ->
+    foldl(fun(J,N,_A) -> ok = hset(D,N,array:get(J,V)) end,ok,Id);
 hset(D,{E,I},V) ->
     #e{s=A} = E0 = fetch(E,hget()),
     D = (array:get(I,A) =:= null),
