@@ -63,7 +63,7 @@ call(F,_X,_W) when not is_function(F) ->
 call(F,X,W) ->
     true = (not is_record(F,m1) and not is_record(F,m2)),
     %fmt({call,erlang:fun_info(F,name)},8),
-    %fmt({call,erlang:fun_info(F,name),rfmt(X),rfmt(W)},8),
+    %fmt({call,erlang:fun_info(F,name),X,W},8),
     F(X,W).
 r({R,I}) when is_reference(R) -> % resolve heap reference when popping from stack
     #e{s=E} = fetch(R,hget()),
@@ -395,19 +395,18 @@ ce(_S,22) ->
     cont;
 ce(S,25) ->
     1 = len(S),
-    R = rr(head(S)),
-    fmt({ce25,R}),R.
+    head(S).
 
 vm_switch(B,O,D,P,E,S,cont) ->
     ArgStart = P+1,
     {Op,ArgStart} = num(B,P),
         fmt({op,{Op,ArgStart}},4),
     {Arg,ArgEnd} = pe(B,ArgStart,Op),
-        fmt({args,{Arg,ArgEnd}},8),
+        %fmt({args,{Arg,ArgEnd}},8),
         %dbg({Op,P},{15,0}),
     Sn = se(B,O,D,E,S,Arg,Op),
         %fmt({se,len(Sn)},8),
-        fmt({se,len(Sn),lists:map(fun rfmt/1,lists:reverse(queue:to_list(Sn)))},8),
+        fmt({se,len(Sn),lists:reverse(queue:to_list(Sn))},8),
     ok = he(S,Op),
         %fmt({he,hget()},8),
     Ctrln = ce(S,Op),
