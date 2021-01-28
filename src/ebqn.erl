@@ -74,33 +74,7 @@ r(X) when is_function(X); % pass thru
           is_record(X,m2);
           is_number(X);
           X =:= undefined ->
-    X;
-r(X) -> % hacky
-    case is_array(X) of
-        true ->
-            X
-            %map(fun(_I,E) -> r(E) end,X)
-    end.
-rr({R,I}) when is_reference(R) -> % resolve heap reference when returning from callee
-    r({R,I});
-rr(X) when is_function(X); % pass thru
-           is_number(X) ->
-    X;
-rr(#v{r=R} = X) when is_record(X,v) ->
-    X#v{r=map(fun(_I,E) -> r(E) end,R)};
-rr(X) ->
-    case is_array(X) of
-        true ->
-            map(fun(_I,E) -> r(E) end,X)
-    end;
-rr(X) ->
-    fmt({rr,X}),dbg().
-rfmt({R,I}) when is_reference(R) ->
-    r({R,I});
-rfmt(R) when is_function(R) ->
-    erlang:fun_info(R,name);
-rfmt(R) ->
-    R.
+    X.
 
 arr(R,Sh) -> #v{r=R,sh=Sh}.
 list(A) when is_record(A,v) -> A;
@@ -306,17 +280,17 @@ se(_B,_O,_D,_E0,S,X,4) ->
     end,
     cons(list(T),Si);
 se(_B,_O,_D,_E0,S,undefined,7) ->
-    F = r(head(S)),
-    #m1{f=M} = r(head(tail(S))),
+    F = head(S),
+    #m1{f=M} = head(tail(S)),
     cons(M(F),tail(tail(S)));
 se(_B,_O,_D,_E0,S,undefined,8) ->
-    F = r(head(S)),
-    #m2{f=M} = r(head(tail(S))),
-    G = r(head(tail(tail(S)))),
+    F = head(S),
+    #m2{f=M} = head(tail(S)),
+    G = head(tail(tail(S))),
     cons(M(F,G),tail(tail(tail(S))));
 se(_B,_O,_D,_E0,S,undefined,9) ->
-    G = r(head(S)),
-    J = r(head(tail(S))),
+    G = head(S),
+    J = head(tail(S)),
     cons(fun(X,W) -> call(G,call(J,X,W),undefined) end,tail(tail(S)));
 se(_B,_O,_D,_E0,S,undefined,11) ->
     tail(S);
@@ -328,23 +302,24 @@ se(B,O,D,E0,S,X,15) ->
     F = element(1+X,D),
     cons(F(B,O,D,E0),S);
 se(_B,_O,_D,_E0,S,undefined,16) ->
-    F = r(head(S)),
-    X = r(head(tail(S))),
+    F = head(S),
+    X = head(tail(S)),
     cons(call(F,X,undefined),tail(tail(S)));
 se(_B,_O,_D,_E0,S,undefined,17) ->
-    W = r(head(S)),
-    F = r(head(tail(S))),
-    X = r(head(tail(tail(S)))),
+    W = head(S),
+    F = head(tail(S)),
+    X = head(tail(tail(S))),
     cons(call(F,X,W),tail(tail(tail(S))));
 se(_B,_O,_D,_E0,S,undefined,19) ->
-    F = r(head(S)),
-    G = r(head(tail(S))),
-    J = r(head(tail(tail(S)))),
+    F = head(S),
+    G = head(tail(S)),
+    J = head(tail(tail(S))),
     cons(tr3o(J,G,F),tail(tail(tail(S))));
 se(_B,_O,_D,E0,S,{X,Y},21) ->
     {T,#e{s=V}} = ge(X,E0),
-    true = (null =/= array:get(Y,V)),
-    cons({T,Y},S);
+    Z = array:get(Y,V),
+    true = (null =/= Z),
+    cons(Z,S);
 se(_B,_O,_D,E0,S,{X,Y},22) ->
     {T,_} = ge(X,E0),
     cons({T,Y},S);
