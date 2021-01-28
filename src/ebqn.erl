@@ -265,15 +265,15 @@ pe(_B,P,25) ->
 se(_B,O,_D,_E0,S,X,0) ->
     cons(element(1+X,O),S);
 se(_B,_O,_D,_E0,S,X,3) ->
-    case X of
-        0 -> {T,Si} = {list(fixed([])),S};
-        _ -> {T,Si} = tail(X-1,new(X),S)
+    {T,Si} = case X of
+        0 -> {list(fixed([])),S};
+        _ -> tail(X-1,new(X),S)
     end,
     cons(list(T),Si);
 se(_B,_O,_D,_E0,S,X,4) ->
-    case X of
-        0 -> {T,Si} = {list(fixed([])),S};
-        _ -> {T,Si} = tail(X-1,new(X),S)
+    {T,Si} = case X of
+        0 -> {list(fixed([])),S};
+        _ -> tail(X-1,new(X),S)
     end,
     cons(list(T),Si);
 se(_B,_O,_D,_E0,S,undefined,7) ->
