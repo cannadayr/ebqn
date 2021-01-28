@@ -416,7 +416,7 @@ run_env(B,O,D,H0,E0,V,ST) ->
         H = store(E,#e{s=concat(SV,V),p=E0},H0),
         vm(B,O,D,H,ST,E)
     end.
-run_block(T,I,ST,L) ->
+load_block(T,I,ST,L) ->
     fun (B,O,D,H,E) ->
         fmt({block,{T,I,ST,L}}),
         %mem(),
@@ -438,7 +438,7 @@ run_block(T,I,ST,L) ->
         F(G)
     end.
 run_init(S) ->
-    list_to_tuple(lists:map(fun({T,I,ST,L}) -> run_block(T,I,ST,L) end,S)).
+    list_to_tuple(lists:map(fun({T,I,ST,L}) -> load_block(T,I,ST,L) end,S)).
 run(B,O,S) ->
     E = make_ref(),
     H = store(E,#e{},dict:new()),
