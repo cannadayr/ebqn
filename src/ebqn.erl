@@ -1,12 +1,12 @@
 -module(ebqn).
 
--export([test/0,fixed/1,concat/2,load_block/1]).
+-export([test/0,fixed/1,concat/1,concat/2,load_block/1]).
 -import(array,[fix/1,from_list/1,resize/2,foldl/3,set/3]).
 -import(queue,[cons/2,tail/1,liat/1,head/1,len/1]).
 -import(dict,[store/3,fetch/2,fetch_keys/1]).
 -import(erlang,[fun_info/2]).
 
--record(prog,{r,a,h}). % root ancestor heap
+%-record(prog,{r,a,h}). % root ancestor heap
 %-record(code,{b,o,s}). % bytecode objects sections
 
 -record(v,{sh,r}). % value (shape, ravel)
@@ -108,7 +108,9 @@ concat(nil,W) when W =/= nil ->
 concat(X,W) ->
     Xs = array:size(X),
     Z = array:resize(Xs+array:size(W),X),
-    array:foldl(fun(I,V,A) -> array:set(Xs+I,V,A) end,Z,W).
+    foldl(fun(I,V,A) -> set(Xs+I,V,A) end,Z,W).
+concat(L) ->
+    lists:foldl(fun(V,A) -> concat(A,V) end,fixed([]),L).
 tail(L,A,S) when L =:= -1 ->
     {A,S};
 tail(L,A,S) ->
@@ -207,11 +209,49 @@ vm(B,O,S,E,P,Stack,rtn) ->
 vm(B,O,S,E,P,Stack,cont) ->
     Pi = P+1,
     {Op,Pi} = num(B,P),
+    io:format("~p~n",[{vm,Op,Pi}]),
     {Arg,Pn} = args(B,Pi,Op), % advances the ptr and reads the args
     Sn = stack(B,O,S,get(root),get(heap),get(an),E,Stack,Arg,Op), % mutates the stack
     put(heap,heap(get(root),get(heap),Stack,Op)), % mutates the heap
     Ctrl = ctrl(Op), % set ctrl atom
+    Refs = mark(get(root),get(heap),get(an),E,Sn), % get stale refs
+    io:format("~p~n",[{refs,sets:to_list(Refs)}]),
+    put(heap,sweep(get(heap),Refs)),
     vm(B,O,S,E,Pn,Sn,Ctrl). % call itself with new state
+
+% "brute-force" mark and sweep collector
+env(R,A) when is_reference(R) ->
+    sets:del_element(R,A);
+env(Fn,A) when is_function(Fn) ->
+    {env,Vars} = erlang:fun_info(Fn,env),
+    lists:foldl(fun env/2,A,Vars); % fold over the bound variables
+env(V,A) when V =:= nil; is_tuple(V); is_binary(V); is_number(V) ->
+    A.
+trace(Fn,A) when is_function(Fn) ->
+    {env,Vars} = erlang:fun_info(Fn,env),
+    lists:foldl(fun env/2,A,Vars);
+trace(M,A) when is_record(M,m1) ->
+    trace(M#m1.f,A);
+trace(M,A) when is_record(M,m2) ->
+    trace(M#m2.f,A);
+trace(V,Acc) when is_record(V,v) ->
+    foldl(fun(_,X,A) -> env(X,A) end,Acc,V#v.r); % fold over the ravel
+trace({R,_},A) when is_reference(R) ->
+    sets:del_element(R,A);
+trace(V,A) when V =:= undefined; is_number(V) ->
+    A.
+mark(Root,Heap,An,E,Stack) ->
+    Unvisited = lists:foldl(fun sets:del_element/2,sets:from_list(fetch_keys(Heap)),[Root,E]), % list of unvisited environments
+    RootSlots = fetch(Root,Heap), % get the root slots
+    StackSlots = case queue:is_queue(Stack) of
+        true -> fixed(queue:to_list(Stack));
+        false -> fixed([Stack])
+    end,
+    EnvSlots = fetch(E,Heap),
+    Refs = foldl(fun(_I,V,A) -> trace(V,A) end,Unvisited,concat([RootSlots,EnvSlots,StackSlots])),
+    Refs.
+sweep(Heap,Refs) ->
+    sets:fold(fun dict:erase/2,Heap,Refs).
 
 load_vm(B,O,S,E,Parent,V,ST) ->
     put(heap,store(E,V,get(heap))), % alloc slots
