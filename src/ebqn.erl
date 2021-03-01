@@ -6,12 +6,13 @@
 -import(dict,[store/3,fetch/2,fetch_keys/1]).
 -import(erlang,[fun_info/2]).
 
--record(prog,{r,a,h}). % root ancestor heap
-%-record(code,{b,o,s}). % bytecode objects sections
-
+-record(bl,{t,i,st,l}).
+-record(bi,{b,o,s,t,d,args,e}). % bytecode, objs, sections, type, definition, args, env
+-record(tr,{f,g,h}).
 -record(v,{sh,r}). % value (shape, ravel)
 -record(m1,{f,i}).
 -record(m2,{f,i}).
+-record(r1,{m,f}). % raw 1-mod
 
 test([B,O,S]) ->
     run(list_to_binary(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
@@ -51,11 +52,37 @@ list(A) ->
     arr(A,[array:size(A)]).
 call(_F,undefined,_W) ->
     undefined;
-call(F,_X,_W) when not is_function(F) ->
+call(F,X,W) when is_number(F) ->
     F;
-call(F,X,W) when is_function(F) ->
-    true = (not is_record(F,m1) and not is_record(F,m2)),
-    F(X,W).
+call(F,X,W) when is_record(F,bi) ->
+    0 = F#bi.t,
+    D = F#bi.d,
+    Args = F#bi.args,
+    L = concat([fixed([F,X,W]),Args,array:new(D#bl.l)]),
+    load_vm(F#bi.b,F#bi.o,F#bi.s,D,make_ref(),F#bi.e,L);
+call(T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
+    R = call(T#tr.h,X,W),
+    L = call(T#tr.f,X,W),
+    call(T#tr.g,R,L);
+call(T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
+    R = call(T#tr.h,X,W),
+    call(T#tr.g,R,undefined);
+call(V,X,W) when is_record(V,v) ->
+    V.
+call_block(M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
+    M#bi{args=Args,t=0};
+call_block(M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
+    D = M#bi.d,
+    L = concat([Args,array:new(D#bl.l - asize(Args))]),
+    load_vm(M#bi.b,M#bi.o,M#bi.s,D,make_ref(),M#bi.e,L).
+call1(M,F) when is_record(M,bi) ->
+    1 =:= M#bi.t,
+    call_block(M,fixed([M,F]));
+call1(M,F) when is_record(M,m1) ->
+    #r1{m=M,f=F}.
+call2(M,F,G) when is_record(M,bi) ->
+    2 =:= M#bi.t,
+    call_block(M,fixed([M,F,G])).
 tr3o(H,G,undefined) ->
     fun(X,W) ->
         call(G,call(H,X,W),undefined)
@@ -75,8 +102,6 @@ hset(Heap,D,{E,I},V) ->
     A = fetch(E,Heap),
     D = (array:get(I,A) =:= undefined),
     store(E,set(I,V,A),Heap).
-hget1(I) ->
-    bad.
 hget(Heap,{T,I}) when is_reference(T) ->
     Slots = fetch(T,Heap),
     Z = array:get(I,Slots),
@@ -95,6 +120,10 @@ num(_Binary,_Ptr,Size,Chunk,Acc,0) ->
     {Size+7,<<Chunk/bitstring,Acc/bitstring>>};
 num(Binary,Ptr,Size,Chunk,Acc,1) ->
     num(Binary,Ptr+1,Size+7,<<Chunk/bitstring,Acc/bitstring>>).
+asize(X) when X =:= nil;X =:= [nil] ->
+    0;
+asize(X) ->
+    array:size(X).
 fixed(X) when X =:= nil;X =:= [nil] ->
     nil;
 fixed(X) when is_list(X) ->
@@ -109,10 +138,17 @@ concat(X,W) ->
     Xs = array:size(X),
     Z = array:resize(Xs+array:size(W),X),
     array:foldl(fun(I,V,A) -> array:set(Xs+I,V,A) end,Z,W).
+concat(L) ->
+    lists:foldl(fun(V,A) -> concat(A,V) end,fixed([]),L).
 tail(L,A,S) when L =:= -1 ->
     {A,S};
 tail(L,A,S) ->
     tail(L-1,set(L,head(S),A),tail(S)).
+
+derive(B,O,S,#bl{t=0,i=1} = Block,E) ->
+    load_vm(B,O,S,Block,make_ref(),E,array:new(Block#bl.l));
+derive(B,O,S,Block,E) ->
+    #bi{b=B,o=O,s=S,t=Block#bl.t,d=Block,args=nil,e=E}.
 
 args(B,P,Op) when Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 25 ->
     {undefined,P};
@@ -133,17 +169,17 @@ stack(B,O,S,Root,Heap,An,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
     cons(list(T),Si);
 stack(B,O,S,Root,Heap,An,E,Stack,undefined,7) ->
     F = head(Stack),
-    #m1{f=M} = head(tail(Stack)),
-    cons(M(F),tail(tail(Stack)));
+    M = head(tail(Stack)),
+    cons(call1(M,F),tail(tail(Stack)));
 stack(B,O,S,Root,Heap,An,E,Stack,undefined,8) ->
     F = head(Stack),
-    #m2{f=M} = head(tail(Stack)),
+    M = head(tail(Stack)),
     G = head(tail(tail(Stack))),
-    cons(M(F,G),tail(tail(tail(Stack))));
+    cons(call2(M,F,G),tail(tail(tail(Stack))));
 stack(B,O,S,Root,Heap,An,E,Stack,undefined,9) ->
     G = head(Stack),
     J = head(tail(Stack)),
-    cons(fun(X,W) -> call(G,call(J,X,W),undefined) end,tail(tail(Stack)));
+    cons(#tr{f=undefined,g=G,h=J},tail(tail(Stack)));
 stack(B,O,S,Root,Heap,An,E,Stack,X,Op) when Op =:= 11; Op =:= 12 ->
     tail(Stack);
 stack(B,O,S,Root,Heap,An,E,Stack,X,13) ->
@@ -152,8 +188,8 @@ stack(B,O,S,Root,Heap,An,E,Stack,X,14) ->
     liat(Stack);
 stack(B,O,S,Root,Heap,An,E,Stack,X,15) ->
     Block = load_block(element(1+X,S)),
-    Fn = Block(B,O,S,make_ref(),E),
-    cons(Fn,Stack);
+    D = derive(B,O,S,Block,E),
+    cons(D,Stack);
 stack(B,O,S,Root,Heap,An,E,Stack,undefined,16) ->
     F = head(Stack),
     X = head(tail(Stack)),
@@ -167,7 +203,7 @@ stack(B,O,S,Root,Heap,An,E,Stack,undefined,19) ->
     F = head(Stack),
     G = head(tail(Stack)),
     H = head(tail(tail(Stack))),
-    cons(tr3o(H,G,F),tail(tail(tail(Stack))));
+    cons(#tr{f=F,g=G,h=H},tail(tail(tail(Stack))));
 stack(B,O,S,Root,Heap,An,E,Stack,{X,Y},21) ->
     T = ge(X,E,An),
     Slots = fetch(T,Heap),
@@ -202,40 +238,25 @@ ctrl(Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:=
 ctrl(Op) when Op =:= 25 ->
     rtn.
 
-vm(B,O,S,E,P,Stack,rtn) ->
+vm(B,O,S,Block,E,P,Stack,rtn) ->
     Stack;
-vm(B,O,S,E,P,Stack,cont) ->
+vm(B,O,S,Block,E,P,Stack,cont) ->
     Pi = P+1,
     {Op,Pi} = num(B,P),
     {Arg,Pn} = args(B,Pi,Op), % advances the ptr and reads the args
     Sn = stack(B,O,S,get(root),get(heap),get(an),E,Stack,Arg,Op), % mutates the stack
     put(heap,heap(get(root),get(heap),Stack,Op)), % mutates the heap
     Ctrl = ctrl(Op), % set ctrl atom
-    vm(B,O,S,E,Pn,Sn,Ctrl). % call itself with new state
+    vm(B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
 
-load_vm(B,O,S,E,Parent,V,ST) ->
+load_vm(B,O,S,Block,E,Parent,V) ->
     put(heap,store(E,V,get(heap))), % alloc slots
     An = get(an),
     put(an,An#{E => Parent}), % alloc relationship
-    vm(B,O,S,E,ST,queue:new(),cont). % run vm
+    vm(B,O,S,Block,E,Block#bl.st,queue:new(),cont). % run vm w/ empty stack
 
-load_block({T,I,ST,L}) -> % lexically scoped block
-    Program = fun (B,O,S,E,Parent) ->
-        C = fun(SV) -> load_vm(B,O,S,E,Parent,concat(SV,array:new(L)),ST) end,
-        F =
-            case T of
-                0 -> fun(N) -> N(nil) end;
-                1 -> fun(N) -> R = fun R(F  ) -> N(fixed([R,F  ])) end,#m1{f=R,i=I} end;
-                2 -> fun(N) -> R = fun R(F,G) -> N(fixed([R,F,G])) end,#m2{f=R,i=I} end
-            end,
-        G =
-            case I of
-                0 -> fun(V) -> fun R(X,W) -> C(concat(fixed([R,X,W]),V)) end end;
-                1 -> C
-            end,
-        F(G)
-    end,
-    Program. % value
+load_block({T,I,ST,L}) ->
+    #bl{t=T,i=I,st=ST,l=L}.
 
 run(B,O,S) ->
     Root = make_ref(),
@@ -244,5 +265,5 @@ run(B,O,S) ->
     put(heap,Heap), % init the proc_dict
     put(root,Root),
     put(an,An),
-    Block = load_block(element(1,S)),
-    R = Block(B,O,S,Root,Root),R. % set the root environment, and root as its own parent.
+    #bl{i=1,l=L} = Block = load_block(element(1,S)),
+    load_vm(B,O,S,Block,Root,Root,array:new(L)). % set the root environment, and root as its own parent.
