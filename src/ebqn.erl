@@ -76,12 +76,12 @@ call_block(M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
     L = concat([Args,array:new(D#bl.l - asize(Args))]),
     load_vm(M#bi.b,M#bi.o,M#bi.s,D,make_ref(),M#bi.e,L).
 call1(M,F) when is_record(M,bi) ->
-    1 =:= M#bi.t,
+    true = (1 =:= M#bi.t),
     call_block(M,fixed([M,F]));
 call1(M,F) when is_record(M,m1) ->
     #r1{m=M,f=F}.
 call2(M,F,G) when is_record(M,bi) ->
-    2 =:= M#bi.t,
+    true = (2 =:= M#bi.t),
     call_block(M,fixed([M,F,G])).
 tr3o(H,G,undefined) ->
     fun(X,W) ->
@@ -124,6 +124,10 @@ asize(X) when X =:= nil;X =:= [nil] ->
     0;
 asize(X) ->
     array:size(X).
+afoldl(F,Acc,X) when X =:= nil;X =:= [nil] ->
+    Acc;
+afoldl(F,Acc,X) ->
+    foldl(F,Acc,X).
 fixed(X) when X =:= nil;X =:= [nil] ->
     nil;
 fixed(X) when is_list(X) ->
@@ -185,7 +189,7 @@ stack(B,O,S,Root,Heap,An,E,Stack,X,Op) when Op =:= 11; Op =:= 12 ->
 stack(B,O,S,Root,Heap,An,E,Stack,X,13) ->
     tail(tail(Stack));
 stack(B,O,S,Root,Heap,An,E,Stack,X,14) ->
-    liat(Stack);
+    tail(Stack);
 stack(B,O,S,Root,Heap,An,E,Stack,X,15) ->
     Block = load_block(element(1+X,S)),
     D = derive(B,O,S,Block,E),
@@ -239,20 +243,60 @@ ctrl(Op) when Op =:= 25 ->
     rtn.
 
 vm(B,O,S,Block,E,P,Stack,rtn) ->
+    io:format("~p~n",[{rtn_pop,head(get(rtn))}]),
+    put(rtn,tail(get(rtn))), % pop parent reference from rtn stack
     Stack;
 vm(B,O,S,Block,E,P,Stack,cont) ->
     Pi = P+1,
     {Op,Pi} = num(B,P),
+    io:format("~p~n",[{vm,Op,Pi,E}]),
+    %io:format("~p~n",[{e,E}]),
     {Arg,Pn} = args(B,Pi,Op), % advances the ptr and reads the args
     Sn = stack(B,O,S,get(root),get(heap),get(an),E,Stack,Arg,Op), % mutates the stack
     put(heap,heap(get(root),get(heap),Stack,Op)), % mutates the heap
     Ctrl = ctrl(Op), % set ctrl atom
+    Refs = mark(get(root),get(heap),get(an),E,Sn), % get stale refs
+    put(heap,sweep(get(heap),Refs)),
+    put(an,maps:without(sets:to_list(Refs),get(an))),
     vm(B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
+
+trace_env(E,Root,An,Acc) when E =:= Root ->
+    [E] ++ Acc;
+trace_env(E,Root,An,Acc) ->
+    #{E := Parent} = An,
+    trace_env(Parent,Root,An,[E]++Acc).
+trace(X,A) when is_number(X);X =:= undefined ->
+    A;
+trace({Ref,_Id},A) when is_reference(Ref) ->
+    sets:del_element(Ref,A);
+trace(V,A) when is_record(V,v) ->
+    foldl(fun(_I,X,B) -> trace(X,B) end,A,V#v.r);
+trace(Tr,A) when is_record(Tr,tr) ->
+    trace(Tr#tr.h,trace(Tr#tr.g,trace(Tr#tr.f,A)));
+trace(Bi,A) when is_record(Bi,bi) ->
+    %io:format("~p~n",[{trace,Bi#bi.args,Bi#bi.e,fetch(Bi#bi.e,get(heap))}]),
+    afoldl(fun(_I,X,B) -> trace(X,B) end,sets:del_element(Bi#bi.e,A),Bi#bi.args).
+    %sets:del_element(Bi#bi.e,A).
+mark(Root,Heap,An,E,Stack) ->
+    Keys = fetch_keys(Heap),
+    Lineage = trace_env(E,get(root),An,[]),
+    Rtn = queue:to_list(get(rtn)),
+    Unvisited = lists:foldl(fun sets:del_element/2,sets:from_list(Keys),Rtn++Lineage),
+    StackSlots = case queue:is_queue(Stack) of
+        true -> fixed(queue:to_list(Stack));
+        false -> fixed([Stack])
+    end,
+    Slots = lists:foldl(fun(V,A) -> concat(fetch(V,Heap),A) end,StackSlots,Rtn++Lineage),
+    Refs = foldl(fun(_I,V,A) -> trace(V,A) end,Unvisited,Slots),
+    Refs.
+sweep(Heap,Refs) ->
+    sets:fold(fun dict:erase/2,Heap,Refs).
 
 load_vm(B,O,S,Block,E,Parent,V) ->
     put(heap,store(E,V,get(heap))), % alloc slots
     An = get(an),
     put(an,An#{E => Parent}), % alloc relationship
+    put(rtn,queue:cons(E,get(rtn))), % push reference to rtn stack
     vm(B,O,S,Block,E,Block#bl.st,queue:new(),cont). % run vm w/ empty stack
 
 load_block({T,I,ST,L}) ->
@@ -265,5 +309,6 @@ run(B,O,S) ->
     put(heap,Heap), % init the proc_dict
     put(root,Root),
     put(an,An),
+    put(rtn,queue:new()),
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
     load_vm(B,O,S,Block,Root,Root,array:new(L)). % set the root environment, and root as its own parent.
