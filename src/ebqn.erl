@@ -255,9 +255,9 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
     Sn = stack(B,O,S,get(root),get(heap),get(an),E,Stack,Arg,Op), % mutates the stack
     put(heap,heap(get(root),get(heap),Stack,Op)), % mutates the heap
     Ctrl = ctrl(Op), % set ctrl atom
-    Refs = mark(get(root),get(heap),get(an),E,Sn), % get stale refs
-    put(heap,sweep(get(heap),Refs)),
-    put(an,maps:without(sets:to_list(Refs),get(an))),
+    %Refs = mark(get(root),get(heap),get(an),E,Sn), % get stale refs
+    %put(heap,sweep(get(heap),Refs)),
+    %put(an,maps:without(sets:to_list(Refs),get(an))),
     vm(B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
 
 trace_env(E,Root,An,Acc) when E =:= Root ->
