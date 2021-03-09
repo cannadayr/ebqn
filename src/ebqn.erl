@@ -148,6 +148,10 @@ tail(L,A,S) when L =:= -1 ->
     {A,S};
 tail(L,A,S) ->
     tail(L-1,set(L,head(S),A),tail(S)).
+popn(N,Q) when N =:= 0 ->
+    Q;
+popn(N,Q) when N =/= 0 ->
+    popn(N-1,tail(Q)).
 
 derive(B,O,S,#bl{t=0,i=1} = Block,E) ->
     load_vm(B,O,S,Block,make_ref(),E,array:new(Block#bl.l));
