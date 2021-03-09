@@ -247,8 +247,13 @@ ctrl(Op) when Op =:= 25 ->
     rtn.
 
 vm(B,O,S,Block,E,P,Stack,rtn) ->
-    io:format("~p~n",[{rtn_pop,head(get(rtn))}]),
-    put(rtn,tail(get(rtn))), % pop parent reference from rtn stack
+    % get the number of children for each environment
+    An = get(an),
+    Children = maps:fold(fun(K,V,A) -> maps:update_with(V,fun(N) -> N+1 end,1,A) end,#{},An),
+    % get the number of children for this environment
+    Num = maps:get(E,Children,0),
+    io:format("~p~n",[{rtn_pop,Num}]),
+    put(rtn,popn(Num,get(rtn))), % pop this number of slots off the rtn stack
     Stack;
 vm(B,O,S,Block,E,P,Stack,cont) ->
     Pi = P+1,
