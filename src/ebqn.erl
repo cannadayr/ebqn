@@ -243,7 +243,11 @@ heap(Root,Heap,Stack,Op) when Op =:= 13 ->
     I = head(Stack),
     F = head(tail(Stack)),
     X = head(tail(tail(Stack))),
-    hset(Heap,false,I,call(F,X,hget(Heap,I))).
+    % the following call/3 may mutate the heap
+    % set the change on the proc_dict heap, *not* the Heap passed in via args
+    % this *must* be separated into separate lines!
+    Result = call(F,X,hget(Heap,I)),
+    hset(get(heap),false,I,Result).
 
 ctrl(Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22 ->
     cont;
