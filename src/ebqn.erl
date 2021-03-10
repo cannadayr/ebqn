@@ -124,6 +124,10 @@ asize(X) when X =:= nil;X =:= [nil] ->
     0;
 asize(X) ->
     array:size(X).
+alist(X) when X =:= nil;X =:= [nil] ->
+    [];
+alist(X) ->
+    array:to_list(X).
 afoldl(F,Acc,X) when X =:= nil;X =:= [nil] ->
     Acc;
 afoldl(F,Acc,X) ->
@@ -264,7 +268,16 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
     Sn = stack(B,O,S,get(root),get(heap),get(an),E,Stack,Arg,Op), % mutates the stack
     put(heap,heap(get(root),get(heap),Stack,Op)), % mutates the heap
     Ctrl = ctrl(Op), % set ctrl atom
-    %Refs = mark(get(root),get(heap),get(an),E,Sn), % get stale refs
+    % convert stack to a usable data structure for GC
+    Slots =
+        case Ctrl =:= rtn of
+            true ->
+                [Sn];
+            false ->
+                queue:to_list(Sn)
+        end,
+    Refs = mark(get(root),get(heap),get(an),get(rtn),E,Slots), % get stale refs
+    io:format("~p~n",[{refs,sets:to_list(Refs)}]),
     %put(heap,sweep(get(heap),Refs)),
     %put(an,maps:without(sets:to_list(Refs),get(an))),
     vm(B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
@@ -274,30 +287,46 @@ trace_env(E,Root,An,Acc) when E =:= Root ->
 trace_env(E,Root,An,Acc) ->
     #{E := Parent} = An,
     trace_env(Parent,Root,An,[E]++Acc).
-trace(X,A) when is_number(X);X =:= undefined ->
-    A;
-trace({Ref,_Id},A) when is_reference(Ref) ->
-    sets:del_element(Ref,A);
-trace(V,A) when is_record(V,v) ->
-    foldl(fun(_I,X,B) -> trace(X,B) end,A,V#v.r);
-trace(Tr,A) when is_record(Tr,tr) ->
-    trace(Tr#tr.h,trace(Tr#tr.g,trace(Tr#tr.f,A)));
-trace(Bi,A) when is_record(Bi,bi) ->
-    %io:format("~p~n",[{trace,Bi#bi.args,Bi#bi.e,fetch(Bi#bi.e,get(heap))}]),
-    afoldl(fun(_I,X,B) -> trace(X,B) end,sets:del_element(Bi#bi.e,A),Bi#bi.args).
-    %sets:del_element(Bi#bi.e,A).
-mark(Root,Heap,An,E,Stack) ->
-    Keys = fetch_keys(Heap),
-    Lineage = trace_env(E,get(root),An,[]),
-    Rtn = queue:to_list(get(rtn)),
-    Unvisited = lists:foldl(fun sets:del_element/2,sets:from_list(Keys),Rtn++Lineage),
-    StackSlots = case queue:is_queue(Stack) of
-        true -> fixed(queue:to_list(Stack));
-        false -> fixed([Stack])
-    end,
-    Slots = lists:foldl(fun(V,A) -> concat(fetch(V,Heap),A) end,StackSlots,Rtn++Lineage),
-    Refs = foldl(fun(_I,V,A) -> trace(V,A) end,Unvisited,Slots),
-    Refs.
+trace([],Marked,Root,An,Heap) ->
+    Marked;
+trace(Todo,Marked,Root,An,Heap) when is_number(hd(Todo)); undefined =:= hd(Todo) ->
+    trace(tl(Todo),Marked,Root,An,Heap);
+trace(Todo,Marked,Root,An,Heap) when is_tuple(hd(Todo)),is_reference(element(1,hd(Todo))) ->
+    {R,_} = hd(Todo),
+    trace([R]++tl(Todo),Marked,Root,An,Heap);
+trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),v) ->
+    V = hd(Todo),
+    trace(alist(V#v.r)++tl(Todo),Marked,Root,An,Heap);
+trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),tr) ->
+    Tr = hd(Todo),
+    F = Tr#tr.f,
+    G = Tr#tr.g,
+    H = Tr#tr.h,
+    trace([F,G,H]++tl(Todo),Marked,Root,An,Heap);
+trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),bi) ->
+    Bi = hd(Todo),
+    trace(alist(Bi#bi.args)++[Bi#bi.e]++tl(Todo),Marked,Root,An,Heap);
+trace(Todo,Marked,Root,An,Heap) when is_reference(hd(Todo)) ->
+    E = hd(Todo),
+    {TodoN,MarkedN} =
+        case sets:is_element(E,Marked) of
+            true ->
+                % already marked
+                {tl(Todo),Marked};
+            false ->
+                % get env lineage
+                Lineage = trace_env(E,Root,An,[]),
+                % get the slots from the heap
+                Slots = array:to_list(fetch(E,Heap)),
+                {Lineage++Slots++tl(Todo),sets:add_element(E,Marked)}
+        end,
+    trace(TodoN,MarkedN,Root,An,Heap).
+mark(Root,Heap,An,Rtn,E,Stack) ->
+    % initial list of slots & environments to fold over
+    Init = queue:to_list(Rtn)++Stack++[Root,E],
+    % trace for references
+    Marked = trace(Init,sets:new(),Root,An,Heap),
+    Marked.
 sweep(Heap,Refs) ->
     sets:fold(fun dict:erase/2,Heap,Refs).
 
