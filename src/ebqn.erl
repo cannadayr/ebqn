@@ -245,7 +245,7 @@ heap(Root,Heap,Stack,Op) when Op =:= 13 ->
     X = head(tail(tail(Stack))),
     % the following call/3 may mutate the heap
     % set the change on the proc_dict heap, *not* the Heap passed in via args
-    % this *must* be separated into separate lines!
+    % this *must* be in separate lines!
     Result = call(F,X,hget(Heap,I)),
     hset(get(heap),false,I,Result).
 
@@ -282,8 +282,8 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
         end,
     Refs = mark(get(root),get(heap),get(an),get(rtn),E,Slots), % get stale refs
     io:format("~p~n",[{refs,sets:to_list(Refs)}]),
-    %put(heap,sweep(get(heap),Refs)),
-    %put(an,maps:without(sets:to_list(Refs),get(an))),
+    put(heap,sweep(get(heap),Refs)),
+    put(an,maps:without(sets:to_list(Refs),get(an))),
     vm(B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
 
 trace_env(E,Root,An,Acc) when E =:= Root ->
@@ -330,7 +330,8 @@ mark(Root,Heap,An,Rtn,E,Stack) ->
     Init = queue:to_list(Rtn)++Stack++[Root,E],
     % trace for references
     Marked = trace(Init,sets:new(),Root,An,Heap),
-    Marked.
+    % return the unmarked environments
+    sets:subtract(sets:from_list(dict:fetch_keys(Heap)),Marked).
 sweep(Heap,Refs) ->
     sets:fold(fun dict:erase/2,Heap,Refs).
 
