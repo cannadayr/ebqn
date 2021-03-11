@@ -43,7 +43,9 @@ call1(M,F) when is_record(M,m1) ->
     #r1{m=M,f=F}.
 call2(M,F,G) when is_record(M,bi) ->
     true = (2 =:= M#bi.t),
-    call_block(M,fixed([M,F,G])).
+    call_block(M,fixed([M,F,G]));
+call2(M,F,G) when is_record(M,m2) ->
+    #r2{m=M,f=F,g=G}.
 ge(I,E,An) when I =:= 0 ->
     E;
 ge(I,E,An) when I =/= 0 ->
@@ -246,7 +248,7 @@ trace_env(E,Root,An,Acc) ->
     trace_env(Parent,Root,An,[E]++Acc).
 trace([],Marked,Root,An,Heap) ->
     Marked;
-trace(Todo,Marked,Root,An,Heap) when is_number(hd(Todo)); undefined =:= hd(Todo); is_function(hd(Todo)); is_record(hd(Todo),m1); is_record(hd(Todo),m2) ->
+trace(Todo,Marked,Root,An,Heap) when is_number(hd(Todo)); undefined =:= hd(Todo); is_function(hd(Todo)) ->
     trace(tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_tuple(hd(Todo)),is_reference(element(1,hd(Todo))) ->
     {R,_} = hd(Todo),
@@ -260,6 +262,23 @@ trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),tr) ->
     G = Tr#tr.g,
     H = Tr#tr.h,
     trace([F,G,H]++tl(Todo),Marked,Root,An,Heap);
+trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),m1) ->
+    D = hd(Todo),
+    trace([D#m1.f]++tl(Todo),Marked,Root,An,Heap);
+trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),m2) ->
+    D = hd(Todo),
+    trace([D#m2.f]++tl(Todo),Marked,Root,An,Heap);
+trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),r1) ->
+    D = hd(Todo),
+    M = D#r1.m,
+    F = D#r1.f,
+    trace([M,F]++tl(Todo),Marked,Root,An,Heap);
+trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),r2) ->
+    D = hd(Todo),
+    M = D#r2.m,
+    F = D#r2.f,
+    G = D#r2.g,
+    trace([M,F,G]++tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),bi) ->
     Bi = hd(Todo),
     trace(alist(Bi#bi.args)++[Bi#bi.e]++tl(Todo),Marked,Root,An,Heap);

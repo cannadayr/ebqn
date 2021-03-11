@@ -7,4 +7,4 @@
 -record(m1,{f}).
 -record(m2,{f}).
 -record(r1,{m,f}). % raw 1-mod
--record(r2,{m,f}). % raw 2-mod
+-record(r2,{m,f,g}). % raw 2-mod
