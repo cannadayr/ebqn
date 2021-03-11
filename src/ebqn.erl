@@ -246,7 +246,7 @@ trace_env(E,Root,An,Acc) ->
     trace_env(Parent,Root,An,[E]++Acc).
 trace([],Marked,Root,An,Heap) ->
     Marked;
-trace(Todo,Marked,Root,An,Heap) when is_number(hd(Todo)); undefined =:= hd(Todo) ->
+trace(Todo,Marked,Root,An,Heap) when is_number(hd(Todo)); undefined =:= hd(Todo); is_function(hd(Todo)); is_record(hd(Todo),m1); is_record(hd(Todo),m2) ->
     trace(tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_tuple(hd(Todo)),is_reference(element(1,hd(Todo))) ->
     {R,_} = hd(Todo),
