@@ -15,6 +15,21 @@ call(_F,undefined,_W) ->
     undefined;
 call(F,X,W) when is_number(F) ->
     F;
+call(F,X,W) when is_function(F) ->
+    F(X,W);
+call(R,X,W) when is_record(R,r1) ->
+    M = R#r1.m,
+    F = R#r1.f,
+    Fn = M#m1.f,
+    D = Fn(F),
+    D(X,W);
+call(R,X,W) when is_record(R,r2) ->
+    M = R#r2.m,
+    F = R#r2.f,
+    G = R#r2.g,
+    Fn = M#m2.f,
+    D = Fn(F,G),
+    D(X,W);
 call(F,X,W) when is_record(F,bi) ->
     0 = F#bi.t,
     D = F#bi.d,
