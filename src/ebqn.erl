@@ -6,6 +6,11 @@
 
 -include("schema.hrl").
 
+fmt(X) ->
+    io:format("~p~n",[X]).
+dbg() ->
+    halt(erlang:pid_to_list(self())).
+
 arr(R,Sh) ->
     #v{r=R,sh=Sh}.
 list(A) when is_record(A,v) ->
