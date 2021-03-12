@@ -41,7 +41,7 @@ call(F,X,W) when is_record(F,bi) ->
     D = F#bi.d,
     Args = F#bi.args,
     L = concat([fixed([F,X,W]),Args,array:new(D#bl.l)]),
-    load_vm(F#bi.b,F#bi.o,F#bi.s,D,make_ref(),F#bi.e,L);
+    load_vm(maps:get(F#bi.b,get(b)),maps:get(F#bi.o,get(o)),maps:get(F#bi.s,get(s)),D,make_ref(),F#bi.e,L);
 call(T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
     R = call(T#tr.h,X,W),
     L = call(T#tr.f,X,W),
@@ -56,7 +56,7 @@ call_block(M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
 call_block(M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
     D = M#bi.d,
     L = concat([Args,array:new(D#bl.l - asize(Args))]),
-    load_vm(M#bi.b,M#bi.o,M#bi.s,D,make_ref(),M#bi.e,L).
+    load_vm(maps:get(M#bi.b,get(b)),maps:get(M#bi.o,get(o)),maps:get(M#bi.s,get(s)),D,make_ref(),M#bi.e,L).
 call1(M,F) when is_record(M,bi) ->
     true = (1 =:= M#bi.t),
     call_block(M,fixed([M,F]));
@@ -135,10 +135,22 @@ popn(N,Q) when N =:= 0 ->
 popn(N,Q) when N =/= 0 ->
     popn(N-1,tail(Q)).
 
+hash(T) when is_binary(T) ->
+    crypto:hash(sha,T);
+hash(T) ->
+    crypto:hash(sha,erlang:term_to_binary(T)).
 derive(B,O,S,#bl{t=0,i=1} = Block,E) ->
     load_vm(B,O,S,Block,make_ref(),E,array:new(Block#bl.l));
 derive(B,O,S,Block,E) ->
-    #bi{b=B,o=O,s=S,t=Block#bl.t,d=Block,args=nil,e=E}.
+    % hash the terms and use it as a map key in its respective process dictionary
+    % this prevents accumulation of duplicate objects in the heap at the expense of hashing cpu
+    Bh = hash(B),
+    Oh = hash(O),
+    Sh = hash(S),
+    put(b,maps:put(Bh,B,get(b))),
+    put(o,maps:put(Oh,O,get(o))),
+    put(s,maps:put(Sh,S,get(s))),
+    #bi{b=Bh,o=Oh,s=Sh,t=Block#bl.t,d=Block,args=nil,e=E}.
 
 args(B,P,Op) when Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 25 ->
     {undefined,P};
@@ -238,13 +250,13 @@ vm(B,O,S,Block,E,P,Stack,rtn) ->
     Children = maps:fold(fun(K,V,A) -> maps:update_with(V,fun(N) -> N+1 end,1,A) end,#{},An),
     % get the number of children for this environment
     Num = maps:get(E,Children,0),
-    %io:format("~p~n",[{rtn_pop,Num}]),
+    %fmt("~p~n",[{rtn_pop,Num}]),
     put(rtn,popn(Num,get(rtn))), % pop this number of slots off the rtn stack
     Stack;
 vm(B,O,S,Block,E,P,Stack,cont) ->
     Pi = P+1,
     {Op,Pi} = num(B,P),
-    io:format("~p~n",[{vm,Op,Pi,E}]),
+    %fmt("~p~n",[{vm,Op,Pi,E}]),
     {Arg,Pn} = args(B,Pi,Op), % advances the ptr and reads the args
     Sn = stack(B,O,S,get(root),get(heap),get(an),E,Stack,Arg,Op), % mutates the stack
     put(heap,heap(get(root),get(heap),Stack,Op)), % mutates the heap
@@ -258,16 +270,21 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
                 queue:to_list(Sn)
         end,
     % reduce until GC
-    case get(red)-1 of
-        0 ->
+    case get(red) =:= 0 of
+        true ->
             Refs = mark(get(root),get(heap),get(an),get(rtn),E,Slots), % get stale refs
-            io:format("~p~n",[{refs,sets:to_list(Refs),erts_debug:flat_size(get(heap))}]),
+            %fmt({memory,process_info(self(),[heap_size,stack_size]),erlang:memory(processes)/(1024*1024),erts_debug:flat_size(get(heap))}),
+            %case erts_debug:flat_size(get(heap)) > 2*1024*1024 of
+            %    true ->
+            %        dbg();
+            %    false ->
+            %        ok
+            %end,
             put(heap,sweep(get(heap),Refs)),
             put(an,maps:without(sets:to_list(Refs),get(an))),
-            put(red,1),
-            erlang:garbage_collect();
-        X ->
-            put(red,X-1)
+            put(red,?RED);
+        false ->
+            put(red,get(red)-1)
     end,
     vm(B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
 
@@ -355,6 +372,10 @@ run(B,O,S) ->
     put(root,Root),
     put(an,An),
     put(rtn,queue:new()),
-    put(red,1), % reductions
+    put(red,?RED), % reductions
+    % put bytecode, object, and section maps in the process dictionary. see derive/5
+    put(b,#{}),
+    put(o,#{}),
+    put(s,#{}),
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
     load_vm(B,O,S,Block,Root,Root,array:new(L)). % set the root environment, and root as its own parent.
