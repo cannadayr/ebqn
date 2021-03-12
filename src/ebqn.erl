@@ -3,7 +3,6 @@
 -export([run/3,call/3,list/1,fixed/1,concat/2,load_block/1]).
 -import(array,[fix/1,from_list/1,resize/2,foldl/3,set/3]).
 -import(queue,[cons/2,tail/1,head/1,len/1]).
--import(dict,[store/3,fetch/2,fetch_keys/1]).
 
 -include("schema.hrl").
 
@@ -71,11 +70,11 @@ ge(I,E,An) when I =/= 0 ->
 hset(Heap,D,#v{r=Id},#v{r=V}) ->
     foldl(fun(J,N,A) -> hset(A,D,N,array:get(J,V)) end,Heap,Id);
 hset(Heap,D,{E,I},V) ->
-    A = fetch(E,Heap),
+    A = maps:get(E,Heap),
     D = (array:get(I,A) =:= undefined),
-    store(E,set(I,V,A),Heap).
+    maps:put(E,set(I,V,A),Heap).
 hget(Heap,{T,I}) when is_reference(T) ->
-    Slots = fetch(T,Heap),
+    Slots = maps:get(T,Heap),
     Z = array:get(I,Slots),
     true = (null =/= Z),
     Z;
@@ -192,7 +191,7 @@ stack(B,O,S,Root,Heap,An,E,Stack,undefined,19) ->
     cons(#tr{f=F,g=G,h=H},tail(tail(tail(Stack))));
 stack(B,O,S,Root,Heap,An,E,Stack,{X,Y},21) ->
     T = ge(X,E,An),
-    Slots = fetch(T,Heap),
+    Slots = maps:get(T,Heap),
     Z = array:get(Y,Slots),
     true = (null =/= Z),
     cons(Z,Stack);
@@ -234,14 +233,13 @@ vm(B,O,S,Block,E,P,Stack,rtn) ->
     Children = maps:fold(fun(K,V,A) -> maps:update_with(V,fun(N) -> N+1 end,1,A) end,#{},An),
     % get the number of children for this environment
     Num = maps:get(E,Children,0),
-    io:format("~p~n",[{rtn_pop,Num}]),
+    %io:format("~p~n",[{rtn_pop,Num}]),
     put(rtn,popn(Num,get(rtn))), % pop this number of slots off the rtn stack
     Stack;
 vm(B,O,S,Block,E,P,Stack,cont) ->
     Pi = P+1,
     {Op,Pi} = num(B,P),
     io:format("~p~n",[{vm,Op,Pi,E}]),
-    %io:format("~p~n",[{e,E}]),
     {Arg,Pn} = args(B,Pi,Op), % advances the ptr and reads the args
     Sn = stack(B,O,S,get(root),get(heap),get(an),E,Stack,Arg,Op), % mutates the stack
     put(heap,heap(get(root),get(heap),Stack,Op)), % mutates the heap
@@ -261,7 +259,8 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
             io:format("~p~n",[{refs,sets:to_list(Refs),erts_debug:flat_size(get(heap))}]),
             put(heap,sweep(get(heap),Refs)),
             put(an,maps:without(sets:to_list(Refs),get(an))),
-            put(red,1);
+            put(red,1),
+            erlang:garbage_collect();
         X ->
             put(red,X-1)
     end,
@@ -319,7 +318,7 @@ trace(Todo,Marked,Root,An,Heap) when is_reference(hd(Todo)) ->
                 % get env lineage
                 Lineage = trace_env(E,Root,An,[]),
                 % get the slots from the heap
-                Slots = array:to_list(fetch(E,Heap)),
+                Slots = array:to_list(maps:get(E,Heap)),
                 {Lineage++Slots++tl(Todo),sets:add_element(E,Marked)}
         end,
     trace(TodoN,MarkedN,Root,An,Heap).
@@ -329,12 +328,12 @@ mark(Root,Heap,An,Rtn,E,Stack) ->
     % trace for references
     Marked = trace(Init,sets:new(),Root,An,Heap),
     % return the unmarked environments
-    sets:subtract(sets:from_list(dict:fetch_keys(Heap)),Marked).
+    sets:subtract(sets:from_list(maps:keys(Heap)),Marked).
 sweep(Heap,Refs) ->
-    sets:fold(fun dict:erase/2,Heap,Refs).
+    maps:without(sets:to_list(Refs),Heap).
 
 load_vm(B,O,S,Block,E,Parent,V) ->
-    put(heap,store(E,V,get(heap))), % alloc slots
+    put(heap,maps:put(E,V,get(heap))), % alloc slots
     An = get(an),
     put(an,An#{E => Parent}), % alloc relationship
     put(rtn,queue:cons(E,get(rtn))), % push reference to rtn stack
@@ -345,7 +344,7 @@ load_block({T,I,ST,L}) ->
 
 run(B,O,S) ->
     Root = make_ref(),
-    Heap = dict:new(),
+    Heap = #{},
     An = #{}, % ancestors
     put(heap,Heap), % init the proc_dict
     put(root,Root),
