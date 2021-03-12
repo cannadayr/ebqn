@@ -366,18 +366,25 @@ load_vm(B,O,S,Block,E,Parent,V) ->
 load_block({T,I,ST,L}) ->
     #bl{t=T,i=I,st=ST,l=L}.
 
+init(Key,T) ->
+    case get(Key) of
+        undefined ->
+            put(Key,T);
+        _ ->
+            ok
+    end.
 run(B,O,S) ->
     Root = make_ref(),
     Heap = #{},
     An = #{}, % ancestors
-    put(heap,Heap), % init the proc_dict
+    init(heap,Heap), % init the proc_dict
     put(root,Root),
-    put(an,An),
+    init(an,An),
     put(rtn,queue:new()),
-    put(red,?RED), % reductions
+    init(red,?RED), % reductions
     % put bytecode, object, and section maps in the process dictionary. see derive/5
-    put(b,#{}),
-    put(o,#{}),
-    put(s,#{}),
+    init(bi,#{}),
+    init(b,#{}),
+    init(o,#{}),
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
     load_vm(B,O,S,Block,Root,Root,array:new(L)). % set the root environment, and root as its own parent.
