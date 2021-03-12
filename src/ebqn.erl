@@ -254,10 +254,17 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
             false ->
                 queue:to_list(Sn)
         end,
-    Refs = mark(get(root),get(heap),get(an),get(rtn),E,Slots), % get stale refs
-    io:format("~p~n",[{refs,sets:to_list(Refs)}]),
-    put(heap,sweep(get(heap),Refs)),
-    put(an,maps:without(sets:to_list(Refs),get(an))),
+    % reduce until GC
+    case get(red)-1 of
+        0 ->
+            Refs = mark(get(root),get(heap),get(an),get(rtn),E,Slots), % get stale refs
+            io:format("~p~n",[{refs,sets:to_list(Refs),erts_debug:flat_size(get(heap))}]),
+            put(heap,sweep(get(heap),Refs)),
+            put(an,maps:without(sets:to_list(Refs),get(an))),
+            put(red,1);
+        X ->
+            put(red,X-1)
+    end,
     vm(B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
 
 trace_env(E,Root,An,Acc) when E =:= Root ->
@@ -344,5 +351,6 @@ run(B,O,S) ->
     put(root,Root),
     put(an,An),
     put(rtn,queue:new()),
+    put(red,1), % reductions
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
     load_vm(B,O,S,Block,Root,Root,array:new(L)). % set the root environment, and root as its own parent.
