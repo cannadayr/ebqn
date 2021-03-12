@@ -1,6 +1,6 @@
 -module(ebqn).
 
--export([run/3,call/3,list/1,fixed/1,concat/2,load_block/1]).
+-export([run/3,call/3,list/1,fixed/1,concat/2,load_block/1,str/1]).
 -import(array,[fix/1,from_list/1,resize/2,foldl/3,set/3]).
 -import(queue,[cons/2,tail/1,head/1,len/1]).
 
@@ -17,6 +17,8 @@ list(A) when is_record(A,v) ->
     A;
 list(A) when not is_record(A,v) ->
     arr(A,[array:size(A)]).
+str(S) ->
+    list(fixed(S)).
 call(_F,undefined,_W) ->
     undefined;
 call(F,X,W) when is_number(F) ->
