@@ -9,7 +9,9 @@
 
 arr(R,Sh) ->
     #v{r=R,sh=Sh}.
-list(A) ->
+list(A) when is_record(A,v) ->
+    A;
+list(A) when not is_record(A,v) ->
     arr(A,[array:size(A)]).
 call(_F,undefined,_W) ->
     undefined;
@@ -96,7 +98,9 @@ asize(X) ->
     array:size(X).
 alist(X) when X =:= nil;X =:= [nil] ->
     [];
-alist(X) ->
+alist(X) when is_record(X,v) ->
+    array:to_list(X#v.r);
+alist(X) when not is_record(X,v) ->
     array:to_list(X).
 afoldl(F,Acc,X) when X =:= nil;X =:= [nil] ->
     Acc;
