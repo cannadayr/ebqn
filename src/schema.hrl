@@ -1,6 +1,6 @@
 -compile([nowarn_unused_function,nowarn_unused_vars]).
 
--define(RED,10000). % number of reductions before gc
+-define(MEM,7833228). % total memory in Kb
 -record(bl,{t,i,st,l}).
 -record(bi,{b,o,s,t,d,args,e}). % bytecode, objs, sections, type, definition, args, env
 -record(tr,{f,g,h}).

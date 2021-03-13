@@ -273,22 +273,17 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
             false ->
                 queue:to_list(Sn)
         end,
-    % reduce until GC
-    case get(red) =:= 0 of
+    % test for GC
+    % currently using hard coded memory total
+    % this should be replaced w/ either a platform specific system cmd or memsup
+    case ((?MEM*1024)-erlang:memory(total)) < 1024*1024*100 of
         true ->
             Refs = mark(get(root),get(heap),get(an),get(rtn),E,Slots), % get stale refs
-            %fmt({memory,process_info(self(),[heap_size,stack_size]),erlang:memory(processes)/(1024*1024),erts_debug:flat_size(get(heap))}),
-            %case erts_debug:flat_size(get(heap)) > 2*1024*1024 of
-            %    true ->
-            %        dbg();
-            %    false ->
-            %        ok
-            %end,
+            fmt({memory,process_info(self(),[heap_size,stack_size]),erlang:memory(processes)/(1024*1024),erts_debug:flat_size(get(heap))}),
             put(heap,sweep(get(heap),Refs)),
-            put(an,maps:without(sets:to_list(Refs),get(an))),
-            put(red,?RED);
+            put(an,maps:without(sets:to_list(Refs),get(an)));
         false ->
-            put(red,get(red)-1)
+            ok
     end,
     vm(B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
 
@@ -383,7 +378,6 @@ run(B,O,S) ->
     put(root,Root),
     init(an,An),
     put(rtn,queue:new()),
-    init(red,?RED), % reductions
     % put bytecode, object, and section maps in the process dictionary. see derive/5
     init(b,#{}),
     init(o,#{}),
