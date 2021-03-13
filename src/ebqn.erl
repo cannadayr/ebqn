@@ -89,17 +89,6 @@ hget(Heap,{T,I}) when is_reference(T) ->
     Z;
 hget(Heap,#v{sh=S,r=R} = I) when is_record(I,v) ->
     arr(array:map(fun(_J,E) -> hget(Heap,E) end,R),S).
-num(Binary,Ptr) ->
-    {Size,Bitstring} = num(Binary,Ptr,0,<<>>),
-    <<Value:Size/unsigned-integer>> = Bitstring,
-    {Value,Ptr+trunc(Size/7)}.
-num(Binary,Ptr,Size,Acc) ->
-    <<H:1,Chunk:7/bitstring>> = binary_part(Binary,Ptr,1),
-    num(Binary,Ptr,Size,Chunk,Acc,H).
-num(_Binary,_Ptr,Size,Chunk,Acc,0) ->
-    {Size+7,<<Chunk/bitstring,Acc/bitstring>>};
-num(Binary,Ptr,Size,Chunk,Acc,1) ->
-    num(Binary,Ptr+1,Size+7,<<Chunk/bitstring,Acc/bitstring>>).
 asize(X) when X =:= nil;X =:= [nil] ->
     0;
 asize(X) ->
@@ -159,11 +148,11 @@ derive(B,O,S,Block,E) ->
 args(B,P,Op) when Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 25 ->
     {undefined,P};
 args(B,P,Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 15 ->
-    num(B,P);
+    {lists:nth(1+P,B),1+P};
 args(B,P,Op) when Op =:= 21; Op =:= 22 ->
-    {X,Xp} = num(B,P),
-    {Y,Yp} = num(B,Xp),
-    {{X,Y},Yp}.
+    X = lists:nth(1+P,B),
+    Y = lists:nth(2+P,B),
+    {{X,Y},2+P}.
 
 stack(B,O,S,Root,Heap,An,E,Stack,X,0) ->
     cons(element(1+X,O),Stack);
@@ -258,10 +247,9 @@ vm(B,O,S,Block,E,P,Stack,rtn) ->
     put(rtn,popn(Num,get(rtn))), % pop this number of slots off the rtn stack
     Stack;
 vm(B,O,S,Block,E,P,Stack,cont) ->
-    Pi = P+1,
-    {Op,Pi} = num(B,P),
-    %fmt("~p~n",[{vm,Op,Pi,E}]),
-    {Arg,Pn} = args(B,Pi,Op), % advances the ptr and reads the args
+    Op = lists:nth(1+P,B),
+    %fmt({vm,Op,Pi}),
+    {Arg,Pn} = args(B,1+P,Op), % advances the ptr and reads the args
     Sn = stack(B,O,S,get(root),get(heap),get(an),E,Stack,Arg,Op), % mutates the stack
     put(heap,heap(get(root),get(heap),Stack,Op)), % mutates the heap
     Ctrl = ctrl(Op), % set ctrl atom
