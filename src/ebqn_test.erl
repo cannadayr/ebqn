@@ -5,8 +5,8 @@
 -export([test/1,test1/0,test2/1]).
 
 test([B,O,S]) ->
-    io:format("~p~n",[{test}]),
-    ebqn:run(list_to_binary(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
+    %fmt(test),
+    ebqn:run(B,list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
 
 test1() ->
     % bytecode tests

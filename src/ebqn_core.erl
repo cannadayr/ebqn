@@ -20,6 +20,12 @@ is_array(_X,_W) ->
     0.
 type(_X,_W) ->
     0.
+decompose(X,W) ->
+    throw("decompose not implemented").
+glyph(X,W) ->
+    throw("glyph not implemented").
+fill(X,W) ->
+    throw("fill not implemented").
 log(X,undefined) ->
     log(X);
 log(X,W) ->
@@ -43,55 +49,60 @@ group_ord(#v{r=X},#v{r=W}) ->
     end,
     {_, O} = foldl(F,{S,R},X),
     list(O).
-assert(X,undefined) ->
-    case X=:=1 of true -> 1; false -> 0 end.
-add(X,undefined) ->
+assert_fn(Pre) ->
+    fun
+        (X,W) when X =/= 1 ->
+            throw("assert_fn something failed");
+        (X,W) ->
+            X
+    end.
+plus(X,undefined) ->
     X;
-add(X,W) when is_list(X),is_list(W) ->
+plus(X,W) when is_list(X),is_list(W) ->
     throw("DomainError: +: cannot add char to char");
-add(X,W) when not is_number(X),not is_list(X) ->
+plus(X,W) when not is_number(X),not is_list(X) ->
     throw("DomainError: calling a number only function on a function and number");
-add(X,W) when not is_number(W),not is_list(W) ->
+plus(X,W) when not is_number(W),not is_list(W) ->
     throw("DomainError: calling a number only function on a function and number");
-add(X,W) when is_list(X),not is_list(W) ->
+plus(X,W) when is_list(X),not is_list(W) ->
     [lists:nth(1,X) + W];
-add(X,W) when is_list(W),not is_list(X) ->
+plus(X,W) when is_list(W),not is_list(X) ->
     [lists:nth(1,W) + X];
-add(inf,W) when is_number(W) ->
+plus(inf,W) when is_number(W) ->
     inf;
-add(X,W)  ->
+plus(X,W)  ->
     W + X.
-subtract(inf,undefined) ->
+minus(inf,undefined) ->
     ninf;
-subtract(ninf,undefined) ->
+minus(ninf,undefined) ->
     inf;
-subtract(inf,W) ->
+minus(inf,W) ->
     ninf;
-subtract(X,undefined) when is_list(X) ->
+minus(X,undefined) when is_list(X) ->
     throw("DomainError: Expected number, got character");
-subtract(X,undefined) when not is_number(X) ->
+minus(X,undefined) when not is_number(X) ->
     throw("DomainError: Expected number, got function");
-subtract(X,undefined) ->
+minus(X,undefined) ->
     -1*X;
-subtract(X,W) when is_list(X),is_list(W) ->
+minus(X,W) when is_list(X),is_list(W) ->
     lists:nth(1,W) - lists:nth(1,X);
-subtract(X,W) when not is_list(X),is_list(W) ->
+minus(X,W) when not is_list(X),is_list(W) ->
     [lists:nth(1,W) - X];
-subtract(X,W) when is_list(X),not is_list(W) ->
+minus(X,W) when is_list(X),not is_list(W) ->
     throw("DomainError: -: cannot operate on a number and character");
-subtract(X,W) when is_number(X),is_number(W) ->
+minus(X,W) when is_number(X),is_number(W) ->
     W-X.
-multiply(X,undefined) when X < 0 ->
+times(X,undefined) when X < 0 ->
     -1;
-multiply(X,undefined) when X =:= 0 ->
+times(X,undefined) when X =:= 0 ->
     0;
-multiply(X,undefined) when X > 0 ->
+times(X,undefined) when X > 0 ->
     1;
-multiply(inf,W) when W > 0 ->
+times(inf,W) when W > 0 ->
     inf;
-multiply(X,W) when is_list(X);is_list(W) ->
+times(X,W) when is_list(X);is_list(W) ->
     throw("DomainError: calling a number only function on a number and character");
-multiply(X,W) ->
+times(X,W) ->
     X*W.
 divide(0,undefined) ->
     inf;
@@ -111,13 +122,13 @@ power(X,W) when is_list(X),is_list(W) ->
     throw("DomainError: calling a number only function on a character and character");
 power(X,W) ->
     pow(W,X).
-minimum(inf,_W) ->
+floor(inf,_W) ->
     inf;
-minimum(ninf,_W) ->
+floor(ninf,_W) ->
     ninf;
-minimum(X,_W) when not is_number(X),not is_list(X) ->
+floor(X,_W) when not is_number(X),not is_list(X) ->
     throw("DomainError: ⌊: argument contained a function");
-minimum(X,_W) when is_number(X) ->
+floor(X,_W) when is_number(X) ->
     floor(X).
 equals(#v{sh=S} = X,undefined) when is_record(X,v),is_list(S) ->
     length(S);
@@ -189,15 +200,19 @@ scan(F) ->
             end,
             arr(H(R,L),S)
     end.
-reorder(F,G) ->
+fill_by(F,G) ->
+    fun(X,W) ->
+        throw("fill_by not implemented")
+    end.
+% TODO add `setrepr`
+cases(F,G) ->
     fun
         (X,undefined) ->
             call(F,X,undefined);
         (X,W) ->
             call(G,X,W)
     end.
-fns() -> list(fixed([fun is_array/2,fun type/2,fun log/2,fun group_len/2,fun group_ord/2,
-                     fun assert/2,fun add/2,fun subtract/2,fun multiply/2,fun divide/2,
-                     fun power/2,fun minimum/2,fun equals/2,fun lesseq/2,fun shape/2,
-                     fun reshape/2,fun pick/2,fun window/2,m1(fun table/1),m1(fun scan/1),m2(fun reorder/2)])).
-
+fns() -> [fun type/2,fun decompose/2,fun glyph/2,fun fill/2,fun log/2,fun group_len/2,fun group_ord/2,
+                     assert_fn(""),fun plus/2,fun minus/2,fun times/2,fun divide/2,
+                     fun power/2,fun floor/2,fun equals/2,fun lesseq/2,fun shape/2,
+                     fun reshape/2,fun pick/2,fun window/2,m1(fun table/1),m1(fun scan/1),m2(fun fill_by/2),m2(fun cases/2)].
