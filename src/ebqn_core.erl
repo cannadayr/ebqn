@@ -69,7 +69,13 @@ subtract(inf,W) ->
     ninf;
 subtract(X,undefined) ->
     -1*X;
-subtract(X,W)  ->
+subtract(X,W) when is_list(X),is_list(W) ->
+    lists:nth(1,W) - lists:nth(1,X);
+subtract(X,W) when not is_list(X),is_list(W) ->
+    [lists:nth(1,W) - X];
+subtract(X,W) when is_list(X),not is_list(W) ->
+    throw("DomainError: -: cannot operate on a number and character");
+subtract(X,W) when is_number(X),is_number(W) ->
     W-X.
 multiply(X,undefined) when X < 0 ->
     -1;
