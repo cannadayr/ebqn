@@ -1,6 +1,6 @@
 -module(ebqn).
 
--export([run/3,call/3,list/1,fixed/1,concat/2,load_block/1,str/1]).
+-export([run/3,call/3,list/1,fixed/1,concat/2,load_block/1,str/1,fmt/1]).
 -import(array,[fix/1,from_list/1,resize/2,foldl/3,set/3]).
 -import(queue,[cons/2,tail/1,head/1,len/1]).
 
@@ -52,7 +52,9 @@ call(T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
     R = call(T#tr.h,X,W),
     call(T#tr.g,R,undefined);
 call(V,X,W) when is_record(V,v) ->
-    V.
+    V;
+call(F,X,W) when not is_function(F) ->
+    F.
 call_block(M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
     M#bi{args=Args,t=0};
 call_block(M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->

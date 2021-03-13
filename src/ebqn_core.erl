@@ -3,7 +3,7 @@
 -import(lists,[seq/2,flatten/1,duplicate/2,merge/1]).
 -import(array,[new/1,new/2,resize/2,map/2,foldl/3,set/3,from_list/1,to_list/1,fix/1]).
 -import(math,[log/1,exp/1,pow/2]).
--import(ebqn,[list/1,concat/2,fixed/1,call/3]).
+-import(ebqn,[list/1,concat/2,fixed/1,call/3,fmt/1]).
 
 -export([fns/0]).
 -include("schema.hrl").
