@@ -47,8 +47,26 @@ assert(X,undefined) ->
     case X=:=1 of true -> 1; false -> 0 end.
 add(X,undefined) ->
     X;
+add(X,W) when is_list(X),is_list(W) ->
+    throw("DomainError: +: cannot add char to char");
+add(X,W) when not is_number(X),not is_list(X) ->
+    throw("DomainError: calling a number only function on a function and number");
+add(X,W) when not is_number(W),not is_list(W) ->
+    throw("DomainError: calling a number only function on a function and number");
+add(X,W) when is_list(X),not is_list(W) ->
+    [lists:nth(1,X) + W];
+add(X,W) when is_list(W),not is_list(X) ->
+    [lists:nth(1,W) + X];
+add(inf,W) when is_number(W) ->
+    inf;
 add(X,W)  ->
     W + X.
+subtract(inf,undefined) ->
+    ninf;
+subtract(ninf,undefined) ->
+    inf;
+subtract(inf,W) ->
+    ninf;
 subtract(X,undefined) ->
     -1*X;
 subtract(X,W)  ->
@@ -59,6 +77,8 @@ multiply(X,undefined) when X =:= 0 ->
     0;
 multiply(X,undefined) when X > 0 ->
     1;
+multiply(inf,W) when W > 0 ->
+    inf;
 multiply(X,W) ->
     X*W.
 divide(X,undefined)  ->
@@ -67,9 +87,11 @@ divide(X,W) ->
     W / X.
 power(X,undefined) ->
     exp(X);
+power(X,W) when 0 > W  ->
+    inf;
 power(X,W)  ->
     pow(X,W).
-minimum(X,_W) ->
+minimum(X,_W) when is_number(X) ->
     floor(X).
 equals(#v{sh=S} = X,undefined) when is_record(X,v),is_list(S) ->
     length(S);
