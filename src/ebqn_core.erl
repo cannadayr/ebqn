@@ -67,6 +67,10 @@ subtract(ninf,undefined) ->
     inf;
 subtract(inf,W) ->
     ninf;
+subtract(X,undefined) when is_list(X) ->
+    throw("DomainError: Expected number, got character");
+subtract(X,undefined) when not is_number(X) ->
+    throw("DomainError: Expected number, got function");
 subtract(X,undefined) ->
     -1*X;
 subtract(X,W) when is_list(X),is_list(W) ->
@@ -85,24 +89,41 @@ multiply(X,undefined) when X > 0 ->
     1;
 multiply(inf,W) when W > 0 ->
     inf;
+multiply(X,W) when is_list(X);is_list(W) ->
+    throw("DomainError: calling a number only function on a number and character");
 multiply(X,W) ->
     X*W.
-divide(X,undefined)  ->
+divide(0,undefined) ->
+    inf;
+divide(inf,undefined) ->
+    0;
+divide(X,undefined) when is_list(X) ->
+    throw("DomainError: Expected number, got character");
+divide(X,undefined) ->
     1 / X;
 divide(X,W) ->
     W / X.
+power(X,undefined) when is_list(X) ->
+    throw("DomainError: Expected number, got character");
 power(X,undefined) ->
     exp(X);
-power(X,W) when 0 > W  ->
+power(X,W) when is_list(X),is_list(W) ->
+    throw("DomainError: calling a number only function on a character and character");
+power(X,W) ->
+    pow(W,X).
+minimum(inf,_W) ->
     inf;
-power(X,W)  ->
-    pow(X,W).
+minimum(ninf,_W) ->
+    ninf;
+minimum(X,_W) when not is_number(X),not is_list(X) ->
+    throw("DomainError: ⌊: argument contained a function");
 minimum(X,_W) when is_number(X) ->
     floor(X).
 equals(#v{sh=S} = X,undefined) when is_record(X,v),is_list(S) ->
     length(S);
 equals(X,W) ->
-    case X =:= W of true -> 1; false -> 0 end.
+    % use '==' for float-to-int comparisons
+    case X == W of true -> 1; false -> 0 end.
 lesseq(X,W) when X =:= W ->
     1;
 lesseq(X,W) ->
