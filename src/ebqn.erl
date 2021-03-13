@@ -383,8 +383,8 @@ run(B,O,S) ->
     put(rtn,queue:new()),
     init(red,?RED), % reductions
     % put bytecode, object, and section maps in the process dictionary. see derive/5
-    init(bi,#{}),
     init(b,#{}),
     init(o,#{}),
+    init(s,#{}),
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
     load_vm(B,O,S,Block,Root,Root,array:new(L)). % set the root environment, and root as its own parent.
