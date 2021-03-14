@@ -31,7 +31,13 @@ type(X,_W) when is_number(X) ->
 type(X,_W) ->
     2.
 decompose(X,W) ->
-    throw("decompose not implemented").
+    case not is_function(X) of
+        true ->
+            list(fixed([-1,X]));
+        false ->
+            % glyph & repr cases not implemented
+            list(fixed([1,X]))
+    end.
 glyph(X,W) ->
     throw("glyph not implemented").
 % fill not yet implemented
