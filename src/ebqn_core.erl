@@ -18,7 +18,7 @@ is_array(X,_W) when is_record(X,v) ->
     1;
 is_array(_X,_W) ->
     0.
-type(X,_W) when is_function(X) ->
+type(X,_W) when is_function(X);is_record(X,bi) ->
     3;
 type(X,_W) when is_record(X,m1) ->
     4;
@@ -148,22 +148,25 @@ equals(X,W) ->
     case X == W of true -> 1; false -> 0 end.
 lesseq(X,W) when X =:= W ->
     1;
+lesseq(X,inf) when is_list(X),hd(X) =:= 0 ->
+    1;
+lesseq(X,ninf) ->
+    1;
+lesseq(X,inf) ->
+    0;
+lesseq(X,W) when is_record(X,bi);is_record(W,bi);is_function(X);is_function(W) ->
+    throw("DomainError: lesseq: Cannot compare functions");
 lesseq(X,W) ->
-    case {is_record(X,v),is_record(W,v)} of
-        {true,false}  -> 1;
-        {false,true}  -> 0;
-        {true,true}   ->
-            #v{sh=Xs} = X,#v{sh=Ws} = W,
-            case length(Xs) >= length(Ws) of
-                true -> 1;
-                false -> 0
-            end;
-        {false,false} ->
-            case X >= W of
-                true -> 1;
-                false -> 0
-            end
-    end.
+    T = type(X,undefined),
+    S = type(W,undefined),
+    R =
+        case S =/= T of
+            true ->
+                S =< T;
+            false ->
+                W =< X
+        end,
+    case R of true -> 1; false -> 0 end.
 shape(#v{sh=Sh},undefined) ->
     list(fixed(Sh)).
 reshape(#v{r=X},undefined) ->
