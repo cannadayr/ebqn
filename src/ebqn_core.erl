@@ -18,14 +18,25 @@ is_array(X,_W) when is_record(X,v) ->
     1;
 is_array(_X,_W) ->
     0.
-type(_X,_W) ->
-    0.
+type(X,_W) when is_function(X) ->
+    3;
+type(X,_W) when is_record(X,m1) ->
+    4;
+type(X,_W) when is_record(X,m2) ->
+    5;
+type(X,_W) when is_record(X,v) ->
+    0;
+type(X,_W) when is_number(X) ->
+    1;
+type(X,_W) ->
+    2.
 decompose(X,W) ->
     throw("decompose not implemented").
 glyph(X,W) ->
     throw("glyph not implemented").
+% fill not yet implemented
 fill(X,W) ->
-    throw("fill not implemented").
+    X.
 log(X,undefined) ->
     log(X);
 log(X,W) ->
@@ -52,7 +63,7 @@ group_ord(#v{r=X},#v{r=W}) ->
 assert_fn(Pre) ->
     fun
         (X,W) when X =/= 1 ->
-            throw("assert_fn something failed");
+            throw({assert_fn,X,W});
         (X,W) ->
             X
     end.
@@ -200,10 +211,9 @@ scan(F) ->
             end,
             arr(H(R,L),S)
     end.
+% fill_by not yet implemented
 fill_by(F,G) ->
-    fun(X,W) ->
-        throw("fill_by not implemented")
-    end.
+    F.
 % TODO add `setrepr`
 cases(F,G) ->
     fun
