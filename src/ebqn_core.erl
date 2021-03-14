@@ -1,7 +1,6 @@
 -module(ebqn_core).
 
--import(lists,[seq/2,flatten/1,duplicate/2,merge/1]).
--import(array,[new/1,new/2,resize/2,map/2,foldl/3,set/3,from_list/1,to_list/1,fix/1]).
+-import(lists,[seq/2,flatten/1]).
 -import(math,[log/1,exp/1,pow/2]).
 -import(ebqn,[list/1,concat/2,fixed/1,call/3,fmt/1]).
 
@@ -48,23 +47,23 @@ log(X,undefined) ->
 log(X,W) ->
     log(X) / log(W).
 group_len(#v{r=X},_W) ->
-    L = foldl(fun(_I,V,A) -> max(A,V) end,-1,X),
-    R = new(L+1,{default,0}),
-    F = fun (_I,E,A) when E >= 0 -> set(E,1+array:get(E,A),A);
+    L = array:foldl(fun(_I,V,A) -> max(A,V) end,-1,X),
+    R = array:new(L+1,{default,0}),
+    F = fun (_I,E,A) when E >= 0 -> array:set(E,1+array:get(E,A),A);
             (_I,_E,A)            -> A
     end,
-    list(foldl(F,R,X)).
+    array:list(array:foldl(F,R,X)).
 group_ord(#v{r=X},#v{r=W}) ->
-    {S,L} = foldl(fun(_I,V,{Si,Li}) -> {concat(Si,fixed([Li])),Li+V} end,{nil,0},W),
-    R = new(L),
+    {S,L} = array:foldl(fun(_I,V,{Si,Li}) -> {concat(Si,fixed([Li])),Li+V} end,{nil,0},W),
+    R = array:new(L),
     F = fun
         (I,V,{Si,Ri}) when V >= 0 ->
-            {set(V,1+array:get(V,Si),Si),
-                set(array:get(V,Si),I,Ri)};
+            {array:set(V,1+array:get(V,Si),Si),
+                array:set(array:get(V,Si),I,Ri)};
         (_I,_V,A) ->
             A
     end,
-    {_, O} = foldl(F,{S,R},X),
+    {_, O} = array:foldl(F,{S,R},X),
     list(O).
 assert_fn(Pre) ->
     fun
@@ -178,39 +177,48 @@ shape(#v{sh=Sh},undefined) ->
 reshape(#v{r=X},undefined) ->
     arr(X,[array:size(X)]);
 reshape(#v{r=X},#v{r=W}) ->
-    arr(X,to_list(W));
+    arr(X,array:to_list(W));
 reshape(#v{r=X},W) ->
     arr(X,W).
-pick(#v{r=X},W) ->
-    array:get(W,X).
+pick(#v{r=X} = Y,W) ->
+    array:get(trunc(W),X).
+%pick(#v{r=X} = Y,W) ->
+%    %fmt(pick),
+%    % js x[y] compatibility
+%    case W >= array:size(X) of
+%        true ->
+%            undefined;
+%        false ->
+%            array:get(trunc(W),X)
+%    end.
 window(X,undefined) ->
     list(fixed(seq(0,trunc(X)-1))).
 table(F) ->
     fun
         (#v{r=R,sh=Sh},undefined) ->
-            arr(map(fun(_I,E) -> call(F,E,undefined) end,R),Sh);
+            arr(array:map(fun(_I,E) -> call(F,E,undefined) end,R),Sh);
         (#v{r=Xr,sh=Xsh},#v{r=Wr,sh=Wsh}) ->
             InitSize =  array:new(array:size(Xr)*array:size(Wr)),
             Xs = array:size(Xr),
-            arr(foldl(fun(J,D,A1) -> foldl(fun(I,E,A2) -> array:set(J*Xs+I,call(F,E,D),A2) end, A1, Xr) end,InitSize, Wr),flatten(Wsh ++ Xsh))
+            arr(array:foldl(fun(J,D,A1) -> array:foldl(fun(I,E,A2) -> array:set(J*Xs+I,call(F,E,D),A2) end, A1, Xr) end,InitSize, Wr),flatten(Wsh ++ Xsh))
     end.
 scan(F) ->
     fun
         (#v{r=X,sh=S},undefined) when length(S) > 0 ->
             L = array:size(X),
-            R = new(L),
+            R = array:new(L),
             H = fun
                 (Ri,Li) when Li > 0 ->
                     C = lists:foldl(fun(E,A) -> A*E end,1,lists:nthtail(1,S)),
                     G = fun
                         G(I,Ci,Rn) when I =/= Ci ->
-                            G(I+1,Ci,set(I,array:get(I,X),Rn));
+                            G(I+1,Ci,array:set(I,array:get(I,X),Rn));
                         G(I,Ci,Rn) when I =:= Ci ->
                             Rn
                     end,
                     J = fun
                         J(I,Ci,Rn,Ln) when I =/= Ln ->
-                            J(I+1,Ci,set(I,call(F,array:get(I,X),array:get(I-C,Rn)),Rn),Ln);
+                            J(I+1,Ci,array:set(I,call(F,array:get(I,X),array:get(I-C,Rn)),Rn),Ln);
                         J(I,_Ci,Rn,Ln) when I =:= Ln ->
                             Rn
                     end,
