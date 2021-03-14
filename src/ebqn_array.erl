@@ -4,7 +4,7 @@
 % https://erlang.org/doc/man/maps.html
 % https://en.wikipedia.org/wiki/Hash_array_mapped_trie
 
--export([new/1]).
+-export([new/1,get/2,set/3]).
 
 % functions that need to be implemented (or have shims for)
 new(N) when is_integer(N),N > 0 ->
@@ -13,3 +13,10 @@ new(N,L,A) when N =:= L ->
     A;
 new(N,L,A) ->
     new(N+1,L,A#{N=>undefined}).
+
+get(N,M) ->
+    #{N := V}  = M,
+    V.
+
+set(N,V,M) ->
+    M#{N=>V}.
