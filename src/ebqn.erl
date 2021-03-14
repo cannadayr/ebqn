@@ -1,7 +1,6 @@
 -module(ebqn).
 
--export([run/3,call/3,list/1,fixed/1,concat/2,load_block/1,str/1,fmt/1]).
--import(array,[fix/1,from_list/1,resize/2,foldl/3,set/3]).
+-export([run/3,call/3,list/1,fixed/1,concat/2,load_block/1,str/1,fmt/1,perf/1]).
 -import(queue,[cons/2,tail/1,head/1,len/1]).
 
 -include("schema.hrl").
@@ -10,6 +9,12 @@ fmt(X) ->
     io:format("~p~n",[X]).
 dbg() ->
     halt(erlang:pid_to_list(self())).
+% ebqn:perf(fun() -> ebqn_test:test(ebqn_bc:runtime()) end).
+perf(F) ->
+    B = erlang:timestamp(),
+    V = F(),
+    A = erlang:timestamp(),
+    timer:now_diff(A,B).
 
 arr(R,Sh) ->
     #v{r=R,sh=Sh}.
@@ -77,11 +82,11 @@ ge(I,E,An) when I =/= 0 ->
     #{E := Parent} = An,
     ge(I-1,Parent,An).
 hset(Heap,D,#v{r=Id},#v{r=V}) ->
-    foldl(fun(J,N,A) -> hset(A,D,N,array:get(J,V)) end,Heap,Id);
+    array:foldl(fun(J,N,A) -> hset(A,D,N,array:get(J,V)) end,Heap,Id);
 hset(Heap,D,{E,I},V) ->
     A = maps:get(E,Heap),
     D = (array:get(I,A) =:= undefined),
-    maps:put(E,set(I,V,A),Heap).
+    maps:put(E,array:set(I,V,A),Heap).
 hget(Heap,{T,I}) when is_reference(T) ->
     Slots = maps:get(T,Heap),
     Z = array:get(I,Slots),
@@ -102,11 +107,11 @@ alist(X) when not is_record(X,v) ->
 afoldl(F,Acc,X) when X =:= nil;X =:= [nil] ->
     Acc;
 afoldl(F,Acc,X) ->
-    foldl(F,Acc,X).
+    array:foldl(F,Acc,X).
 fixed(X) when X =:= nil;X =:= [nil] ->
     nil;
 fixed(X) when is_list(X) ->
-    fix(resize(length(X),from_list(X))).
+    array:fix(array:resize(length(X),array:from_list(X))).
 concat(nil,nil) ->
     nil;
 concat(X,nil) when X =/= nil ->
@@ -122,7 +127,7 @@ concat(L) ->
 tail(L,A,S) when L =:= -1 ->
     {A,S};
 tail(L,A,S) ->
-    tail(L-1,set(L,head(S),A),tail(S)).
+    tail(L-1,array:set(L,head(S),A),tail(S)).
 popn(N,Q) when N =:= 0 ->
     Q;
 popn(N,Q) when N =/= 0 ->
@@ -248,7 +253,7 @@ vm(B,O,S,Block,E,P,Stack,rtn) ->
     Stack;
 vm(B,O,S,Block,E,P,Stack,cont) ->
     Op = lists:nth(1+P,B),
-    %fmt({vm,Op,Pi}),
+    %fmt({vm,Op,P+1}),
     {Arg,Pn} = args(B,1+P,Op), % advances the ptr and reads the args
     Sn = stack(B,O,S,get(root),get(heap),get(an),E,Stack,Arg,Op), % mutates the stack
     put(heap,heap(get(root),get(heap),Stack,Op)), % mutates the heap
