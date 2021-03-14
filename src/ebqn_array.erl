@@ -4,8 +4,10 @@
 % https://erlang.org/doc/man/maps.html
 % https://en.wikipedia.org/wiki/Hash_array_mapped_trie
 
--export([new/1,get/2,set/3,to_list/1,concat/2,from_list/1]).
+-export([new/1,get/2,set/3,to_list/1,concat/1,concat/2,from_list/1]).
 
+new(N) when N =:= 0 ->
+    #{};
 new(N) when is_integer(N),N > 0 ->
     new(0,N,#{}).
 new(N,L,A) when N =:= L ->
@@ -30,3 +32,5 @@ from_list(L) ->
 concat(X,W) ->
     S = maps:size(X),
     maps:fold(fun(K,V,A) -> A#{K+S=>V} end,X,W).
+concat(L) ->
+    lists:foldl(fun(M,A) -> concat(A,M) end,hd(L),tl(L)).
