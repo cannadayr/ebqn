@@ -119,6 +119,10 @@ times(inf,W) when W > 0 ->
     inf;
 times(X,W) when is_list(X);is_list(W) ->
     throw("DomainError: calling a number only function on a number and character");
+times(X,W) when not is_number(X),is_number(W) ->
+    throw("DomainError: calling a number only function on a number and function");
+times(X,W) when is_number(X),not is_number(W) ->
+    throw("DomainError: calling a number only function on a number and function");
 times(X,W) ->
     X*W.
 divide(0,undefined) ->
@@ -137,6 +141,8 @@ power(X,undefined) ->
     exp(X);
 power(X,W) when is_list(X),is_list(W) ->
     throw("DomainError: calling a number only function on a character and character");
+power(X,W) when is_list(W) ->
+    throw("DomainError: Expected number, got character");
 power(X,W) ->
     pow(W,X).
 floor(inf,_W) ->
