@@ -1,6 +1,6 @@
 -module(ebqn).
 
--export([run/3,call/3,list/1,fixed/1,concat/2,load_block/1,str/1,fmt/1,perf/1]).
+-export([run/3,call/3,list/1,load_block/1,str/1,fmt/1,perf/1]).
 -import(queue,[cons/2,tail/1,head/1,len/1]).
 
 -include("schema.hrl").
@@ -21,9 +21,9 @@ arr(R,Sh) ->
 list(A) when is_record(A,v) ->
     A;
 list(A) when not is_record(A,v) ->
-    arr(A,[array:size(A)]).
+    arr(A,[maps:size(A)]).
 str(S) ->
-    list(fixed(S)).
+    list(ebqn_array:from_list(S)).
 call(_F,undefined,_W) ->
     undefined;
 call(F,X,W) when is_number(F) ->
@@ -82,7 +82,7 @@ ge(I,E,An) when I =/= 0 ->
     #{E := Parent} = An,
     ge(I-1,Parent,An).
 hset(Heap,D,#v{r=Id},#v{r=V}) ->
-    array:foldl(fun(J,N,A) -> hset(A,D,N,array:get(J,V)) end,Heap,Id);
+    maps:fold(fun(J,N,A) -> hset(A,D,N,ebqn_array:get(J,V)) end,Heap,Id);
 hset(Heap,D,{E,I},V) ->
     A = maps:get(E,Heap),
     D = (ebqn_array:get(I,A) =:= undefined),
@@ -93,41 +93,11 @@ hget(Heap,{T,I}) when is_reference(T) ->
     true = (null =/= Z),
     Z;
 hget(Heap,#v{sh=S,r=R} = I) when is_record(I,v) ->
-    arr(array:map(fun(_J,E) -> hget(Heap,E) end,R),S).
-asize(X) when X =:= nil;X =:= [nil] ->
-    0;
-asize(X) ->
-    array:size(X).
-alist(X) when X =:= nil;X =:= [nil] ->
-    [];
-alist(X) when is_record(X,v) ->
-    array:to_list(X#v.r);
-alist(X) when not is_record(X,v) ->
-    array:to_list(X).
-afoldl(F,Acc,X) when X =:= nil;X =:= [nil] ->
-    Acc;
-afoldl(F,Acc,X) ->
-    array:foldl(F,Acc,X).
-fixed(X) when X =:= nil;X =:= [nil] ->
-    nil;
-fixed(X) when is_list(X) ->
-    array:fix(array:resize(length(X),array:from_list(X))).
-concat(nil,nil) ->
-    nil;
-concat(X,nil) when X =/= nil ->
-    X;
-concat(nil,W) when W =/= nil ->
-    W;
-concat(X,W) ->
-    Xs = array:size(X),
-    Z = array:resize(Xs+array:size(W),X),
-    array:foldl(fun(I,V,A) -> array:set(Xs+I,V,A) end,Z,W).
-concat(L) ->
-    lists:foldl(fun(V,A) -> concat(A,V) end,fixed([]),L).
+    arr(maps:map(fun(_J,E) -> hget(Heap,E) end,R),S).
 tail(L,A,S) when L =:= -1 ->
     {A,S};
 tail(L,A,S) ->
-    tail(L-1,array:set(L,head(S),A),tail(S)).
+    tail(L-1,ebqn_array:set(L,head(S),A),tail(S)).
 popn(N,Q) when N =:= 0 ->
     Q;
 popn(N,Q) when N =/= 0 ->
@@ -163,8 +133,8 @@ stack(B,O,S,Root,Heap,An,E,Stack,X,0) ->
     cons(element(1+X,O),Stack);
 stack(B,O,S,Root,Heap,An,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
     {T,Si} = case X of
-        0 -> {list(fixed([])),Stack};
-        _ -> tail(X-1,array:new(X),Stack)
+        0 -> {list(#{}),Stack};
+        _ -> tail(X-1,ebqn_array:new(X),Stack)
     end,
     cons(list(T),Si);
 stack(B,O,S,Root,Heap,An,E,Stack,undefined,7) ->
@@ -294,7 +264,7 @@ trace(Todo,Marked,Root,An,Heap) when is_tuple(hd(Todo)),is_reference(element(1,h
     trace([R]++tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),v) ->
     V = hd(Todo),
-    trace(alist(V#v.r)++tl(Todo),Marked,Root,An,Heap);
+    trace(ebqn_array:to_list(V#v.r)++tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),tr) ->
     Tr = hd(Todo),
     F = Tr#tr.f,
@@ -320,7 +290,7 @@ trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),r2) ->
     trace([M,F,G]++tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),bi) ->
     Bi = hd(Todo),
-    trace(alist(Bi#bi.args)++[Bi#bi.e]++tl(Todo),Marked,Root,An,Heap);
+    trace(ebqn_array:to_list(Bi#bi.args)++[Bi#bi.e]++tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_reference(hd(Todo)) ->
     E = hd(Todo),
     {TodoN,MarkedN} =
