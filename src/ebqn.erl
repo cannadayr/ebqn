@@ -123,10 +123,10 @@ derive(B,O,S,Block,E) ->
 args(B,P,Op) when Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 25 ->
     {undefined,P};
 args(B,P,Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 15 ->
-    {lists:nth(1+P,B),1+P};
+    {element(1+P,B),1+P};
 args(B,P,Op) when Op =:= 21; Op =:= 22 ->
-    X = lists:nth(1+P,B),
-    Y = lists:nth(2+P,B),
+    X = element(1+P,B),
+    Y = element(2+P,B),
     {{X,Y},2+P}.
 
 stack(B,O,S,Root,Heap,An,E,Stack,X,0) ->
@@ -222,8 +222,8 @@ vm(B,O,S,Block,E,P,Stack,rtn) ->
     put(rtn,popn(Num,get(rtn))), % pop this number of slots off the rtn stack
     Stack;
 vm(B,O,S,Block,E,P,Stack,cont) ->
-    Op = lists:nth(1+P,B),
-    %fmt({vm,Op,P+1}),
+    Op = element(1+P,B),
+    %fmt({vm,Op,P+1,E}),
     {Arg,Pn} = args(B,1+P,Op), % advances the ptr and reads the args
     Sn = stack(B,O,S,get(root),get(heap),get(an),E,Stack,Arg,Op), % mutates the stack
     put(heap,heap(get(root),get(heap),Stack,Op)), % mutates the heap
