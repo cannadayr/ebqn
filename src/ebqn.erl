@@ -1,6 +1,6 @@
 -module(ebqn).
 
--export([run/3,call/3,list/1,load_block/1,str/1,fmt/1,perf/1]).
+-export([run/1,run/3,call/3,list/1,load_block/1,str/1,fmt/1,perf/1]).
 -import(queue,[cons/2,tail/1,head/1,len/1]).
 
 -include("schema.hrl").
@@ -9,7 +9,7 @@ fmt(X) ->
     io:format("~p~n",[X]).
 dbg() ->
     halt(erlang:pid_to_list(self())).
-% ebqn:perf(fun() -> ebqn_test:test(ebqn_bc:runtime()) end).
+% ebqn:perf(fun() -> ebqn:run(ebqn_bc:runtime()) end).
 perf(F) ->
     B = erlang:timestamp(),
     V = F(),
@@ -334,6 +334,9 @@ init(Key,T) ->
         _ ->
             ok
     end.
+
+run([B,O,S]) ->
+    ebqn:run(list_to_tuple(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
 run(B,O,S) ->
     Root = make_ref(),
     Heap = #{},
