@@ -176,7 +176,7 @@ stack(B,O,S,Root,Heap,An,E,Stack,undefined,19) ->
 stack(B,O,S,Root,Heap,An,E,Stack,{X,Y},21) ->
     T = ge(X,E,get(an)),
     Z = ebqn_heap:get(T,Y,get(heap)),
-    true = (undefined =/= Z),
+    %true = (undefined =/= Z),
     cons(Z,Stack);
 stack(B,O,S,Root,Heap,An,E,Stack,{X,Y},22) ->
     T = ge(X,E,An),
