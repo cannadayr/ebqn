@@ -3,7 +3,7 @@
 -export([alloc/3,get/3,set/4]).
 
 alloc(E,Slots,Heap) ->
-    lists:foldl(fun(K,A) -> A#{{E,K}=>undefined} end,#{},lists:seq(0,Slots)).
+    maps:fold(fun(K,V,A) -> A#{{E,K}=>V} end,Heap,Slots).
 
 get(E,N,Heap) ->
     #{{E,N}:=Slot} = Heap,
