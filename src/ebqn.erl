@@ -84,13 +84,12 @@ ge(I,E,An) when I =/= 0 ->
 hset(Heap,D,#v{r=Id},#v{r=V}) ->
     maps:fold(fun(J,N,A) -> hset(A,D,N,ebqn_array:get(J,V)) end,Heap,Id);
 hset(Heap,D,{E,I},V) ->
-    A = maps:get(E,Heap),
-    D = (ebqn_array:get(I,A) =:= undefined),
-    maps:put(E,ebqn_array:set(I,V,A),Heap).
+    Slot = ebqn_heap:get(E,I,Heap),
+    D = (undefined =:= Slot),
+    ebqn_heap:set(E,I,V,Heap).
 hget(Heap,{T,I}) when is_reference(T) ->
-    Slots = maps:get(T,Heap),
-    Z = ebqn_array:get(I,Slots),
-    true = (null =/= Z),
+    Z = ebqn_heap:get(T,I,Heap),
+    true = (undefined =/= Z),
     Z;
 hget(Heap,#v{sh=S,r=R} = I) when is_record(I,v) ->
     arr(maps:map(fun(_J,E) -> hget(Heap,E) end,R),S).
@@ -175,10 +174,9 @@ stack(B,O,S,Root,Heap,An,E,Stack,undefined,19) ->
     H = head(tail(tail(Stack))),
     cons(#tr{f=F,g=G,h=H},tail(tail(tail(Stack))));
 stack(B,O,S,Root,Heap,An,E,Stack,{X,Y},21) ->
-    T = ge(X,E,An),
-    Slots = maps:get(T,Heap),
-    Z = ebqn_array:get(Y,Slots),
-    true = (null =/= Z),
+    T = ge(X,E,get(an)),
+    Z = ebqn_heap:get(T,Y,get(heap)),
+    true = (undefined =/= Z),
     cons(Z,Stack);
 stack(B,O,S,Root,Heap,An,E,Stack,{X,Y},22) ->
     T = ge(X,E,An),
@@ -202,8 +200,8 @@ heap(Root,Heap,Stack,Op) when Op =:= 13 ->
     F = head(tail(Stack)),
     X = head(tail(tail(Stack))),
     % the following call/3 may mutate the heap
-    % set the change on the proc_dict heap, *not* the Heap passed in via args
-    % this *must* be in separate lines!
+    % set the change on the proc_dict heap, not the Heap passed in via args
+    % this _must_ be in separate lines!
     Result = call(F,X,hget(Heap,I)),
     hset(get(heap),false,I,Result).
 
@@ -318,7 +316,7 @@ sweep(Heap,Refs) ->
     maps:without(sets:to_list(Refs),Heap).
 
 load_vm(B,O,S,Block,E,Parent,V) ->
-    put(heap,maps:put(E,V,get(heap))), % alloc slots
+    put(heap,ebqn_heap:alloc(E,V,get(heap))), % alloc slots
     An = get(an),
     put(an,An#{E => Parent}), % alloc relationship
     put(rtn,queue:cons(E,get(rtn))), % push reference to rtn stack
@@ -342,7 +340,7 @@ run(B,O,S) ->
     Heap = #{},
     An = #{}, % ancestors
     init(heap,Heap), % init the proc_dict
-    put(root,Root),
+    init(root,Root),
     init(an,An),
     put(rtn,queue:new()),
     % put bytecode, object, and section maps in the process dictionary. see derive/5
