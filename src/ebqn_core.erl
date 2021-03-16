@@ -82,9 +82,9 @@ plus(X,W) when not is_number(X),not is_list(X) ->
 plus(X,W) when not is_number(W),not is_list(W) ->
     throw("DomainError: calling a number only function on a function and number");
 plus(X,W) when is_list(X),not is_list(W) ->
-    [lists:nth(1,X) + W];
+    [hd(X) + W];
 plus(X,W) when is_list(W),not is_list(X) ->
-    [lists:nth(1,W) + X];
+    [hd(W) + X];
 plus(inf,W) when is_number(W) ->
     inf;
 plus(X,W)  ->
@@ -102,9 +102,9 @@ minus(X,undefined) when not is_number(X) ->
 minus(X,undefined) ->
     -1*X;
 minus(X,W) when is_list(X),is_list(W) ->
-    lists:nth(1,W) - lists:nth(1,X);
+    hd(W) - hd(X);
 minus(X,W) when not is_list(X),is_list(W) ->
-    [lists:nth(1,W) - X];
+    [hd(W) - X];
 minus(X,W) when is_list(X),not is_list(W) ->
     throw("DomainError: -: cannot operate on a number and character");
 minus(X,W) when is_number(X),is_number(W) ->
