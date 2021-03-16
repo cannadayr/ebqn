@@ -14,7 +14,7 @@ perf(F) ->
     B = erlang:timestamp(),
     V = F(),
     A = erlang:timestamp(),
-    timer:now_diff(A,B).
+    timer:now_diff(A,B)/1000.
 
 arr(R,Sh) ->
     #v{r=R,sh=Sh}.
@@ -239,7 +239,8 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
     % test for GC
     % currently using hard coded memory total
     % this should be replaced w/ either a platform specific system cmd or memsup
-    case ((?MEM*1024)-erlang:memory(total)) < 1024*1024*100 of
+    % ((?MEM*1024)-erlang:memory(total)) < 1024*1024*100
+    case false of
         true ->
             Refs = mark(get(root),get(heap),get(an),get(rtn),E,Slots), % get stale refs
             fmt({memory,process_info(self(),[heap_size,stack_size]),erlang:memory(processes)/(1024*1024),erts_debug:flat_size(get(heap))}),
