@@ -22,8 +22,15 @@ get(N,M) ->
 set(N,V,M) ->
     M#{N=>V}.
 
+% recursive fn calls to ensure in-order transformation
 to_list(M) ->
-    maps:fold(fun(_,V,A) -> [V]++A end,[],M).
+    S = maps:size(M),
+    to_list(0,S,[],M).
+to_list(I,L,A,M) when I =/= L ->
+    #{I := K} = M,
+    to_list(I+1,L,[K]++A,M);
+to_list(I,L,A,M) when I =:= L ->
+    lists:reverse(A).
 
 from_list(L) ->
     {_,R} = lists:foldl(fun(V,{N,A}) -> {N+1,A#{N=>V}} end,{0,#{}},L),
