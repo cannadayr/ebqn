@@ -189,15 +189,6 @@ reshape(#v{r=X},W) ->
     arr(X,W).
 pick(#v{r=X} = Y,W) ->
     ebqn_array:get(trunc(W),X).
-%pick(#v{r=X} = Y,W) ->
-%    %fmt(pick),
-%    % js x[y] compatibility
-%    case W >= array:size(X) of
-%        true ->
-%            undefined;
-%        false ->
-%            array:get(trunc(W),X)
-%    end.
 window(X,undefined) ->
     list(ebqn_array:from_list(seq(0,trunc(X)-1))).
 table(F) ->
@@ -216,7 +207,7 @@ scan(F) ->
             R = ebqn_array:new(L),
             H = fun
                 (Ri,Li) when Li > 0 ->
-                    C = lists:foldl(fun(E,A) -> A*E end,1,lists:nthtail(1,S)),
+                    C = lists:foldl(fun(E,A) -> A*E end,1,tl(S)),
                     G = fun
                         G(I,Ci,Rn) when I =/= Ci ->
                             G(I+1,Ci,ebqn_array:set(I,ebqn_array:get(I,X),Rn));
