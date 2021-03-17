@@ -107,6 +107,8 @@ minus(X,W) when not is_list(X),is_list(W) ->
     [hd(W) - X];
 minus(X,W) when is_list(X),not is_list(W) ->
     throw("DomainError: -: cannot operate on a number and character");
+minus(X,W) when not is_number(X);not is_number(W) ->
+    throw("DomainError: calling a number only function on a number and function");
 minus(X,W) when is_number(X),is_number(W) ->
     W-X.
 times(X,undefined) when X < 0 ->
@@ -129,6 +131,8 @@ divide(0,undefined) ->
     inf;
 divide(inf,undefined) ->
     0;
+divide(X,undefined) when is_record(X,bi);is_record(X,tr);is_function(X) ->
+    throw("DomainError: Expected number, got function");
 divide(X,undefined) when is_list(X) ->
     throw("DomainError: Expected number, got character");
 divide(X,undefined) ->
