@@ -26,7 +26,7 @@ type(X,_W) when is_record(X,m2) ->
     5;
 type(X,_W) when is_record(X,v) ->
     0;
-type(X,_W) when is_number(X) ->
+type(X,_W) when is_number(X);X =:= inf; X =:= ninf ->
     1;
 type(X,_W) ->
     2.
@@ -180,7 +180,12 @@ lesseq(X,W) ->
             true ->
                 S =< T;
             false ->
-                W =< X
+                case (W =:= ninf) or (X =:= inf) of
+                    true ->
+                        false;
+                    false ->
+                        W =< X
+                end
         end,
     case R of true -> 1; false -> 0 end.
 shape(#v{sh=Sh},undefined) ->
