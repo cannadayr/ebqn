@@ -102,9 +102,23 @@ minus(X,undefined) when not is_number(X) ->
 minus(X,undefined) ->
     -1*X;
 minus(X,W) when is_list(X),is_list(W) ->
-    hd(W) - hd(X);
+    R = hd(W) - hd(X),
+    case R =< 0 of
+        true ->
+            throw("DomainError: Result out of range");
+        false ->
+            ok
+    end,
+    R;
 minus(X,W) when not is_list(X),is_list(W) ->
-    [hd(W) - X];
+    R = hd(W) - X,
+    case R =< 0 of
+        true ->
+            throw("DomainError: Result out of range");
+        false ->
+            ok
+    end,
+    [R];
 minus(X,W) when is_list(X),not is_list(W) ->
     throw("DomainError: -: cannot operate on a number and character");
 minus(X,W) when not is_number(X);not is_number(W) ->
