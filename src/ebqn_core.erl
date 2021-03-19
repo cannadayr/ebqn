@@ -103,7 +103,7 @@ minus(X,undefined) ->
     -1*X;
 minus(X,W) when is_list(X),is_list(W) ->
     R = hd(W) - hd(X),
-    case R =< 0 of
+    case R < 0 of
         true ->
             throw("DomainError: Result out of range");
         false ->
@@ -112,7 +112,7 @@ minus(X,W) when is_list(X),is_list(W) ->
     R;
 minus(X,W) when not is_list(X),is_list(W) ->
     R = hd(W) - X,
-    case R =< 0 of
+    case R < 0 of
         true ->
             throw("DomainError: Result out of range");
         false ->
