@@ -180,7 +180,7 @@ lesseq(X,W) ->
             true ->
                 S =< T;
             false ->
-                case (W =:= ninf) or (X =:= inf) of
+                case (X =:= ninf) or (W =:= inf) of
                     true ->
                         false;
                     false ->
