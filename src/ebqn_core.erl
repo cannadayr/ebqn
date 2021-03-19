@@ -184,7 +184,7 @@ lesseq(X,ninf) ->
     1;
 lesseq(X,inf) ->
     0;
-lesseq(X,W) when is_record(X,bi);is_record(W,bi);is_function(X);is_function(W) ->
+lesseq(X,W) when is_record(X,bi);is_record(W,bi);is_record(X,tr);is_record(W,tr);is_function(X);is_function(W) ->
     throw("DomainError: lesseq: Cannot compare functions");
 lesseq(X,W) ->
     T = type(X,undefined),
