@@ -193,9 +193,9 @@ layer1(#v{r=Runtime}) ->
     1 = ebqn:run([[0,3,0,0,16,0,1,0,2,17,25],[ebqn_array:get(8,Runtime),ebqn_array:get(18,Runtime),5,-5],[[0,1,0,0]]]), %5≡|¯5
     1 = ebqn:run([[0,2,0,0,16,0,1,0,2,17,25],[ebqn_array:get(8,Runtime),ebqn_array:get(18,Runtime),6],[[0,1,0,0]]]), %6≡|6
     1 = ebqn:run([[0,3,0,0,16,0,1,0,2,17,25],[ebqn_array:get(8,Runtime),ebqn_array:get(18,Runtime),inf,ninf],[[0,1,0,0]]]), %∞≡|¯∞
-    %ok = try ebqn:run([[0,1,0,0,9,22,0,0,11,14,21,0,0,0,2,16,25],[ebqn_array:get(0,Runtime),ebqn_array:get(1,Runtime),ebqn_array:get(8,Runtime)],[[0,1,0,1]]]) % F←+-⋄|f
-    %    catch _ -> ok
-    %end,
+    ok = try ebqn:run([[0,1,0,0,9,22,0,0,11,14,21,0,0,0,2,16,25],[ebqn_array:get(0,Runtime),ebqn_array:get(1,Runtime),ebqn_array:get(8,Runtime)],[[0,1,0,1]]]) % F←+-⋄|f
+        catch _ -> ok
+    end,
     1 = ebqn:run([[0,4,0,0,0,3,17,0,1,0,2,17,25],[ebqn_array:get(8,Runtime),ebqn_array:get(18,Runtime),2,3,8],[[0,1,0,0]]]), %2≡3|8
     1 = ebqn:run([[0,4,0,0,0,3,17,0,1,0,2,17,25],[ebqn_array:get(8,Runtime),ebqn_array:get(18,Runtime),2,3,-7],[[0,1,0,0]]]), %2≡3|¯7
     1 = ebqn:run([[0,4,0,0,0,3,17,0,1,0,2,17,25],[ebqn_array:get(8,Runtime),ebqn_array:get(18,Runtime),-1,-3,8],[[0,1,0,0]]]), %¯1≡¯3|8
