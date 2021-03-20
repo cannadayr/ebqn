@@ -145,9 +145,9 @@ divide(0,undefined) ->
     inf;
 divide(inf,undefined) ->
     0;
-divide(X,undefined) when is_record(X,bi);is_record(X,tr);is_function(X) ->
+divide(X,W) when is_record(X,bi);is_record(X,tr);is_function(X) ->
     throw("DomainError: Expected number, got function");
-divide(X,undefined) when is_list(X) ->
+divide(X,W) when is_list(X) ->
     throw("DomainError: Expected number, got character");
 divide(X,undefined) ->
     1 / X;
