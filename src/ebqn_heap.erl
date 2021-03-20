@@ -6,8 +6,7 @@ alloc(E,Slots,Heap) ->
     maps:fold(fun(K,V,A) -> A#{{E,K}=>V} end,Heap,Slots).
 
 get(E,N,Heap) ->
-    #{{E,N}:=Slot} = Heap,
-    Slot.
+     maps:get({E,N},Heap).
 
 set(E,N,V,Heap) ->
     Heap#{{E,N}=>V}.
