@@ -255,7 +255,9 @@ fill_by(F,G) ->
 % TODO add `setrepr`
 cases(F,G) ->
     fun
-        (X,undefined) ->
+        (X,undefined) when is_list(X),length(X) =:= 1 ->
+            call(F,hd(X),undefined);
+        (X,undefined) when not is_list(X) ->
             call(F,X,undefined);
         (X,W) ->
             call(G,X,W)
