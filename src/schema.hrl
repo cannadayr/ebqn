@@ -5,6 +5,7 @@
 -record(bi,{b,o,s,t,d,args,e}). % bytecode, objs, sections, type, definition, args, env
 -record(tr,{f,g,h}).
 -record(v,{sh,r}). % value (shape, ravel)
+-record(c,{p}). % character (point)
 -record(m1,{f}).
 -record(m2,{f}).
 -record(r1,{m,f}). % raw 1-mod

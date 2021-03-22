@@ -1,6 +1,6 @@
 -module(ebqn).
 
--export([run/1,run/3,call/3,list/1,load_block/1,str/1,fmt/1,perf/1]).
+-export([run/1,run/3,call/3,list/1,load_block/1,char/1,str/1,fmt/1,perf/1]).
 -import(queue,[cons/2,tail/1,head/1,len/1]).
 
 -include("schema.hrl").
@@ -22,8 +22,10 @@ list(A) when is_record(A,v) ->
     A;
 list(A) when not is_record(A,v) ->
     arr(A,[maps:size(A)]).
+char([C]) ->
+    #c{p=C}.
 str(S) ->
-    list(ebqn_array:from_list(S)).
+    list(ebqn_array:from_list(lists:map(fun(P) -> #c{p=P} end,S))).
 call(_F,undefined,_W) ->
     undefined;
 call(F,X,W) when is_number(F) ->

@@ -12,10 +12,10 @@ Esc←{
   𝕩 ↩ i ⊏⟜out⌾((i<≠out)⊸/) 𝕩  # Replace
   ∾(i<≠in) /⟜"\"⊸∾¨ 𝕩         # Insert \
 }
-Str ← "str("""∾Esc∾""")"˜     # A BQN string
-Char ← '"'(∾∾⊣)Esc∘⥊          # A BQN character
-FP ← ∞⊸=◶⟨⍕,"inf"⟩            # Format positive number
-Num0 ← 0⊸≤◶⟨"-"∾FP∘|,FP⟩      # Format number
+Str ← "str("""∾Esc∾""")"˜       # A BQN string
+Char ← {"char("""∾𝕩∾""")"}Esc∘⥊ # A BQN character
+FP ← ∞⊸=◶⟨⍕,"inf"⟩              # Format positive number
+Num0 ← 0⊸≤◶⟨"-"∾FP∘|,FP⟩        # Format number
 Num ← ¯∞⊸≢◶⟨"n"∾Num0∘|,Num0⟩
 
 F ← ⍕  # Format number
