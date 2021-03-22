@@ -75,16 +75,15 @@ assert_fn(Pre) ->
     end.
 plus(X,undefined) ->
     X;
-plus(X,W) when is_list(X),is_list(W) ->
-    throw("DomainError: +: cannot add char to char");
-plus(X,W) when not is_number(X),not is_list(X) ->
-    throw("DomainError: calling a number only function on a function and number");
-plus(X,W) when not is_number(W),not is_list(W) ->
-    throw("DomainError: calling a number only function on a function and number");
-plus(X,W) when is_list(X),not is_list(W) ->
-    [hd(X) + W];
-plus(X,W) when is_list(W),not is_list(X) ->
-    [hd(W) + X];
+plus(X,W) when is_record(X,c),is_record(W,c) ->
+    throw("+: Cannot add two characters");
+plus(X,W) when (is_record(X,tr) or is_record(X,bi) or is_record(X,m1) or is_record(X,m2) or is_function(X))  or
+               (is_record(W,tr) or is_record(W,bi) or is_record(W,m1) or is_record(W,m2) or is_function(W)) ->
+    throw("+: Cannot add non-data values");
+plus(X,W) when is_record(X,c),not is_record(W,c) ->
+    #c{p=X#c.p + W};
+plus(X,W) when is_record(W,c),not is_record(X,c) ->
+    #c{p=W#c.p + X};
 plus(inf,W) when is_number(W) ->
     inf;
 plus(X,W)  ->
@@ -95,34 +94,26 @@ minus(ninf,undefined) ->
     inf;
 minus(inf,W) ->
     ninf;
-minus(X,undefined) when is_list(X) ->
-    throw("DomainError: Expected number, got character");
 minus(X,undefined) when not is_number(X) ->
-    throw("DomainError: Expected number, got function");
+    throw("-: Can only negate numbers");
 minus(X,undefined) ->
     -1*X;
-minus(X,W) when is_list(X),is_list(W) ->
-    R = hd(W) - hd(X),
-    case R < 0 of
+minus(X,W) when (is_record(X,tr) or is_record(X,bi) or is_record(X,m1) or is_record(X,m2) or is_function(X))  or
+                (is_record(W,tr) or is_record(W,bi) or is_record(W,m1) or is_record(W,m2) or is_function(W)) ->
+    throw("-: Can only negate numbers");
+minus(X,W) when is_record(X,c),is_record(W,c) ->
+    W#c.p - X#c.p;
+minus(X,W) when not is_record(X,c),is_record(W,c) ->
+    P = W#c.p - X,
+    case P < 0 of
         true ->
-            throw("DomainError: Result out of range");
+            throw("Invalid code point");
         false ->
             ok
     end,
-    R;
-minus(X,W) when not is_list(X),is_list(W) ->
-    R = hd(W) - X,
-    case R < 0 of
-        true ->
-            throw("DomainError: Result out of range");
-        false ->
-            ok
-    end,
-    [R];
-minus(X,W) when is_list(X),not is_list(W) ->
-    throw("DomainError: -: cannot operate on a number and character");
-minus(X,W) when not is_number(X);not is_number(W) ->
-    throw("DomainError: calling a number only function on a number and function");
+    #c{p=P};
+minus(X,W) when is_record(X,c),not is_record(W,c) ->
+    throw("-: Can only negate numbers");
 minus(X,W) when is_number(X),is_number(W) ->
     W-X.
 times(X,undefined) when X < 0 ->
@@ -133,12 +124,12 @@ times(X,undefined) when X > 0 ->
     1;
 times(inf,W) when W > 0 ->
     inf;
-times(X,W) when is_list(X);is_list(W) ->
-    throw("DomainError: calling a number only function on a number and character");
+times(X,W) when is_record(X,c);is_record(W,c) ->
+    throw("×: Arguments must be numbers");
 times(X,W) when not is_number(X),is_number(W) ->
-    throw("DomainError: calling a number only function on a number and function");
+    throw("×: Arguments must be numbers");
 times(X,W) when is_number(X),not is_number(W) ->
-    throw("DomainError: calling a number only function on a number and function");
+    throw("×: Arguments must be numbers");
 times(X,W) ->
     X*W.
 divide(0,undefined) ->
@@ -146,29 +137,25 @@ divide(0,undefined) ->
 divide(inf,undefined) ->
     0;
 divide(X,W) when is_record(X,bi);is_record(X,tr);is_function(X) ->
-    throw("DomainError: Expected number, got function");
-divide(X,W) when is_list(X);is_list(W) ->
-    throw("DomainError: Expected number, got character");
+    throw("÷: Arguments must be numbers");
+divide(X,W) when is_record(X,c);is_record(W,c) ->
+    throw("÷: Arguments must be numbers");
 divide(X,undefined) ->
     1 / X;
 divide(X,W) ->
     W / X.
-power(X,undefined) when is_list(X) ->
-    throw("DomainError: Expected number, got character");
+power(X,W) when is_record(X,c);is_record(W,c) ->
+    throw("⋆: Arguments must be numbers");
 power(X,undefined) ->
     exp(X);
-power(X,W) when is_list(X),is_list(W) ->
-    throw("DomainError: calling a number only function on a character and character");
-power(X,W) when is_list(W) ->
-    throw("DomainError: Expected number, got character");
 power(X,W) ->
     pow(W,X).
 floor(inf,_W) ->
     inf;
 floor(ninf,_W) ->
     ninf;
-floor(X,_W) when not is_number(X),not is_list(X) ->
-    throw("DomainError: ⌊: argument contained a function");
+floor(X,_W) when not is_number(X),not is_record(X,c) ->
+    throw("⌊: Cannot compare operations");
 floor(X,_W) when is_number(X) ->
     floor(X).
 equals(#v{sh=S} = X,undefined) when is_record(X,v),is_list(S) ->
@@ -178,14 +165,14 @@ equals(X,W) ->
     case X == W of true -> 1; false -> 0 end.
 lesseq(X,W) when X =:= W ->
     1;
-lesseq(X,inf) when is_list(X),hd(X) =:= 0 ->
+lesseq(X,inf) when is_record(X,c) ->
     1;
 lesseq(X,ninf) ->
     1;
 lesseq(X,inf) ->
     0;
 lesseq(X,W) when is_record(X,bi);is_record(W,bi);is_record(X,tr);is_record(W,tr);is_function(X);is_function(W) ->
-    throw("DomainError: lesseq: Cannot compare functions");
+    throw("𝕨≤𝕩: Cannot compare operations");
 lesseq(X,W) ->
     T = type(X,undefined),
     S = type(W,undefined),
@@ -249,10 +236,9 @@ scan(F) ->
             end,
             arr(H(R,L),S)
     end.
-% fill_by not yet implemented
+% fill_by not implemented
 fill_by(F,G) ->
     F.
-% TODO add `setrepr`
 cases(F,G) ->
     fun
         (X,undefined) when is_list(X),length(X) =:= 1 ->
