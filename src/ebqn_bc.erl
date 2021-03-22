@@ -2,7 +2,7 @@
 
 -include("schema.hrl").
 
--import(ebqn,[str/1]).
+-import(ebqn,[char/1,str/1]).
 -export([runtime/0,compiler/1]).
 
 runtime() ->
