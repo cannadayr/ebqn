@@ -48,14 +48,14 @@ log(X,undefined) ->
 log(X,W) ->
     log(X) / log(W).
 group_len(#v{r=X},_W) ->
-    L = maps:fold(fun(_I,V,A) -> max(A,V) end,-1,X),
+    L = ebqn_array:foldl(fun(_I,V,A) -> max(A,V) end,-1,X),
     R = ebqn_array:new(L+1,{default,0}),
     F = fun (_I,E,A) when E >= 0 -> ebqn_array:set(E,1+ebqn_array:get(E,A),A);
             (_I,_E,A)            -> A
     end,
-    ebqn:list(maps:fold(F,R,X)).
+    ebqn:list(ebqn_array:foldl(F,R,X)).
 group_ord(#v{r=X},#v{r=W}) ->
-    {S,L} = maps:fold(fun(_I,V,{Si,Li}) -> {ebqn_array:concat(Si,ebqn_array:from_list([Li])),Li+V} end,{nil,0},W),
+    {S,L} = ebqn_array:foldl(fun(_I,V,{Si,Li}) -> {ebqn_array:concat(Si,ebqn_array:from_list([Li])),Li+V} end,{nil,0},W),
     R = ebqn_array:new(L),
     F = fun
         (I,V,{Si,Ri}) when V >= 0 ->
@@ -64,7 +64,7 @@ group_ord(#v{r=X},#v{r=W}) ->
         (_I,_V,A) ->
             A
     end,
-    {_, O} = maps:fold(F,{S,R},X),
+    {_, O} = ebqn_array:foldl(F,{S,R},X),
     list(O).
 assert_fn(Pre) ->
     fun
@@ -158,8 +158,8 @@ floor(X,_W) when not is_number(X),not is_record(X,c) ->
     throw("⌊: Cannot compare operations");
 floor(X,_W) when is_number(X) ->
     floor(X).
-equals(#v{sh=S} = X,undefined) when is_record(X,v),is_list(S) ->
-    length(S);
+equals(X,undefined) when is_record(X,v) ->
+    length(X#v.sh);
 equals(X,W) ->
     % use '==' for float-to-int comparisons
     case X == W of true -> 1; false -> 0 end.
@@ -241,9 +241,7 @@ fill_by(F,G) ->
     F.
 cases(F,G) ->
     fun
-        (X,undefined) when is_list(X),length(X) =:= 1 ->
-            call(F,hd(X),undefined);
-        (X,undefined) when not is_list(X) ->
+        (X,undefined) ->
             call(F,X,undefined);
         (X,W) ->
             call(G,X,W)
