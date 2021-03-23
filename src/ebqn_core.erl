@@ -20,9 +20,9 @@ is_array(_X,_W) ->
     0.
 type(X,_W) when is_function(X);is_record(X,bi) ->
     3;
-type(X,_W) when is_record(X,m1) ->
+type(X,_W) when is_record(X,m1);is_record(X,r1) ->
     4;
-type(X,_W) when is_record(X,m2) ->
+type(X,_W) when is_record(X,m2);is_record(X,r2) ->
     5;
 type(X,_W) when is_record(X,v) ->
     0;
