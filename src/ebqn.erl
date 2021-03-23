@@ -1,6 +1,6 @@
 -module(ebqn).
 
--export([run/1,run/3,call/3,list/1,load_block/1,char/1,str/1,fmt/1,perf/1]).
+-export([run/1,run/3,call/3,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1]).
 -import(queue,[cons/2,tail/1,head/1,len/1]).
 
 -include("schema.hrl").
@@ -26,6 +26,9 @@ char([C]) ->
     #c{p=C}.
 str(S) ->
     list(ebqn_array:from_list(lists:map(fun(P) -> #c{p=P} end,S))).
+strings(#v{r=X}) ->
+            io_lib:format("~ts~n",[lists:map(fun(E) -> E#c.p end,ebqn_array:to_list(X))]).
+
 call(_F,undefined,_W) ->
     undefined;
 call(F,X,W) when is_number(F) ->
