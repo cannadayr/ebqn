@@ -69,7 +69,12 @@ group_ord(#v{r=X},#v{r=W}) ->
 assert_fn(Pre) ->
     fun
         (X,W) when X =/= 1 ->
-            throw({assert_fn,X,W});
+            case W =/= undefined of
+                true ->
+                    throw({assert_fn,ebqn:strings(W)});
+                false ->
+                    throw({assert_fn,Pre})
+            end;
         (X,W) ->
             X
     end.
