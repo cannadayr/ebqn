@@ -40,7 +40,8 @@ decompose(X,W) ->
     end.
 glyph(X,W) ->
     throw("glyph not implemented").
-% fill not yet implemented
+fill(X,undefined) ->
+    0;
 fill(X,W) ->
     X.
 log(X,undefined) ->
@@ -241,9 +242,10 @@ scan(F) ->
             end,
             arr(H(R,L),S)
     end.
-% fill_by not implemented
 fill_by(F,G) ->
-    F.
+    fun(X,W) ->
+        call(F,X,W)
+    end.
 cases(F,G) ->
     fun
         (X,undefined) ->
