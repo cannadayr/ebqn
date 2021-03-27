@@ -50,7 +50,7 @@ log(X,W) ->
     log(X) / log(W).
 group_len(#v{r=X},_W) ->
     L = ebqn_array:foldl(fun(_I,V,A) -> max(A,V) end,-1,X),
-    R = ebqn_array:new(L+1,{default,0}),
+    R = ebqn_array:new(L+1,0),
     F = fun (_I,E,A) when E >= 0 -> ebqn_array:set(E,1+ebqn_array:get(E,A),A);
             (_I,_E,A)            -> A
     end,

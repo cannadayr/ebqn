@@ -4,16 +4,20 @@
 % https://erlang.org/doc/man/maps.html
 % https://en.wikipedia.org/wiki/Hash_array_mapped_trie
 
--export([new/1,get/2,set/3,to_list/1,concat/1,concat/2,from_list/1,foldl/3]).
+-export([new/1,new/2,get/2,set/3,to_list/1,concat/1,concat/2,from_list/1,foldl/3]).
 
 new(N) when N =:= 0 ->
     #{};
 new(N) when is_integer(N),N > 0 ->
-    new(0,N,#{}).
-new(N,L,A) when N =:= L ->
+    new(0,N,#{},undefined).
+new(N,Default) when N =:= 0 ->
+    #{};
+new(N,Default) when is_integer(N),N > 0 ->
+    new(0,N,#{},Default).
+new(N,L,A,Default) when N =:= L ->
     A;
-new(N,L,A) ->
-    new(N+1,L,A#{N=>undefined}).
+new(N,L,A,Default) ->
+    new(N+1,L,A#{N=>Default},Default).
 
 get(N,M) ->
     #{N := V}  = M,
