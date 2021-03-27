@@ -31,13 +31,7 @@ type(X,_W) when is_number(X);X =:= inf; X =:= ninf ->
 type(X,_W) ->
     2.
 decompose(X,W) ->
-    case not is_function(X) of
-        true ->
-            list(ebqn_array:from_list([-1,X]));
-        false ->
-            % glyph & repr cases not implemented
-            list(ebqn_array:from_list([1,X]))
-    end.
+    list(ebqn_array:from_list([0,X])).
 glyph(X,W) ->
     throw("glyph not implemented").
 fill(X,undefined) ->
@@ -253,7 +247,7 @@ cases(F,G) ->
         (X,W) ->
             call(G,X,W)
     end.
-fns() -> [fun type/2,fun decompose/2,fun glyph/2,fun fill/2,fun log/2,fun group_len/2,fun group_ord/2,
+fns() -> [fun type/2,fun fill/2,fun log/2,fun group_len/2,fun group_ord/2,
                      assert_fn(""),fun plus/2,fun minus/2,fun times/2,fun divide/2,
                      fun power/2,fun floor/2,fun equals/2,fun lesseq/2,fun shape/2,
                      fun reshape/2,fun pick/2,fun window/2,m1(fun table/1),m1(fun scan/1),m2(fun fill_by/2),m2(fun cases/2)].
