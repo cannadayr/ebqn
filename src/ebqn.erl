@@ -30,23 +30,23 @@ strings(#v{r=X}) ->
             io_lib:format("~ts~n",[lists:map(fun(E) -> E#c.p end,ebqn_array:to_list(X))]).
 
 call(State,_F,undefined,_W) ->
-    undefined;
+    {State,undefined};
 call(State,F,X,W) when is_number(F) ->
-    F;
+    {State,F};
 call(State,F,X,W) when is_function(F) ->
-    F(X,W);
+    {State,F(X,W)};
 call(State,R,X,W) when is_record(R,r1) ->
     M = R#r1.m,
     F = R#r1.f,
     Fn = M#m1.f,
-    D = Fn(F),
+    {St1,D} = Fn(F),
     call(State,D,X,W);
 call(State,R,X,W) when is_record(R,r2) ->
     M = R#r2.m,
     F = R#r2.f,
     G = R#r2.g,
     Fn = M#m2.f,
-    D = Fn(F,G),
+    {St1,D} = Fn(F,G),
     call(State,D,X,W);
 call(State,F,X,W) when is_record(F,bi) ->
     0 = F#bi.t,
@@ -55,18 +55,18 @@ call(State,F,X,W) when is_record(F,bi) ->
     L = ebqn_array:concat([ebqn_array:from_list([F,X,W]),Args,ebqn_array:new(D#bl.l)]),
     load_vm(State,F#bi.b,F#bi.o,F#bi.s,D,make_ref(),F#bi.e,L);
 call(State,T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
-    R = call(State,T#tr.h,X,W),
-    L = call(State,T#tr.f,X,W),
+    {St1,R} = call(State,T#tr.h,X,W),
+    {St2,L} = call(State,T#tr.f,X,W),
     call(State,T#tr.g,R,L);
 call(State,T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
-    R = call(State,T#tr.h,X,W),
+    {St1,R} = call(State,T#tr.h,X,W),
     call(State,T#tr.g,R,undefined);
 call(State,V,X,W) when is_record(V,v) ->
-    V;
+    {State,V};
 call(State,F,X,W) when not is_function(F) ->
-    F.
+    {State,F}.
 call_block(State,M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
-    M#bi{args=Args,t=0};
+    {State,M#bi{args=Args,t=0}};
 call_block(State,M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
     D = M#bi.d,
     L = ebqn_array:concat([Args,ebqn_array:new(D#bl.l - maps:size(Args))]),
@@ -75,12 +75,12 @@ call1(State,M,F) when is_record(M,bi) ->
     true = (1 =:= M#bi.t),
     call_block(State,M,ebqn_array:from_list([M,F]));
 call1(State,M,F) when is_record(M,m1) ->
-    #r1{m=M,f=F}.
+    {State,#r1{m=M,f=F}}.
 call2(State,M,F,G) when is_record(M,bi) ->
     true = (2 =:= M#bi.t),
     call_block(State,M,ebqn_array:from_list([M,F,G]));
 call2(State,M,F,G) when is_record(M,m2) ->
-    #r2{m=M,f=F,g=G}.
+    {State,#r2{m=M,f=F,g=G}}.
 ge(I,E,An) when I =:= 0 ->
     E;
 ge(I,E,An) when I =/= 0 ->
@@ -110,7 +110,7 @@ popn(N,Q) when N =/= 0 ->
 derive(State,B,O,S,#bl{t=0,i=1} = Block,E) ->
     load_vm(State,B,O,S,Block,make_ref(),E,ebqn_array:new(Block#bl.l));
 derive(State,B,O,S,Block,E) ->
-    #bi{b=B,o=O,s=S,t=Block#bl.t,d=Block,args=#{},e=E}.
+    {State,#bi{b=B,o=O,s=S,t=Block#bl.t,d=Block,args=#{},e=E}}.
 
 args(B,P,Op) when Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 25 ->
     {undefined,P};
@@ -132,13 +132,15 @@ stack(State,B,O,S,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
 stack(State,B,O,S,E,Stack,undefined,7) ->
     F = head(Stack),
     M = head(tail(Stack)),
-    Sn = cons(call1(State,M,F),tail(tail(Stack))),
+    {State1,Result} = call1(State,M,F),
+    Sn = cons(Result,tail(tail(Stack))),
     {get(st),Sn};
 stack(State,B,O,S,E,Stack,undefined,8) ->
     F = head(Stack),
     M = head(tail(Stack)),
     G = head(tail(tail(Stack))),
-    Sn = cons(call2(State,M,F,G),tail(tail(tail(Stack)))),
+    {St1,Result} = call2(State,M,F,G),
+    Sn = cons(Result,tail(tail(tail(Stack)))),
     {get(st),Sn};
 stack(State,B,O,S,E,Stack,undefined,9) ->
     G = head(Stack),
@@ -161,7 +163,7 @@ stack(State0,B,O,S,E,Stack,X,13) ->
     % the following call/3 may mutate the heap
     % set the change on the proc_dict heap, not the Heap passed in via args
     % this _must_ be in separate lines!
-    Result = call(State0,F,G,hget(State0#st.heap,I)),
+    {St1,Result} = call(State0,F,G,hget(State0#st.heap,I)),
     State1 = get(st),
     NxtHeap = hset(State1#st.heap,false,I,Result),
     {State1#st{heap=NxtHeap},tail(tail(Stack))};
@@ -169,19 +171,20 @@ stack(State,B,O,S,E,Stack,X,14) ->
     {State,tail(Stack)};
 stack(State,B,O,S,E,Stack,X,15) ->
     Block = load_block(element(1+X,S)),
-    D = derive(State,B,O,S,Block,E),
+    {State1,D} = derive(State,B,O,S,Block,E),
     {get(st),cons(D,Stack)};
 stack(State,B,O,S,E,Stack,undefined,16) ->
     F = head(Stack),
     X = head(tail(Stack)),
-    Result = call(State,F,X,undefined),
+    {State1,Result} = call(State,F,X,undefined),
     Sn = cons(Result,tail(tail(Stack))),
     {get(st),Sn};
 stack(State,B,O,S,E,Stack,undefined,17) ->
     W = head(Stack),
     F = head(tail(Stack)),
     X = head(tail(tail(Stack))),
-    Sn = cons(call(State,F,X,W),tail(tail(tail(Stack)))),
+    {State1,Result} = call(State,F,X,W),
+    Sn = cons(Result,tail(tail(tail(Stack)))),
     {get(st),Sn};
 stack(State,B,O,S,E,Stack,undefined,19) ->
     F = head(Stack),
@@ -205,16 +208,18 @@ ctrl(Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:=
 ctrl(Op) when Op =:= 25 ->
     rtn.
 
-vm(State,B,O,S,Block,E,P,Stack,rtn) ->
+vm(State0,B,O,S,Block,E,P,Stack,rtn) ->
     % get the number of children for each environment
-    State = get(st),
-    An = State#st.an,
+    %State = get(st),
+    An = State0#st.an,
     Children = maps:fold(fun(K,V,A) -> maps:update_with(V,fun(N) -> N+1 end,1,A) end,#{},An),
     % get the number of children for this environment
     Num = maps:get(E,Children,0),
-    %fmt("~p~n",[{rtn_pop,Num}]),
-    put(st,State#st{rtn=popn(Num,State#st.rtn)}), % pop this number of slots off the rtn stack
-    Stack;
+    %fmt({rtn_pop,Num}),
+    State1 = State0#st{rtn=popn(Num,State0#st.rtn)},
+    put(st,State1), % pop this number of slots off the rtn stack
+    fmt({rtn_stack,Stack}),
+    {State1,Stack};
 vm(State0,B,O,S,Block,E,P,Stack,cont) ->
     Op = element(1+P,B),
     %fmt({vm,Op,P+1,E}),
@@ -342,4 +347,5 @@ run(B,O,S) ->
     State = init_st(),
     put(st,State),
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
-    load_vm(State,B,O,S,Block,State#st.root,State#st.root,ebqn_array:new(L)). % set the root environment, and root as its own parent.
+    {State1,Result} = load_vm(State,B,O,S,Block,State#st.root,State#st.root,ebqn_array:new(L)), % set the root environment, and root as its own parent.
+    Result.
