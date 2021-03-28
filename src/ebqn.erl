@@ -1,6 +1,6 @@
 -module(ebqn).
 
--export([run/1,run/3,call/3,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1]).
+-export([run/1,run/3,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1]).
 -import(queue,[cons/2,tail/1,head/1,len/1]).
 
 -include("schema.hrl").
@@ -29,41 +29,41 @@ str(S) ->
 strings(#v{r=X}) ->
             io_lib:format("~ts~n",[lists:map(fun(E) -> E#c.p end,ebqn_array:to_list(X))]).
 
-call(_F,undefined,_W) ->
+call(State,_F,undefined,_W) ->
     undefined;
-call(F,X,W) when is_number(F) ->
+call(State,F,X,W) when is_number(F) ->
     F;
-call(F,X,W) when is_function(F) ->
+call(State,F,X,W) when is_function(F) ->
     F(X,W);
-call(R,X,W) when is_record(R,r1) ->
+call(State,R,X,W) when is_record(R,r1) ->
     M = R#r1.m,
     F = R#r1.f,
     Fn = M#m1.f,
     D = Fn(F),
-    call(D,X,W);
-call(R,X,W) when is_record(R,r2) ->
+    call(State,D,X,W);
+call(State,R,X,W) when is_record(R,r2) ->
     M = R#r2.m,
     F = R#r2.f,
     G = R#r2.g,
     Fn = M#m2.f,
     D = Fn(F,G),
-    call(D,X,W);
-call(F,X,W) when is_record(F,bi) ->
+    call(State,D,X,W);
+call(State,F,X,W) when is_record(F,bi) ->
     0 = F#bi.t,
     D = F#bi.d,
     Args = F#bi.args,
     L = ebqn_array:concat([ebqn_array:from_list([F,X,W]),Args,ebqn_array:new(D#bl.l)]),
     load_vm(F#bi.b,F#bi.o,F#bi.s,D,make_ref(),F#bi.e,L);
-call(T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
-    R = call(T#tr.h,X,W),
-    L = call(T#tr.f,X,W),
-    call(T#tr.g,R,L);
-call(T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
-    R = call(T#tr.h,X,W),
-    call(T#tr.g,R,undefined);
-call(V,X,W) when is_record(V,v) ->
+call(State,T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
+    R = call(State,T#tr.h,X,W),
+    L = call(State,T#tr.f,X,W),
+    call(State,T#tr.g,R,L);
+call(State,T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
+    R = call(State,T#tr.h,X,W),
+    call(State,T#tr.g,R,undefined);
+call(State,V,X,W) when is_record(V,v) ->
     V;
-call(F,X,W) when not is_function(F) ->
+call(State,F,X,W) when not is_function(F) ->
     F.
 call_block(M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
     M#bi{args=Args,t=0};
@@ -161,7 +161,7 @@ stack(State0,B,O,S,E,Stack,X,13) ->
     % the following call/3 may mutate the heap
     % set the change on the proc_dict heap, not the Heap passed in via args
     % this _must_ be in separate lines!
-    Result = call(F,G,hget(State0#st.heap,I)),
+    Result = call(State0,F,G,hget(State0#st.heap,I)),
     State1 = get(st),
     NxtHeap = hset(State1#st.heap,false,I,Result),
     {State1#st{heap=NxtHeap},tail(tail(Stack))};
@@ -174,13 +174,14 @@ stack(State,B,O,S,E,Stack,X,15) ->
 stack(State,B,O,S,E,Stack,undefined,16) ->
     F = head(Stack),
     X = head(tail(Stack)),
-    Sn = cons(call(F,X,undefined),tail(tail(Stack))),
+    Result = call(State,F,X,undefined),
+    Sn = cons(Result,tail(tail(Stack))),
     {get(st),Sn};
 stack(State,B,O,S,E,Stack,undefined,17) ->
     W = head(Stack),
     F = head(tail(Stack)),
     X = head(tail(tail(Stack))),
-    Sn = cons(call(F,X,W),tail(tail(tail(Stack)))),
+    Sn = cons(call(State,F,X,W),tail(tail(tail(Stack)))),
     {get(st),Sn};
 stack(State,B,O,S,E,Stack,undefined,19) ->
     F = head(Stack),
