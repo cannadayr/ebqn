@@ -1,6 +1,6 @@
 -module(ebqn).
 
--export([run/1,run/3,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1]).
+-export([run/1,run/3,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0]).
 -import(queue,[cons/2,tail/1,head/1,len/1]).
 
 -include("schema.hrl").
@@ -35,19 +35,22 @@ call(St0,F,X,W) when is_number(F) ->
     {St0,F};
 call(St0,F,X,W) when is_function(F) ->
     {St0,F(X,W)};
+call(St0,F,X,W) when is_record(F,m) ->
+    Fn = F#m.f,
+    Fn(St0,X,W);
 call(St0,R,X,W) when is_record(R,r1) ->
     M = R#r1.m,
     F = R#r1.f,
     Fn = M#m1.f,
-    {St1,D} = Fn(F),
+    D = Fn(F),
     call(St0,D,X,W);
 call(St0,R,X,W) when is_record(R,r2) ->
     M = R#r2.m,
     F = R#r2.f,
     G = R#r2.g,
     Fn = M#m2.f,
-    {St1,D} = Fn(F,G),
-    call(St1,D,X,W);
+    D = Fn(F,G),
+    call(St0,D,X,W);
 call(St0,F,X,W) when is_record(F,bi) ->
     0 = F#bi.t,
     D = F#bi.d,
@@ -81,6 +84,7 @@ call2(St0,M,F,G) when is_record(M,bi) ->
     call_block(St0,M,ebqn_array:from_list([M,F,G]));
 call2(St0,M,F,G) when is_record(M,m2) ->
     {St0,#r2{m=M,f=F,g=G}}.
+
 ge(I,E,An) when I =:= 0 ->
     E;
 ge(I,E,An) when I =/= 0 ->

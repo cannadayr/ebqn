@@ -2,14 +2,16 @@
 
 -import(lists,[seq/2,flatten/1]).
 -import(math,[log/1,exp/1,pow/2]).
--import(ebqn,[list/1,call/3,fmt/1]).
+-import(ebqn,[list/1,call/4,fmt/1]).
 
 -export([fns/0]).
--export([arr/2,m1/1,m2/1,type/2,decompose/2,glyph/2,fill/2,log/2,plus/2,minus/2,times/2,divide/2,power/2,floor/2,equals/2,lesseq/2,shape/2,reshape/2,pick/2,window/2,table/1,scan/1,cases/2]).
+-export([arr/2,m1/1,m2/1,type/2,decompose/2,glyph/2,fill/2,log/2,plus/2,minus/2,times/2,divide/2,power/2,floor/2,equals/2,lesseq/2,shape/2,reshape/2,pick/2,window/2,table/1,scan/1,fill_by/2,cases/2]).
 -include("schema.hrl").
 
 arr(R,Sh) ->
     #v{r=R,sh=Sh}.
+m(F) ->
+    #m{f=F}.
 m1(F) ->
     #m1{f=F}.
 m2(F) ->
@@ -202,17 +204,17 @@ pick(#v{r=X} = Y,W) ->
 window(X,undefined) ->
     list(ebqn_array:from_list(seq(0,trunc(X)-1))).
 table(F) ->
-    fun
-        (#v{r=R,sh=Sh},undefined) ->
-            arr(maps:map(fun(_I,E) -> call(F,E,undefined) end,R),Sh);
-        (#v{r=Xr,sh=Xsh},#v{r=Wr,sh=Wsh}) ->
+    m(fun
+        (St0,#v{r=R,sh=Sh},undefined) ->
+            arr(maps:map(fun(_I,E) -> call(St0,F,E,undefined) end,R),Sh);
+        (St0,#v{r=Xr,sh=Xsh},#v{r=Wr,sh=Wsh}) ->
             InitSize =  ebqn_array:new(maps:size(Xr)*maps:size(Wr)),
             Xs = maps:size(Xr),
-            arr(maps:fold(fun(J,D,A1) -> maps:fold(fun(I,E,A2) -> ebqn_array:set(J*Xs+I,call(F,E,D),A2) end, A1, Xr) end,InitSize, Wr),flatten(Wsh ++ Xsh))
-    end.
+            arr(maps:fold(fun(J,D,A1) -> maps:fold(fun(I,E,A2) -> ebqn_array:set(J*Xs+I,call(St0,F,E,D),A2) end, A1, Xr) end,InitSize, Wr),flatten(Wsh ++ Xsh))
+    end).
 scan(F) ->
-    fun
-        (#v{r=X,sh=S},undefined) when length(S) > 0 ->
+    m(fun
+        (St0,#v{r=X,sh=S},undefined) when length(S) > 0 ->
             L = maps:size(X),
             R = ebqn_array:new(L),
             H = fun
@@ -226,7 +228,7 @@ scan(F) ->
                     end,
                     J = fun
                         J(I,Ci,Rn,Ln) when I =/= Ln ->
-                            J(I+1,Ci,ebqn_array:set(I,call(F,ebqn_array:get(I,X),ebqn_array:get(I-C,Rn)),Rn),Ln);
+                            J(I+1,Ci,ebqn_array:set(I,call(St0,F,ebqn_array:get(I,X),ebqn_array:get(I-C,Rn)),Rn),Ln);
                         J(I,_Ci,Rn,Ln) when I =:= Ln ->
                             Rn
                     end,
@@ -235,18 +237,18 @@ scan(F) ->
                     Ri
             end,
             arr(H(R,L),S)
-    end.
+    end).
 fill_by(F,G) ->
-    fun(X,W) ->
-        call(F,X,W)
-    end.
+    m(fun(St0,X,W) ->
+        call(St0,F,X,W)
+    end).
 cases(F,G) ->
-    fun
-        (X,undefined) ->
-            call(F,X,undefined);
-        (X,W) ->
-            call(G,X,W)
-    end.
+    m(fun
+        (St0,X,undefined) ->
+            call(St0,F,X,undefined);
+        (St0,X,W) ->
+            call(St0,G,X,W)
+    end).
 fns() -> [fun type/2,fun fill/2,fun log/2,fun group_len/2,fun group_ord/2,
                      assert_fn(""),fun plus/2,fun minus/2,fun times/2,fun divide/2,
                      fun power/2,fun floor/2,fun equals/2,fun lesseq/2,fun shape/2,
