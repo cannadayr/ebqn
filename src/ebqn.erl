@@ -53,7 +53,7 @@ call(State,F,X,W) when is_record(F,bi) ->
     D = F#bi.d,
     Args = F#bi.args,
     L = ebqn_array:concat([ebqn_array:from_list([F,X,W]),Args,ebqn_array:new(D#bl.l)]),
-    load_vm(F#bi.b,F#bi.o,F#bi.s,D,make_ref(),F#bi.e,L);
+    load_vm(State,F#bi.b,F#bi.o,F#bi.s,D,make_ref(),F#bi.e,L);
 call(State,T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
     R = call(State,T#tr.h,X,W),
     L = call(State,T#tr.f,X,W),
@@ -65,21 +65,21 @@ call(State,V,X,W) when is_record(V,v) ->
     V;
 call(State,F,X,W) when not is_function(F) ->
     F.
-call_block(M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
+call_block(State,M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
     M#bi{args=Args,t=0};
-call_block(M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
+call_block(State,M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
     D = M#bi.d,
     L = ebqn_array:concat([Args,ebqn_array:new(D#bl.l - maps:size(Args))]),
-    load_vm(M#bi.b,M#bi.o,M#bi.s,D,make_ref(),M#bi.e,L).
-call1(M,F) when is_record(M,bi) ->
+    load_vm(State,M#bi.b,M#bi.o,M#bi.s,D,make_ref(),M#bi.e,L).
+call1(State,M,F) when is_record(M,bi) ->
     true = (1 =:= M#bi.t),
-    call_block(M,ebqn_array:from_list([M,F]));
-call1(M,F) when is_record(M,m1) ->
+    call_block(State,M,ebqn_array:from_list([M,F]));
+call1(State,M,F) when is_record(M,m1) ->
     #r1{m=M,f=F}.
-call2(M,F,G) when is_record(M,bi) ->
+call2(State,M,F,G) when is_record(M,bi) ->
     true = (2 =:= M#bi.t),
-    call_block(M,ebqn_array:from_list([M,F,G]));
-call2(M,F,G) when is_record(M,m2) ->
+    call_block(State,M,ebqn_array:from_list([M,F,G]));
+call2(State,M,F,G) when is_record(M,m2) ->
     #r2{m=M,f=F,g=G}.
 ge(I,E,An) when I =:= 0 ->
     E;
@@ -107,9 +107,9 @@ popn(N,Q) when N =:= 0 ->
 popn(N,Q) when N =/= 0 ->
     popn(N-1,tail(Q)).
 
-derive(B,O,S,#bl{t=0,i=1} = Block,E) ->
-    load_vm(B,O,S,Block,make_ref(),E,ebqn_array:new(Block#bl.l));
-derive(B,O,S,Block,E) ->
+derive(State,B,O,S,#bl{t=0,i=1} = Block,E) ->
+    load_vm(State,B,O,S,Block,make_ref(),E,ebqn_array:new(Block#bl.l));
+derive(State,B,O,S,Block,E) ->
     #bi{b=B,o=O,s=S,t=Block#bl.t,d=Block,args=#{},e=E}.
 
 args(B,P,Op) when Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 25 ->
@@ -132,13 +132,13 @@ stack(State,B,O,S,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
 stack(State,B,O,S,E,Stack,undefined,7) ->
     F = head(Stack),
     M = head(tail(Stack)),
-    Sn = cons(call1(M,F),tail(tail(Stack))),
+    Sn = cons(call1(State,M,F),tail(tail(Stack))),
     {get(st),Sn};
 stack(State,B,O,S,E,Stack,undefined,8) ->
     F = head(Stack),
     M = head(tail(Stack)),
     G = head(tail(tail(Stack))),
-    Sn = cons(call2(M,F,G),tail(tail(tail(Stack)))),
+    Sn = cons(call2(State,M,F,G),tail(tail(tail(Stack)))),
     {get(st),Sn};
 stack(State,B,O,S,E,Stack,undefined,9) ->
     G = head(Stack),
@@ -169,7 +169,7 @@ stack(State,B,O,S,E,Stack,X,14) ->
     {State,tail(Stack)};
 stack(State,B,O,S,E,Stack,X,15) ->
     Block = load_block(element(1+X,S)),
-    D = derive(B,O,S,Block,E),
+    D = derive(State,B,O,S,Block,E),
     {get(st),cons(D,Stack)};
 stack(State,B,O,S,E,Stack,undefined,16) ->
     F = head(Stack),
@@ -312,7 +312,7 @@ mark(Root,Heap,An,Rtn,E,Stack) ->
 sweep(Heap,Refs) ->
     maps:without(sets:to_list(Refs),Heap).
 
-load_vm(B,O,S,Block,E,Parent,V) ->
+load_vm(State0,B,O,S,Block,E,Parent,V) ->
     State = get(st),
     Heap = ebqn_heap:alloc(E,V,State#st.heap),
     An0 = State#st.an,
@@ -335,9 +335,10 @@ init_st() ->
     #st{root=make_ref(),heap=#{},an=#{},rtn=queue:new()}.
 
 run([B,O,S]) ->
+    fmt({run,B}),
     ebqn:run(list_to_tuple(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
 run(B,O,S) ->
     State = init_st(),
     put(st,State),
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
-    load_vm(B,O,S,Block,State#st.root,State#st.root,ebqn_array:new(L)). % set the root environment, and root as its own parent.
+    load_vm(State,B,O,S,Block,State#st.root,State#st.root,ebqn_array:new(L)). % set the root environment, and root as its own parent.
