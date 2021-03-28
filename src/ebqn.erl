@@ -107,10 +107,10 @@ popn(N,Q) when N =:= 0 ->
 popn(N,Q) when N =/= 0 ->
     popn(N-1,tail(Q)).
 
-derive(State,B,O,S,#bl{t=0,i=1} = Block,E) ->
-    load_vm(State,B,O,S,Block,make_ref(),E,ebqn_array:new(Block#bl.l));
-derive(State,B,O,S,Block,E) ->
-    {State,#bi{b=B,o=O,s=S,t=Block#bl.t,d=Block,args=#{},e=E}}.
+derive(St0,B,O,S,#bl{t=0,i=1} = Block,E) ->
+    load_vm(St0,B,O,S,Block,make_ref(),E,ebqn_array:new(Block#bl.l));
+derive(St0,B,O,S,Block,E) ->
+    {St0,#bi{b=B,o=O,s=S,t=Block#bl.t,d=Block,args=#{},e=E}}.
 
 args(B,P,Op) when Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 25 ->
     {undefined,P};
@@ -121,14 +121,14 @@ args(B,P,Op) when Op =:= 21; Op =:= 22 ->
     Y = element(2+P,B),
     {{X,Y},2+P}.
 
-stack(State,B,O,S,E,Stack,X,0) ->
-    {State,cons(element(1+X,O),Stack)};
-stack(State,B,O,S,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
+stack(St0,B,O,S,E,Stack,X,0) ->
+    {St0,cons(element(1+X,O),Stack)};
+stack(St0,B,O,S,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
     {T,Si} = case X of
         0 -> {list(#{}),Stack};
         _ -> tail(X-1,ebqn_array:new(X),Stack)
     end,
-    {State,cons(list(T),Si)};
+    {St0,cons(list(T),Si)};
 stack(St0,B,O,S,E,Stack,undefined,7) ->
     F = head(Stack),
     M = head(tail(Stack)),
@@ -160,11 +160,7 @@ stack(St0,B,O,S,E,Stack,X,13) ->
     I = head(Stack),
     F = head(tail(Stack)),
     G = head(tail(tail(Stack))),
-    % the following call/3 may mutate the heap
-    % set the change on the proc_dict heap, not the Heap passed in via args
-    % this _must_ be in separate lines!
     {St1,Result} = call(St0,F,G,hget(St0#st.heap,I)),
-    %State1 = get(st),
     Heap = hset(St1#st.heap,false,I,Result),
     {St1#st{heap=Heap},tail(tail(Stack))};
 stack(St0,B,O,S,E,Stack,X,14) ->
@@ -208,25 +204,21 @@ ctrl(Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:=
 ctrl(Op) when Op =:= 25 ->
     rtn.
 
-vm(State0,B,O,S,Block,E,P,Stack,rtn) ->
+vm(St0,B,O,S,Block,E,P,Stack,rtn) ->
     % get the number of children for each environment
-    %State = get(st),
-    An = State0#st.an,
+    An = St0#st.an,
     Children = maps:fold(fun(K,V,A) -> maps:update_with(V,fun(N) -> N+1 end,1,A) end,#{},An),
     % get the number of children for this environment
     Num = maps:get(E,Children,0),
     %fmt({rtn_pop,Num}),
-    State1 = State0#st{rtn=popn(Num,State0#st.rtn)},
-    put(st,State1), % pop this number of slots off the rtn stack
-    fmt({rtn_stack,Stack}),
-    {State1,Stack};
-vm(State0,B,O,S,Block,E,P,Stack,cont) ->
+    St1 = St0#st{rtn=popn(Num,St0#st.rtn)}, % pop this number of slots off the rtn stack
+    {St1,Stack};
+vm(St0,B,O,S,Block,E,P,Stack,cont) ->
     Op = element(1+P,B),
     %fmt({vm,Op,P+1,E}),
+    %fmt({stack,queue:to_list(Stack)}),
     {Arg,Pn} = args(B,1+P,Op), % advances the ptr and reads the args
-    State = get(st),
-    {State1,Sn} = stack(State,B,O,S,E,Stack,Arg,Op), % mutates the stack
-    put(st,State1),
+    {St1,Sn} = stack(St0,B,O,S,E,Stack,Arg,Op), % mutates the stack
     Ctrl = ctrl(Op), % set ctrl atom
     % convert stack to a usable data structure for GC
     %Slots =
@@ -249,7 +241,7 @@ vm(State0,B,O,S,Block,E,P,Stack,cont) ->
     %    false ->
     %        ok
     %end,
-    vm(State1,B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
+    vm(St1,B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
 
 trace_env(E,Root,An,Acc) when E =:= Root ->
     [E] ++ Acc;
@@ -317,35 +309,25 @@ mark(Root,Heap,An,Rtn,E,Stack) ->
 sweep(Heap,Refs) ->
     maps:without(sets:to_list(Refs),Heap).
 
-load_vm(State0,B,O,S,Block,E,Parent,V) ->
-    State = get(st),
-    Heap = ebqn_heap:alloc(E,V,State#st.heap),
-    An0 = State#st.an,
+load_vm(St0,B,O,S,Block,E,Parent,V) ->
+    Heap = ebqn_heap:alloc(E,V,St0#st.heap),
+    An0 = St0#st.an,
     An = An0#{E => Parent},
-    Rtn = queue:cons(E,State#st.rtn),
-    State1 = State#st{heap=Heap,an=An,rtn=Rtn},
-    put(st,State1),
-    vm(State1,B,O,S,Block,E,Block#bl.st,queue:new(),cont). % run vm w/ empty stack
+    Rtn = queue:cons(E,St0#st.rtn),
+    St1 = St0#st{heap=Heap,an=An,rtn=Rtn},
+    vm(St1,B,O,S,Block,E,Block#bl.st,queue:new(),cont). % run vm w/ empty stack
 
 load_block({T,I,ST,L}) ->
     #bl{t=T,i=I,st=ST,l=L}.
 
-init(Key,T) ->
-    case get(Key) of
-        undefined ->
-            put(Key,T);
-        _ ->
-            ok
-    end.
 init_st() ->
     #st{root=make_ref(),heap=#{},an=#{},rtn=queue:new()}.
 
 run([B,O,S]) ->
-    fmt({run,B}),
+    %fmt({run,B}),
     ebqn:run(list_to_tuple(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
 run(B,O,S) ->
-    State = init_st(),
-    put(st,State),
+    St0 = init_st(),
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
-    {State1,Result} = load_vm(State,B,O,S,Block,State#st.root,State#st.root,ebqn_array:new(L)), % set the root environment, and root as its own parent.
+    {St1,Result} = load_vm(St0,B,O,S,Block,St0#st.root,St0#st.root,ebqn_array:new(L)), % set the root environment, and root as its own parent.
     Result.
