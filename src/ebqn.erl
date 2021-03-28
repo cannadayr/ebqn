@@ -182,26 +182,26 @@ stack(B,O,S,Root,Heap,An,E,Stack,X,25) ->
     1 = len(Stack),
     head(Stack).
 
-heap(Root,Heap,Stack,Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22; Op =:= 25 ->
-    Heap;
-heap(Root,Heap,Stack,Op) when Op =:= 11 ->
+heap(State,Stack,Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22; Op =:= 25 ->
+    State#st.heap;
+heap(State,Stack,Op) when Op =:= 11 ->
     I = head(Stack),
     V = head(tail(Stack)),
-    hset(Heap,true,I,V);
-heap(Root,Heap,Stack,Op) when Op =:= 12 ->
+    hset(State#st.heap,true,I,V);
+heap(State,Stack,Op) when Op =:= 12 ->
     I = head(Stack),
     V = head(tail(Stack)),
-    hset(Heap,false,I,V);
-heap(Root,Heap,Stack,Op) when Op =:= 13 ->
+    hset(State#st.heap,false,I,V);
+heap(State0,Stack,Op) when Op =:= 13 ->
     I = head(Stack),
     F = head(tail(Stack)),
     X = head(tail(tail(Stack))),
     % the following call/3 may mutate the heap
     % set the change on the proc_dict heap, not the Heap passed in via args
     % this _must_ be in separate lines!
-    Result = call(F,X,hget(Heap,I)),
-    State = get(st),
-    hset(State#st.heap,false,I,Result).
+    Result = call(F,X,hget(State0#st.heap,I)),
+    State1 = get(st),
+    hset(State1#st.heap,false,I,Result).
 
 ctrl(Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22 ->
     cont;
@@ -225,7 +225,7 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
     State = get(st),
     Sn = stack(B,O,S,State#st.root,State#st.heap,State#st.an,E,Stack,Arg,Op), % mutates the stack
     State1 = get(st),
-    NxtHeap = heap(State1#st.root,State1#st.heap,Stack,Op),
+    NxtHeap = heap(State1,Stack,Op),
     put(st,State1#st{heap=NxtHeap}), % mutates the heap
     Ctrl = ctrl(Op), % set ctrl atom
     % convert stack to a usable data structure for GC
