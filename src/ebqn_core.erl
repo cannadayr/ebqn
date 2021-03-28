@@ -205,8 +205,13 @@ window(X,undefined) ->
     list(ebqn_array:from_list(seq(0,trunc(X)-1))).
 table(F) ->
     m(fun
-        (St0,#v{r=R,sh=Sh},undefined) ->
-            arr(maps:map(fun(_I,E) -> call(St0,F,E,undefined) end,R),Sh);
+        (St0,X,undefined) ->
+            Table = fun (I,E,{StAcc,M}) ->
+                {St1,R} = call(StAcc,F,E,undefined),
+                {St1,maps:put(I,R,M)}
+            end,
+            {St2,Result} = maps:fold(Table,{St0,#{}},X#v.r),
+            {St2,arr(Result,X#v.sh)};
         (St0,#v{r=Xr,sh=Xsh},#v{r=Wr,sh=Wsh}) ->
             InitSize =  ebqn_array:new(maps:size(Xr)*maps:size(Wr)),
             Xs = maps:size(Xr),
