@@ -205,7 +205,7 @@ ctrl(Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:=
 ctrl(Op) when Op =:= 25 ->
     rtn.
 
-vm(B,O,S,Block,E,P,Stack,rtn) ->
+vm(State,B,O,S,Block,E,P,Stack,rtn) ->
     % get the number of children for each environment
     State = get(st),
     An = State#st.an,
@@ -215,7 +215,7 @@ vm(B,O,S,Block,E,P,Stack,rtn) ->
     %fmt("~p~n",[{rtn_pop,Num}]),
     put(st,State#st{rtn=popn(Num,State#st.rtn)}), % pop this number of slots off the rtn stack
     Stack;
-vm(B,O,S,Block,E,P,Stack,cont) ->
+vm(State0,B,O,S,Block,E,P,Stack,cont) ->
     Op = element(1+P,B),
     %fmt({vm,Op,P+1,E}),
     {Arg,Pn} = args(B,1+P,Op), % advances the ptr and reads the args
@@ -244,7 +244,7 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
     %    false ->
     %        ok
     %end,
-    vm(B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
+    vm(State1,B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
 
 trace_env(E,Root,An,Acc) when E =:= Root ->
     [E] ++ Acc;
@@ -318,8 +318,9 @@ load_vm(State0,B,O,S,Block,E,Parent,V) ->
     An0 = State#st.an,
     An = An0#{E => Parent},
     Rtn = queue:cons(E,State#st.rtn),
-    put(st,State#st{heap=Heap,an=An,rtn=Rtn}),
-    vm(B,O,S,Block,E,Block#bl.st,queue:new(),cont). % run vm w/ empty stack
+    State1 = State#st{heap=Heap,an=An,rtn=Rtn},
+    put(st,State1),
+    vm(State1,B,O,S,Block,E,Block#bl.st,queue:new(),cont). % run vm w/ empty stack
 
 load_block({T,I,ST,L}) ->
     #bl{t=T,i=I,st=ST,l=L}.
