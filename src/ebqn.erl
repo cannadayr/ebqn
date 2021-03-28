@@ -150,7 +150,10 @@ stack(State0,B,O,S,E,Stack,X,Op) when Op =:= 11 ->
     NxtHeap = hset(State0#st.heap,true,I,V),
     {State0#st{heap=NxtHeap},tail(Stack)};
 stack(State,B,O,S,E,Stack,X,Op) when Op =:= 12 ->
-    {State,tail(Stack)};
+    I = head(Stack),
+    V = head(tail(Stack)),
+    NxtHeap = hset(State#st.heap,false,I,V),
+    {State#st{heap=NxtHeap},tail(Stack)};
 stack(State,B,O,S,E,Stack,X,13) ->
     {State,tail(tail(Stack))};
 stack(State,B,O,S,E,Stack,X,14) ->
@@ -187,12 +190,8 @@ stack(State,B,O,S,E,Stack,X,25) ->
     1 = len(Stack),
     {State,head(Stack)}.
 
-heap(State,Stack,Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22; Op =:= 25; Op =:= 11 ->
+heap(State,Stack,Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22; Op =:= 25; Op =:= 11; Op =:= 12 ->
     State#st.heap;
-heap(State,Stack,Op) when Op =:= 12 ->
-    I = head(Stack),
-    V = head(tail(Stack)),
-    hset(State#st.heap,false,I,V);
 heap(State0,Stack,Op) when Op =:= 13 ->
     I = head(Stack),
     F = head(tail(Stack)),
