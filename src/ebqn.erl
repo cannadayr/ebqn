@@ -53,7 +53,7 @@ call(F,X,W) when is_record(F,bi) ->
     D = F#bi.d,
     Args = F#bi.args,
     L = ebqn_array:concat([ebqn_array:from_list([F,X,W]),Args,ebqn_array:new(D#bl.l)]),
-    load_vm(maps:get(F#bi.b,get(b)),maps:get(F#bi.o,get(o)),maps:get(F#bi.s,get(s)),D,make_ref(),F#bi.e,L);
+    load_vm(F#bi.b,F#bi.o,F#bi.s,D,make_ref(),F#bi.e,L);
 call(T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
     R = call(T#tr.h,X,W),
     L = call(T#tr.f,X,W),
@@ -70,7 +70,7 @@ call_block(M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
 call_block(M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
     D = M#bi.d,
     L = ebqn_array:concat([Args,ebqn_array:new(D#bl.l - maps:size(Args))]),
-    load_vm(maps:get(M#bi.b,get(b)),maps:get(M#bi.o,get(o)),maps:get(M#bi.s,get(s)),D,make_ref(),M#bi.e,L).
+    load_vm(M#bi.b,M#bi.o,M#bi.s,D,make_ref(),M#bi.e,L).
 call1(M,F) when is_record(M,bi) ->
     true = (1 =:= M#bi.t),
     call_block(M,ebqn_array:from_list([M,F]));
@@ -114,15 +114,7 @@ hash(T) ->
 derive(B,O,S,#bl{t=0,i=1} = Block,E) ->
     load_vm(B,O,S,Block,make_ref(),E,ebqn_array:new(Block#bl.l));
 derive(B,O,S,Block,E) ->
-    % hash the terms and use it as a map key in its respective process dictionary
-    % this prevents accumulation of duplicate objects in the heap at the expense of hashing cpu
-    Bh = hash(B),
-    Oh = hash(O),
-    Sh = hash(S),
-    put(b,maps:put(Bh,B,get(b))),
-    put(o,maps:put(Oh,O,get(o))),
-    put(s,maps:put(Sh,S,get(s))),
-    #bi{b=Bh,o=Oh,s=Sh,t=Block#bl.t,d=Block,args=#{},e=E}.
+    #bi{b=B,o=O,s=S,t=Block#bl.t,d=Block,args=#{},e=E}.
 
 args(B,P,Op) when Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 25 ->
     {undefined,P};
@@ -348,9 +340,5 @@ run(B,O,S) ->
     init(root,Root),
     init(an,An),
     put(rtn,queue:new()),
-    % put bytecode, object, and section maps in the process dictionary. see derive/5
-    init(b,#{}),
-    init(o,#{}),
-    init(s,#{}),
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
     load_vm(B,O,S,Block,Root,Root,ebqn_array:new(L)). % set the root environment, and root as its own parent.
