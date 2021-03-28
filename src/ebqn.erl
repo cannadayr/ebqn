@@ -144,7 +144,12 @@ stack(State,B,O,S,E,Stack,undefined,9) ->
     G = head(Stack),
     J = head(tail(Stack)),
     {State,cons(#tr{f=undefined,g=G,h=J},tail(tail(Stack)))};
-stack(State,B,O,S,E,Stack,X,Op) when Op =:= 11; Op =:= 12 ->
+stack(State0,B,O,S,E,Stack,X,Op) when Op =:= 11 ->
+    I = head(Stack),
+    V = head(tail(Stack)),
+    NxtHeap = hset(State0#st.heap,true,I,V),
+    {State0#st{heap=NxtHeap},tail(Stack)};
+stack(State,B,O,S,E,Stack,X,Op) when Op =:= 12 ->
     {State,tail(Stack)};
 stack(State,B,O,S,E,Stack,X,13) ->
     {State,tail(tail(Stack))};
@@ -182,12 +187,8 @@ stack(State,B,O,S,E,Stack,X,25) ->
     1 = len(Stack),
     {State,head(Stack)}.
 
-heap(State,Stack,Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22; Op =:= 25 ->
+heap(State,Stack,Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22; Op =:= 25; Op =:= 11 ->
     State#st.heap;
-heap(State,Stack,Op) when Op =:= 11 ->
-    I = head(Stack),
-    V = head(tail(Stack)),
-    hset(State#st.heap,true,I,V);
 heap(State,Stack,Op) when Op =:= 12 ->
     I = head(Stack),
     V = head(tail(Stack)),
