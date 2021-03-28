@@ -154,8 +154,17 @@ stack(State,B,O,S,E,Stack,X,Op) when Op =:= 12 ->
     V = head(tail(Stack)),
     NxtHeap = hset(State#st.heap,false,I,V),
     {State#st{heap=NxtHeap},tail(Stack)};
-stack(State,B,O,S,E,Stack,X,13) ->
-    {State,tail(tail(Stack))};
+stack(State0,B,O,S,E,Stack,X,13) ->
+    I = head(Stack),
+    F = head(tail(Stack)),
+    G = head(tail(tail(Stack))),
+    % the following call/3 may mutate the heap
+    % set the change on the proc_dict heap, not the Heap passed in via args
+    % this _must_ be in separate lines!
+    Result = call(F,G,hget(State0#st.heap,I)),
+    State1 = get(st),
+    NxtHeap = hset(State1#st.heap,false,I,Result),
+    {State1#st{heap=NxtHeap},tail(tail(Stack))};
 stack(State,B,O,S,E,Stack,X,14) ->
     {State,tail(Stack)};
 stack(State,B,O,S,E,Stack,X,15) ->
@@ -190,19 +199,6 @@ stack(State,B,O,S,E,Stack,X,25) ->
     1 = len(Stack),
     {State,head(Stack)}.
 
-heap(State,Stack,Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22; Op =:= 25; Op =:= 11; Op =:= 12 ->
-    State#st.heap;
-heap(State0,Stack,Op) when Op =:= 13 ->
-    I = head(Stack),
-    F = head(tail(Stack)),
-    X = head(tail(tail(Stack))),
-    % the following call/3 may mutate the heap
-    % set the change on the proc_dict heap, not the Heap passed in via args
-    % this _must_ be in separate lines!
-    Result = call(F,X,hget(State0#st.heap,I)),
-    State1 = get(st),
-    hset(State1#st.heap,false,I,Result).
-
 ctrl(Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22 ->
     cont;
 ctrl(Op) when Op =:= 25 ->
@@ -224,9 +220,7 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
     {Arg,Pn} = args(B,1+P,Op), % advances the ptr and reads the args
     State = get(st),
     {State1,Sn} = stack(State,B,O,S,E,Stack,Arg,Op), % mutates the stack
-    %State1 = get(st),
-    NxtHeap = heap(State1,Stack,Op),
-    put(st,State1#st{heap=NxtHeap}), % mutates the heap
+    put(st,State1),
     Ctrl = ctrl(Op), % set ctrl atom
     % convert stack to a usable data structure for GC
     %Slots =
