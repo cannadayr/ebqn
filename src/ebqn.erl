@@ -122,61 +122,65 @@ args(B,P,Op) when Op =:= 21; Op =:= 22 ->
     {{X,Y},2+P}.
 
 stack(State,B,O,S,E,Stack,X,0) ->
-    cons(element(1+X,O),Stack);
+    {State,cons(element(1+X,O),Stack)};
 stack(State,B,O,S,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
     {T,Si} = case X of
         0 -> {list(#{}),Stack};
         _ -> tail(X-1,ebqn_array:new(X),Stack)
     end,
-    cons(list(T),Si);
+    {State,cons(list(T),Si)};
 stack(State,B,O,S,E,Stack,undefined,7) ->
     F = head(Stack),
     M = head(tail(Stack)),
-    cons(call1(M,F),tail(tail(Stack)));
+    Sn = cons(call1(M,F),tail(tail(Stack))),
+    {get(st),Sn};
 stack(State,B,O,S,E,Stack,undefined,8) ->
     F = head(Stack),
     M = head(tail(Stack)),
     G = head(tail(tail(Stack))),
-    cons(call2(M,F,G),tail(tail(tail(Stack))));
+    Sn = cons(call2(M,F,G),tail(tail(tail(Stack)))),
+    {get(st),Sn};
 stack(State,B,O,S,E,Stack,undefined,9) ->
     G = head(Stack),
     J = head(tail(Stack)),
-    cons(#tr{f=undefined,g=G,h=J},tail(tail(Stack)));
+    {State,cons(#tr{f=undefined,g=G,h=J},tail(tail(Stack)))};
 stack(State,B,O,S,E,Stack,X,Op) when Op =:= 11; Op =:= 12 ->
-    tail(Stack);
+    {State,tail(Stack)};
 stack(State,B,O,S,E,Stack,X,13) ->
-    tail(tail(Stack));
+    {State,tail(tail(Stack))};
 stack(State,B,O,S,E,Stack,X,14) ->
-    tail(Stack);
+    {State,tail(Stack)};
 stack(State,B,O,S,E,Stack,X,15) ->
     Block = load_block(element(1+X,S)),
     D = derive(B,O,S,Block,E),
-    cons(D,Stack);
+    {get(st),cons(D,Stack)};
 stack(State,B,O,S,E,Stack,undefined,16) ->
     F = head(Stack),
     X = head(tail(Stack)),
-    cons(call(F,X,undefined),tail(tail(Stack)));
+    Sn = cons(call(F,X,undefined),tail(tail(Stack))),
+    {get(st),Sn};
 stack(State,B,O,S,E,Stack,undefined,17) ->
     W = head(Stack),
     F = head(tail(Stack)),
     X = head(tail(tail(Stack))),
-    cons(call(F,X,W),tail(tail(tail(Stack))));
+    Sn = cons(call(F,X,W),tail(tail(tail(Stack)))),
+    {get(st),Sn};
 stack(State,B,O,S,E,Stack,undefined,19) ->
     F = head(Stack),
     G = head(tail(Stack)),
     H = head(tail(tail(Stack))),
-    cons(#tr{f=F,g=G,h=H},tail(tail(tail(Stack))));
+    {State,cons(#tr{f=F,g=G,h=H},tail(tail(tail(Stack))))};
 stack(State,B,O,S,E,Stack,{X,Y},21) ->
     T = ge(X,E,State#st.an),
     Z = ebqn_heap:get(T,Y,State#st.heap),
     %true = (undefined =/= Z),
-    cons(Z,Stack);
+    {State,cons(Z,Stack)};
 stack(State,B,O,S,E,Stack,{X,Y},22) ->
     T = ge(X,E,State#st.an),
-    cons({T,Y},Stack);
+    {State,cons({T,Y},Stack)};
 stack(State,B,O,S,E,Stack,X,25) ->
     1 = len(Stack),
-    head(Stack).
+    {State,head(Stack)}.
 
 heap(State,Stack,Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22; Op =:= 25 ->
     State#st.heap;
@@ -219,19 +223,19 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
     %fmt({vm,Op,P+1,E}),
     {Arg,Pn} = args(B,1+P,Op), % advances the ptr and reads the args
     State = get(st),
-    Sn = stack(State,B,O,S,E,Stack,Arg,Op), % mutates the stack
-    State1 = get(st),
+    {State1,Sn} = stack(State,B,O,S,E,Stack,Arg,Op), % mutates the stack
+    %State1 = get(st),
     NxtHeap = heap(State1,Stack,Op),
     put(st,State1#st{heap=NxtHeap}), % mutates the heap
     Ctrl = ctrl(Op), % set ctrl atom
     % convert stack to a usable data structure for GC
-    Slots =
-        case Ctrl =:= rtn of
-            true ->
-                [Sn];
-            false ->
-                queue:to_list(Sn)
-        end,
+    %Slots =
+    %    case Ctrl =:= rtn of
+    %        true ->
+    %            [Sn];
+    %        false ->
+    %            queue:to_list(Sn)
+    %    end,
     % test for GC
     % currently using hard coded memory total
     % this should be replaced w/ either a platform specific system cmd or memsup
