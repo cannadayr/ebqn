@@ -107,10 +107,6 @@ popn(N,Q) when N =:= 0 ->
 popn(N,Q) when N =/= 0 ->
     popn(N-1,tail(Q)).
 
-hash(T) when is_binary(T) ->
-    crypto:hash(sha,T);
-hash(T) ->
-    crypto:hash(sha,erlang:term_to_binary(T)).
 derive(B,O,S,#bl{t=0,i=1} = Block,E) ->
     load_vm(B,O,S,Block,make_ref(),E,ebqn_array:new(Block#bl.l));
 derive(B,O,S,Block,E) ->
