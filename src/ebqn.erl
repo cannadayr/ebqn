@@ -129,79 +129,79 @@ stack(State,B,O,S,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
         _ -> tail(X-1,ebqn_array:new(X),Stack)
     end,
     {State,cons(list(T),Si)};
-stack(State,B,O,S,E,Stack,undefined,7) ->
+stack(St0,B,O,S,E,Stack,undefined,7) ->
     F = head(Stack),
     M = head(tail(Stack)),
-    {State1,Result} = call1(State,M,F),
+    {St1,Result} = call1(St0,M,F),
     Sn = cons(Result,tail(tail(Stack))),
-    {get(st),Sn};
-stack(State,B,O,S,E,Stack,undefined,8) ->
+    {St1,Sn};
+stack(St0,B,O,S,E,Stack,undefined,8) ->
     F = head(Stack),
     M = head(tail(Stack)),
     G = head(tail(tail(Stack))),
-    {St1,Result} = call2(State,M,F,G),
+    {St1,Result} = call2(St0,M,F,G),
     Sn = cons(Result,tail(tail(tail(Stack)))),
-    {get(st),Sn};
-stack(State,B,O,S,E,Stack,undefined,9) ->
+    {St1,Sn};
+stack(St0,B,O,S,E,Stack,undefined,9) ->
     G = head(Stack),
     J = head(tail(Stack)),
-    {State,cons(#tr{f=undefined,g=G,h=J},tail(tail(Stack)))};
-stack(State0,B,O,S,E,Stack,X,Op) when Op =:= 11 ->
+    {St0,cons(#tr{f=undefined,g=G,h=J},tail(tail(Stack)))};
+stack(St0,B,O,S,E,Stack,X,Op) when Op =:= 11 ->
     I = head(Stack),
     V = head(tail(Stack)),
-    NxtHeap = hset(State0#st.heap,true,I,V),
-    {State0#st{heap=NxtHeap},tail(Stack)};
-stack(State,B,O,S,E,Stack,X,Op) when Op =:= 12 ->
+    Heap = hset(St0#st.heap,true,I,V),
+    {St0#st{heap=Heap},tail(Stack)};
+stack(St0,B,O,S,E,Stack,X,Op) when Op =:= 12 ->
     I = head(Stack),
     V = head(tail(Stack)),
-    NxtHeap = hset(State#st.heap,false,I,V),
-    {State#st{heap=NxtHeap},tail(Stack)};
-stack(State0,B,O,S,E,Stack,X,13) ->
+    Heap = hset(St0#st.heap,false,I,V),
+    {St0#st{heap=Heap},tail(Stack)};
+stack(St0,B,O,S,E,Stack,X,13) ->
     I = head(Stack),
     F = head(tail(Stack)),
     G = head(tail(tail(Stack))),
     % the following call/3 may mutate the heap
     % set the change on the proc_dict heap, not the Heap passed in via args
     % this _must_ be in separate lines!
-    {St1,Result} = call(State0,F,G,hget(State0#st.heap,I)),
-    State1 = get(st),
-    NxtHeap = hset(State1#st.heap,false,I,Result),
-    {State1#st{heap=NxtHeap},tail(tail(Stack))};
-stack(State,B,O,S,E,Stack,X,14) ->
-    {State,tail(Stack)};
-stack(State,B,O,S,E,Stack,X,15) ->
+    {St1,Result} = call(St0,F,G,hget(St0#st.heap,I)),
+    %State1 = get(st),
+    Heap = hset(St1#st.heap,false,I,Result),
+    {St1#st{heap=Heap},tail(tail(Stack))};
+stack(St0,B,O,S,E,Stack,X,14) ->
+    {St0,tail(Stack)};
+stack(St0,B,O,S,E,Stack,X,15) ->
     Block = load_block(element(1+X,S)),
-    {State1,D} = derive(State,B,O,S,Block,E),
-    {get(st),cons(D,Stack)};
-stack(State,B,O,S,E,Stack,undefined,16) ->
+    {St1,D} = derive(St0,B,O,S,Block,E),
+    {St1,cons(D,Stack)};
+stack(St0,B,O,S,E,Stack,undefined,16) ->
     F = head(Stack),
     X = head(tail(Stack)),
-    {State1,Result} = call(State,F,X,undefined),
+    {St1,Result} = call(St0,F,X,undefined),
     Sn = cons(Result,tail(tail(Stack))),
-    {get(st),Sn};
-stack(State,B,O,S,E,Stack,undefined,17) ->
+    {St1,Sn};
+stack(St0,B,O,S,E,Stack,undefined,17) ->
     W = head(Stack),
     F = head(tail(Stack)),
     X = head(tail(tail(Stack))),
-    {State1,Result} = call(State,F,X,W),
+    {St1,Result} = call(St0,F,X,W),
     Sn = cons(Result,tail(tail(tail(Stack)))),
-    {get(st),Sn};
-stack(State,B,O,S,E,Stack,undefined,19) ->
+    {St1,Sn};
+stack(St0,B,O,S,E,Stack,undefined,19) ->
     F = head(Stack),
     G = head(tail(Stack)),
     H = head(tail(tail(Stack))),
-    {State,cons(#tr{f=F,g=G,h=H},tail(tail(tail(Stack))))};
-stack(State,B,O,S,E,Stack,{X,Y},21) ->
-    T = ge(X,E,State#st.an),
-    Z = ebqn_heap:get(T,Y,State#st.heap),
+    {St0,cons(#tr{f=F,g=G,h=H},tail(tail(tail(Stack))))};
+stack(St0,B,O,S,E,Stack,{X,Y},21) ->
+    T = ge(X,E,St0#st.an),
+    Z = ebqn_heap:get(T,Y,St0#st.heap),
     %true = (undefined =/= Z),
-    {State,cons(Z,Stack)};
-stack(State,B,O,S,E,Stack,{X,Y},22) ->
-    T = ge(X,E,State#st.an),
-    {State,cons({T,Y},Stack)};
-stack(State,B,O,S,E,Stack,X,25) ->
+    {St0,cons(Z,Stack)};
+stack(St0,B,O,S,E,Stack,{X,Y},22) ->
+    T = ge(X,E,St0#st.an),
+    {St0,cons({T,Y},Stack)};
+stack(St0,B,O,S,E,Stack,X,25) ->
     1 = len(Stack),
-    {State,head(Stack)}.
+    {St0,head(Stack)}.
 
 ctrl(Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22 ->
     cont;
