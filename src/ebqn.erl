@@ -29,58 +29,58 @@ str(S) ->
 strings(#v{r=X}) ->
             io_lib:format("~ts~n",[lists:map(fun(E) -> E#c.p end,ebqn_array:to_list(X))]).
 
-call(State,_F,undefined,_W) ->
-    {State,undefined};
-call(State,F,X,W) when is_number(F) ->
-    {State,F};
-call(State,F,X,W) when is_function(F) ->
-    {State,F(X,W)};
-call(State,R,X,W) when is_record(R,r1) ->
+call(St0,_F,undefined,_W) ->
+    {St0,undefined};
+call(St0,F,X,W) when is_number(F) ->
+    {St0,F};
+call(St0,F,X,W) when is_function(F) ->
+    {St0,F(X,W)};
+call(St0,R,X,W) when is_record(R,r1) ->
     M = R#r1.m,
     F = R#r1.f,
     Fn = M#m1.f,
     {St1,D} = Fn(F),
-    call(State,D,X,W);
-call(State,R,X,W) when is_record(R,r2) ->
+    call(St0,D,X,W);
+call(St0,R,X,W) when is_record(R,r2) ->
     M = R#r2.m,
     F = R#r2.f,
     G = R#r2.g,
     Fn = M#m2.f,
     {St1,D} = Fn(F,G),
-    call(State,D,X,W);
-call(State,F,X,W) when is_record(F,bi) ->
+    call(St1,D,X,W);
+call(St0,F,X,W) when is_record(F,bi) ->
     0 = F#bi.t,
     D = F#bi.d,
     Args = F#bi.args,
     L = ebqn_array:concat([ebqn_array:from_list([F,X,W]),Args,ebqn_array:new(D#bl.l)]),
-    load_vm(State,F#bi.b,F#bi.o,F#bi.s,D,make_ref(),F#bi.e,L);
-call(State,T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
-    {St1,R} = call(State,T#tr.h,X,W),
-    {St2,L} = call(State,T#tr.f,X,W),
-    call(State,T#tr.g,R,L);
-call(State,T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
-    {St1,R} = call(State,T#tr.h,X,W),
-    call(State,T#tr.g,R,undefined);
-call(State,V,X,W) when is_record(V,v) ->
-    {State,V};
-call(State,F,X,W) when not is_function(F) ->
-    {State,F}.
-call_block(State,M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
-    {State,M#bi{args=Args,t=0}};
-call_block(State,M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
+    load_vm(St0,F#bi.b,F#bi.o,F#bi.s,D,make_ref(),F#bi.e,L);
+call(St0,T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
+    {St1,R} = call(St0,T#tr.h,X,W),
+    {St2,L} = call(St1,T#tr.f,X,W),
+    call(St2,T#tr.g,R,L);
+call(St0,T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
+    {St1,R} = call(St0,T#tr.h,X,W),
+    call(St1,T#tr.g,R,undefined);
+call(St0,V,X,W) when is_record(V,v) ->
+    {St0,V};
+call(St0,F,X,W) when not is_function(F) ->
+    {St0,F}.
+call_block(St0,M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
+    {St0,M#bi{args=Args,t=0}};
+call_block(St0,M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
     D = M#bi.d,
     L = ebqn_array:concat([Args,ebqn_array:new(D#bl.l - maps:size(Args))]),
-    load_vm(State,M#bi.b,M#bi.o,M#bi.s,D,make_ref(),M#bi.e,L).
-call1(State,M,F) when is_record(M,bi) ->
+    load_vm(St0,M#bi.b,M#bi.o,M#bi.s,D,make_ref(),M#bi.e,L).
+call1(St0,M,F) when is_record(M,bi) ->
     true = (1 =:= M#bi.t),
-    call_block(State,M,ebqn_array:from_list([M,F]));
-call1(State,M,F) when is_record(M,m1) ->
-    {State,#r1{m=M,f=F}}.
-call2(State,M,F,G) when is_record(M,bi) ->
+    call_block(St0,M,ebqn_array:from_list([M,F]));
+call1(St0,M,F) when is_record(M,m1) ->
+    {St0,#r1{m=M,f=F}}.
+call2(St0,M,F,G) when is_record(M,bi) ->
     true = (2 =:= M#bi.t),
-    call_block(State,M,ebqn_array:from_list([M,F,G]));
-call2(State,M,F,G) when is_record(M,m2) ->
-    {State,#r2{m=M,f=F,g=G}}.
+    call_block(St0,M,ebqn_array:from_list([M,F,G]));
+call2(St0,M,F,G) when is_record(M,m2) ->
+    {St0,#r2{m=M,f=F,g=G}}.
 ge(I,E,An) when I =:= 0 ->
     E;
 ge(I,E,An) when I =/= 0 ->
