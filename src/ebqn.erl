@@ -125,60 +125,60 @@ args(B,P,Op) when Op =:= 21; Op =:= 22 ->
     Y = element(2+P,B),
     {{X,Y},2+P}.
 
-stack(B,O,S,Root,Heap,An,E,Stack,X,0) ->
+stack(State,B,O,S,E,Stack,X,0) ->
     cons(element(1+X,O),Stack);
-stack(B,O,S,Root,Heap,An,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
+stack(State,B,O,S,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
     {T,Si} = case X of
         0 -> {list(#{}),Stack};
         _ -> tail(X-1,ebqn_array:new(X),Stack)
     end,
     cons(list(T),Si);
-stack(B,O,S,Root,Heap,An,E,Stack,undefined,7) ->
+stack(State,B,O,S,E,Stack,undefined,7) ->
     F = head(Stack),
     M = head(tail(Stack)),
     cons(call1(M,F),tail(tail(Stack)));
-stack(B,O,S,Root,Heap,An,E,Stack,undefined,8) ->
+stack(State,B,O,S,E,Stack,undefined,8) ->
     F = head(Stack),
     M = head(tail(Stack)),
     G = head(tail(tail(Stack))),
     cons(call2(M,F,G),tail(tail(tail(Stack))));
-stack(B,O,S,Root,Heap,An,E,Stack,undefined,9) ->
+stack(State,B,O,S,E,Stack,undefined,9) ->
     G = head(Stack),
     J = head(tail(Stack)),
     cons(#tr{f=undefined,g=G,h=J},tail(tail(Stack)));
-stack(B,O,S,Root,Heap,An,E,Stack,X,Op) when Op =:= 11; Op =:= 12 ->
+stack(State,B,O,S,E,Stack,X,Op) when Op =:= 11; Op =:= 12 ->
     tail(Stack);
-stack(B,O,S,Root,Heap,An,E,Stack,X,13) ->
+stack(State,B,O,S,E,Stack,X,13) ->
     tail(tail(Stack));
-stack(B,O,S,Root,Heap,An,E,Stack,X,14) ->
+stack(State,B,O,S,E,Stack,X,14) ->
     tail(Stack);
-stack(B,O,S,Root,Heap,An,E,Stack,X,15) ->
+stack(State,B,O,S,E,Stack,X,15) ->
     Block = load_block(element(1+X,S)),
     D = derive(B,O,S,Block,E),
     cons(D,Stack);
-stack(B,O,S,Root,Heap,An,E,Stack,undefined,16) ->
+stack(State,B,O,S,E,Stack,undefined,16) ->
     F = head(Stack),
     X = head(tail(Stack)),
     cons(call(F,X,undefined),tail(tail(Stack)));
-stack(B,O,S,Root,Heap,An,E,Stack,undefined,17) ->
+stack(State,B,O,S,E,Stack,undefined,17) ->
     W = head(Stack),
     F = head(tail(Stack)),
     X = head(tail(tail(Stack))),
     cons(call(F,X,W),tail(tail(tail(Stack))));
-stack(B,O,S,Root,Heap,An,E,Stack,undefined,19) ->
+stack(State,B,O,S,E,Stack,undefined,19) ->
     F = head(Stack),
     G = head(tail(Stack)),
     H = head(tail(tail(Stack))),
     cons(#tr{f=F,g=G,h=H},tail(tail(tail(Stack))));
-stack(B,O,S,Root,Heap,An,E,Stack,{X,Y},21) ->
-    T = ge(X,E,An),
-    Z = ebqn_heap:get(T,Y,Heap),
+stack(State,B,O,S,E,Stack,{X,Y},21) ->
+    T = ge(X,E,State#st.an),
+    Z = ebqn_heap:get(T,Y,State#st.heap),
     %true = (undefined =/= Z),
     cons(Z,Stack);
-stack(B,O,S,Root,Heap,An,E,Stack,{X,Y},22) ->
-    T = ge(X,E,An),
+stack(State,B,O,S,E,Stack,{X,Y},22) ->
+    T = ge(X,E,State#st.an),
     cons({T,Y},Stack);
-stack(B,O,S,Root,Heap,An,E,Stack,X,25) ->
+stack(State,B,O,S,E,Stack,X,25) ->
     1 = len(Stack),
     head(Stack).
 
@@ -223,7 +223,7 @@ vm(B,O,S,Block,E,P,Stack,cont) ->
     %fmt({vm,Op,P+1,E}),
     {Arg,Pn} = args(B,1+P,Op), % advances the ptr and reads the args
     State = get(st),
-    Sn = stack(B,O,S,State#st.root,State#st.heap,State#st.an,E,Stack,Arg,Op), % mutates the stack
+    Sn = stack(State,B,O,S,E,Stack,Arg,Op), % mutates the stack
     State1 = get(st),
     NxtHeap = heap(State1,Stack,Op),
     put(st,State1#st{heap=NxtHeap}), % mutates the heap
