@@ -5,7 +5,9 @@
 -import(ebqn,[list/1,call/4,fmt/1]).
 
 -export([fns/0]).
--export([arr/2,m1/1,m2/1,type/2,decompose/2,glyph/2,fill/2,log/2,plus/2,minus/2,times/2,divide/2,power/2,floor/2,equals/2,lesseq/2,shape/2,reshape/2,pick/2,window/2,table/1,scan/1,fill_by/2,cases/2]).
+-export([arr/2,m1/1,m2/1,type/2,decompose/2,glyph/2,fill/2,log/2,group_len/2,group_ord/2,
+         plus/2,minus/2,times/2,divide/2,power/2,floor/2,equals/2,lesseq/2,shape/2,
+         reshape/2,pick/2,window/2,table/1,scan/1,fill_by/2,cases/2]).
 -include("schema.hrl").
 
 arr(R,Sh) ->
@@ -44,15 +46,15 @@ log(X,undefined) ->
     log(X);
 log(X,W) ->
     log(X) / log(W).
-group_len(#a{r=X},_W) ->
-    L = ebqn_array:foldl(fun(_I,V,A) -> max(A,V) end,-1,X),
+group_len(X,_W) ->
+    L = ebqn_array:foldl(fun(_I,V,A) -> max(A,V) end,-1,X#a.r),
     R = ebqn_array:new(L+1,0),
     F = fun (_I,E,A) when E >= 0 -> ebqn_array:set(E,1+ebqn_array:get(E,A),A);
             (_I,_E,A)            -> A
     end,
-    ebqn:list(ebqn_array:foldl(F,R,X)).
-group_ord(#a{r=X},#a{r=W}) ->
-    {S,L} = ebqn_array:foldl(fun(_I,V,{Si,Li}) -> {ebqn_array:concat(Si,ebqn_array:from_list([Li])),Li+V} end,{nil,0},W),
+    ebqn:list(ebqn_array:foldl(F,R,X#a.r)).
+group_ord(X,W) ->
+    {S,L} = ebqn_array:foldl(fun(_I,V,{Si,Li}) -> {ebqn_array:concat(Si,ebqn_array:from_list([Li])),Li+V} end,{#{},0},W#a.r),
     R = ebqn_array:new(L),
     F = fun
         (I,V,{Si,Ri}) when V >= 0 ->
@@ -61,7 +63,7 @@ group_ord(#a{r=X},#a{r=W}) ->
         (_I,_V,A) ->
             A
     end,
-    {_, O} = ebqn_array:foldl(F,{S,R},X),
+    {_, O} = ebqn_array:foldl(F,{S,R},X#a.r),
     list(O).
 assert_fn(Pre) ->
     fun
@@ -191,16 +193,16 @@ lesseq(X,W) ->
                 end
         end,
     case R of true -> 1; false -> 0 end.
-shape(#a{sh=Sh},undefined) ->
-    list(ebqn_array:from_list(Sh)).
-reshape(#a{r=X},undefined) ->
-    arr(X,[maps:size(X)]);
-reshape(#a{r=X},#a{r=W}) ->
-    arr(X,ebqn_array:to_list(W));
-reshape(#a{r=X},W) ->
-    arr(X,W).
-pick(#a{r=X} = Y,W) ->
-    ebqn_array:get(trunc(W),X).
+shape(X,undefined) ->
+    list(ebqn_array:from_list(X#a.sh)).
+reshape(X,undefined) ->
+    arr(X#a.r,[maps:size(X#a.r)]);
+reshape(X,W) when is_record(W,a) ->
+    arr(X#a.r,ebqn_array:to_list(W#a.r));
+reshape(X,W) ->
+    arr(X#a.r,W).
+pick(X,W) ->
+    ebqn_array:get(trunc(W),X#a.r).
 window(X,undefined) ->
     list(ebqn_array:from_list(seq(0,trunc(X)-1))).
 table(F) ->
