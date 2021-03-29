@@ -1,7 +1,6 @@
 -module(ebqn).
 
 -export([run/1,run/3,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0]).
--import(queue,[cons/2,tail/1,head/1,len/1]).
 
 -include("schema.hrl").
 
@@ -105,11 +104,11 @@ hget(Heap,#v{sh=S,r=R} = I) when is_record(I,v) ->
 tail(L,A,S) when L =:= -1 ->
     {A,S};
 tail(L,A,S) ->
-    tail(L-1,ebqn_array:set(L,head(S),A),tail(S)).
+    tail(L-1,ebqn_array:set(L,hd(S),A),tl(S)).
 popn(N,Q) when N =:= 0 ->
     Q;
 popn(N,Q) when N =/= 0 ->
-    popn(N-1,tail(Q)).
+    popn(N-1,tl(Q)).
 
 derive(St0,B,O,S,#bl{t=0,i=1} = Block,E) ->
     load_vm(St0,B,O,S,Block,make_ref(),E,ebqn_array:new(Block#bl.l));
@@ -126,82 +125,78 @@ args(B,P,Op) when Op =:= 21; Op =:= 22 ->
     {{X,Y},2+P}.
 
 stack(St0,B,O,S,E,Stack,X,0) ->
-    {St0,cons(element(1+X,O),Stack)};
+    {St0,[element(1+X,O)|Stack]};
 stack(St0,B,O,S,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
     {T,Si} = case X of
         0 -> {list(#{}),Stack};
         _ -> tail(X-1,ebqn_array:new(X),Stack)
     end,
-    {St0,cons(list(T),Si)};
+    {St0,[list(T)|Si]};
 stack(St0,B,O,S,E,Stack,undefined,7) ->
-    F = head(Stack),
-    M = head(tail(Stack)),
+    F = hd(Stack),
+    M = hd(tl(Stack)),
     {St1,Result} = call1(St0,M,F),
-    Sn = cons(Result,tail(tail(Stack))),
-    {St1,Sn};
+    {St1,[Result|tl(tl(Stack))]};
 stack(St0,B,O,S,E,Stack,undefined,8) ->
-    F = head(Stack),
-    M = head(tail(Stack)),
-    G = head(tail(tail(Stack))),
+    F = hd(Stack),
+    M = hd(tl(Stack)),
+    G = hd(tl(tl(Stack))),
     {St1,Result} = call2(St0,M,F,G),
-    Sn = cons(Result,tail(tail(tail(Stack)))),
-    {St1,Sn};
+    {St1,[Result|tl(tl(tl(Stack)))]};
 stack(St0,B,O,S,E,Stack,undefined,9) ->
-    G = head(Stack),
-    J = head(tail(Stack)),
-    {St0,cons(#tr{f=undefined,g=G,h=J},tail(tail(Stack)))};
+    G = hd(Stack),
+    J = hd(tl(Stack)),
+    {St0,[#tr{f=undefined,g=G,h=J}|tl(tl(Stack))]};
 stack(St0,B,O,S,E,Stack,X,Op) when Op =:= 11 ->
-    I = head(Stack),
-    V = head(tail(Stack)),
+    I = hd(Stack),
+    V = hd(tl(Stack)),
     Heap = hset(St0#st.heap,true,I,V),
-    {St0#st{heap=Heap},tail(Stack)};
+    {St0#st{heap=Heap},tl(Stack)};
 stack(St0,B,O,S,E,Stack,X,Op) when Op =:= 12 ->
-    I = head(Stack),
-    V = head(tail(Stack)),
+    I = hd(Stack),
+    V = hd(tl(Stack)),
     Heap = hset(St0#st.heap,false,I,V),
-    {St0#st{heap=Heap},tail(Stack)};
+    {St0#st{heap=Heap},tl(Stack)};
 stack(St0,B,O,S,E,Stack,X,13) ->
-    I = head(Stack),
-    F = head(tail(Stack)),
-    G = head(tail(tail(Stack))),
+    I = hd(Stack),
+    F = hd(tl(Stack)),
+    G = hd(tl(tl(Stack))),
     {St1,Result} = call(St0,F,G,hget(St0#st.heap,I)),
     Heap = hset(St1#st.heap,false,I,Result),
-    {St1#st{heap=Heap},tail(tail(Stack))};
+    {St1#st{heap=Heap},tl(tl(Stack))};
 stack(St0,B,O,S,E,Stack,X,14) ->
-    {St0,tail(Stack)};
+    {St0,tl(Stack)};
 stack(St0,B,O,S,E,Stack,X,15) ->
     Block = load_block(element(1+X,S)),
     {St1,D} = derive(St0,B,O,S,Block,E),
-    {St1,cons(D,Stack)};
+    {St1,[D|Stack]};
 stack(St0,B,O,S,E,Stack,undefined,16) ->
-    F = head(Stack),
-    X = head(tail(Stack)),
+    F = hd(Stack),
+    X = hd(tl(Stack)),
     {St1,Result} = call(St0,F,X,undefined),
-    Sn = cons(Result,tail(tail(Stack))),
-    {St1,Sn};
+    {St1,[Result|tl(tl(Stack))]};
 stack(St0,B,O,S,E,Stack,undefined,17) ->
-    W = head(Stack),
-    F = head(tail(Stack)),
-    X = head(tail(tail(Stack))),
+    W = hd(Stack),
+    F = hd(tl(Stack)),
+    X = hd(tl(tl(Stack))),
     {St1,Result} = call(St0,F,X,W),
-    Sn = cons(Result,tail(tail(tail(Stack)))),
-    {St1,Sn};
+    {St1,[Result|tl(tl(tl(Stack)))]};
 stack(St0,B,O,S,E,Stack,undefined,19) ->
-    F = head(Stack),
-    G = head(tail(Stack)),
-    H = head(tail(tail(Stack))),
-    {St0,cons(#tr{f=F,g=G,h=H},tail(tail(tail(Stack))))};
+    F = hd(Stack),
+    G = hd(tl(Stack)),
+    H = hd(tl(tl(Stack))),
+    {St0,[#tr{f=F,g=G,h=H}|tl(tl(tl(Stack)))]};
 stack(St0,B,O,S,E,Stack,{X,Y},21) ->
     T = ge(X,E,St0#st.an),
     Z = ebqn_heap:get(T,Y,St0#st.heap),
     %true = (undefined =/= Z),
-    {St0,cons(Z,Stack)};
+    {St0,[Z|Stack]};
 stack(St0,B,O,S,E,Stack,{X,Y},22) ->
     T = ge(X,E,St0#st.an),
-    {St0,cons({T,Y},Stack)};
+    {St0,[{T,Y}|Stack]};
 stack(St0,B,O,S,E,Stack,X,25) ->
-    1 = len(Stack),
-    {St0,head(Stack)}.
+    1 = length(Stack),
+    {St0,hd(Stack)}.
 
 ctrl(Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22 ->
     cont;
@@ -219,8 +214,8 @@ vm(St0,B,O,S,Block,E,P,Stack,rtn) ->
     {St1,Stack};
 vm(St0,B,O,S,Block,E,P,Stack,cont) ->
     Op = element(1+P,B),
-    %fmt({vm,Op,P+1,E}),
-    %fmt({stack,queue:to_list(Stack)}),
+    %fmt({vm,Op,P+1}),
+    %fmt({stack,Stack}),
     {Arg,Pn} = args(B,1+P,Op), % advances the ptr and reads the args
     {St1,Sn} = stack(St0,B,O,S,E,Stack,Arg,Op), % mutates the stack
     Ctrl = ctrl(Op), % set ctrl atom
@@ -229,16 +224,16 @@ vm(St0,B,O,S,Block,E,P,Stack,cont) ->
 load_vm(St0,B,O,S,Block,E,Parent,V) ->
     Heap = ebqn_heap:alloc(E,V,St0#st.heap),
     An0 = St0#st.an,
-    An = An0#{E => Parent},
-    Rtn = queue:cons(E,St0#st.rtn),
-    St1 = St0#st{heap=Heap,an=An,rtn=Rtn},
-    vm(St1,B,O,S,Block,E,Block#bl.st,queue:new(),cont). % run vm w/ empty stack
+    An1 = An0#{E => Parent},
+    Rtn = [E|St0#st.rtn],
+    St1 = St0#st{heap=Heap,an=An1,rtn=Rtn},
+    vm(St1,B,O,S,Block,E,Block#bl.st,[],cont). % run vm w/ empty stack
 
 load_block({T,I,ST,L}) ->
     #bl{t=T,i=I,st=ST,l=L}.
 
 init_st() ->
-    #st{root=make_ref(),heap=#{},an=#{},rtn=queue:new()}.
+    #st{root=make_ref(),heap=#{},an=#{},rtn=[]}.
 
 run([B,O,S]) ->
     %fmt({run,B}),
