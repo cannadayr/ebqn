@@ -101,8 +101,12 @@ hget(Heap,{T,I}) when is_reference(T) ->
     Z;
 hget(Heap,#v{sh=S,r=R} = I) when is_record(I,v) ->
     arr(maps:map(fun(_J,E) -> hget(Heap,E) end,R),S).
+llst(0,Stack) ->
+    [list(#{})|Stack];
+llst(X,Stack) ->
+    tail(X-1,ebqn_array:new(X),Stack).
 tail(L,A,S) when L =:= -1 ->
-    {A,S};
+    [list(A)|S];
 tail(L,A,S) ->
     tail(L-1,ebqn_array:set(L,hd(S),A),tl(S)).
 popn(N,Q) when N =:= 0 ->
@@ -124,14 +128,11 @@ args(B,P,Op) when Op =:= 21; Op =:= 22 ->
     Y = element(2+P,B),
     {{X,Y},2+P}.
 
+% put guard Op matches before atom matches
+stack(St0,B,O,S,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
+    {St0,llst(X,Stack)};
 stack(St0,B,O,S,E,Stack,X,0) ->
     {St0,[element(1+X,O)|Stack]};
-stack(St0,B,O,S,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
-    {T,Si} = case X of
-        0 -> {list(#{}),Stack};
-        _ -> tail(X-1,ebqn_array:new(X),Stack)
-    end,
-    {St0,[list(T)|Si]};
 stack(St0,B,O,S,E,Stack,undefined,7) ->
     F = hd(Stack),
     M = hd(tl(Stack)),
