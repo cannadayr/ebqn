@@ -205,11 +205,9 @@ ctrl(Op) when Op =:= 25 ->
     rtn.
 
 vm(St0,B,O,S,Block,E,P,Stack,rtn) ->
-    % get the number of children for each environment
-    An = St0#st.an,
-    Children = maps:fold(fun(K,V,A) -> maps:update_with(V,fun(N) -> N+1 end,1,A) end,#{},An),
+    An0 = St0#st.an,
     % get the number of children for this environment
-    Num = maps:get(E,Children,0),
+    Num = maps:size(maps:filter(fun(K,V) -> V =:= E end,An0)),
     %fmt({rtn_pop,Num}),
     St1 = St0#st{rtn=popn(Num,St0#st.rtn)}, % pop this number of slots off the rtn stack
     {St1,Stack};
