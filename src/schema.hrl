@@ -5,7 +5,7 @@
 -record(bl,{t,i,st,l}).         % block (type, immediacy, start, locals)
 -record(bi,{b,o,s,t,d,args,e}). % block instance (bytecode, objs, sections, type, definition, args, env)
 -record(tr,{f,g,h}).            % train (f-fn, g-fn, h-fn)
--record(v,{sh,r}).              % value (shape, ravel)
+-record(a,{sh,r}).              % array (shape, ravel)
 -record(c,{p}).                 % character (point)
 -record(m1,{f}).                % 1-modifier (f-fn)
 -record(m2,{f}).                % 2-modifier (f-fn)

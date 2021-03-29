@@ -16,16 +16,16 @@ perf(F) ->
     timer:now_diff(A,B)/1000.
 
 arr(R,Sh) ->
-    #v{r=R,sh=Sh}.
-list(A) when is_record(A,v) ->
+    #a{r=R,sh=Sh}.
+list(A) when is_record(A,a) ->
     A;
-list(A) when not is_record(A,v) ->
+list(A) when not is_record(A,a) ->
     arr(A,[maps:size(A)]).
 char([C]) ->
     #c{p=C}.
 str(S) ->
     list(ebqn_array:from_list(lists:map(fun(P) -> #c{p=P} end,S))).
-strings(#v{r=X}) ->
+strings(#a{r=X}) ->
             io_lib:format("~ts~n",[lists:map(fun(E) -> E#c.p end,ebqn_array:to_list(X))]).
 
 call(St0,_F,undefined,_W) ->
@@ -63,8 +63,8 @@ call(St0,T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
 call(St0,T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
     {St1,R} = call(St0,T#tr.h,X,W),
     call(St1,T#tr.g,R,undefined);
-call(St0,V,X,W) when is_record(V,v) ->
-    {St0,V};
+call(St0,A,X,W) when is_record(A,a) ->
+    {St0,A};
 call(St0,F,X,W) when not is_function(F) ->
     {St0,F}.
 call_block(St0,M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
@@ -89,7 +89,7 @@ ge(I,E,An) when I =:= 0 ->
 ge(I,E,An) when I =/= 0 ->
     #{E := Parent} = An,
     ge(I-1,Parent,An).
-hset(Heap,D,#v{r=Id},#v{r=V}) ->
+hset(Heap,D,#a{r=Id},#a{r=V}) ->
     maps:fold(fun(J,N,A) -> hset(A,D,N,ebqn_array:get(J,V)) end,Heap,Id);
 hset(Heap,D,{E,I},V) ->
     Slot = ebqn_heap:get(E,I,Heap),
@@ -99,7 +99,7 @@ hget(Heap,{T,I}) when is_reference(T) ->
     Z = ebqn_heap:get(T,I,Heap),
     true = (undefined =/= Z),
     Z;
-hget(Heap,#v{sh=S,r=R} = I) when is_record(I,v) ->
+hget(Heap,#a{sh=S,r=R} = I) when is_record(I,a) ->
     arr(maps:map(fun(_J,E) -> hget(Heap,E) end,R),S).
 llst(0,Stack) ->
     [list(#{})|Stack];

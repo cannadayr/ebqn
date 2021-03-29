@@ -38,9 +38,9 @@ trace(Todo,Marked,Root,An,Heap) when is_number(hd(Todo)); is_atom(hd(Todo)); is_
 trace(Todo,Marked,Root,An,Heap) when is_tuple(hd(Todo)),is_reference(element(1,hd(Todo))) ->
     {R,_} = hd(Todo),
     trace([R]++tl(Todo),Marked,Root,An,Heap);
-trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),v) ->
+trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),a) ->
     V = hd(Todo),
-    trace(ebqn_array:to_list(V#v.r)++tl(Todo),Marked,Root,An,Heap);
+    trace(ebqn_array:to_list(V#a.r)++tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),tr) ->
     Tr = hd(Todo),
     F = Tr#tr.f,

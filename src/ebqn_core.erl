@@ -9,14 +9,14 @@
 -include("schema.hrl").
 
 arr(R,Sh) ->
-    #v{r=R,sh=Sh}.
+    #a{r=R,sh=Sh}.
 m(F) ->
     #m{f=F}.
 m1(F) ->
     #m1{f=F}.
 m2(F) ->
     #m2{f=F}.
-is_array(X,_W) when is_record(X,v) ->
+is_array(X,_W) when is_record(X,a) ->
     1;
 is_array(_X,_W) ->
     0.
@@ -26,7 +26,7 @@ type(X,_W) when is_record(X,m1);is_record(X,r1) ->
     4;
 type(X,_W) when is_record(X,m2);is_record(X,r2) ->
     5;
-type(X,_W) when is_record(X,v) ->
+type(X,_W) when is_record(X,a) ->
     0;
 type(X,_W) when is_number(X);X =:= inf; X =:= ninf ->
     1;
@@ -44,14 +44,14 @@ log(X,undefined) ->
     log(X);
 log(X,W) ->
     log(X) / log(W).
-group_len(#v{r=X},_W) ->
+group_len(#a{r=X},_W) ->
     L = ebqn_array:foldl(fun(_I,V,A) -> max(A,V) end,-1,X),
     R = ebqn_array:new(L+1,0),
     F = fun (_I,E,A) when E >= 0 -> ebqn_array:set(E,1+ebqn_array:get(E,A),A);
             (_I,_E,A)            -> A
     end,
     ebqn:list(ebqn_array:foldl(F,R,X)).
-group_ord(#v{r=X},#v{r=W}) ->
+group_ord(#a{r=X},#a{r=W}) ->
     {S,L} = ebqn_array:foldl(fun(_I,V,{Si,Li}) -> {ebqn_array:concat(Si,ebqn_array:from_list([Li])),Li+V} end,{nil,0},W),
     R = ebqn_array:new(L),
     F = fun
@@ -160,8 +160,8 @@ floor(X,_W) when not is_number(X),not is_record(X,c) ->
     throw("⌊: Cannot compare operations");
 floor(X,_W) when is_number(X) ->
     floor(X).
-equals(X,undefined) when is_record(X,v) ->
-    length(X#v.sh);
+equals(X,undefined) when is_record(X,a) ->
+    length(X#a.sh);
 equals(X,W) ->
     % use '==' for float-to-int comparisons
     case X == W of true -> 1; false -> 0 end.
@@ -191,15 +191,15 @@ lesseq(X,W) ->
                 end
         end,
     case R of true -> 1; false -> 0 end.
-shape(#v{sh=Sh},undefined) ->
+shape(#a{sh=Sh},undefined) ->
     list(ebqn_array:from_list(Sh)).
-reshape(#v{r=X},undefined) ->
+reshape(#a{r=X},undefined) ->
     arr(X,[maps:size(X)]);
-reshape(#v{r=X},#v{r=W}) ->
+reshape(#a{r=X},#a{r=W}) ->
     arr(X,ebqn_array:to_list(W));
-reshape(#v{r=X},W) ->
+reshape(#a{r=X},W) ->
     arr(X,W).
-pick(#v{r=X} = Y,W) ->
+pick(#a{r=X} = Y,W) ->
     ebqn_array:get(trunc(W),X).
 window(X,undefined) ->
     list(ebqn_array:from_list(seq(0,trunc(X)-1))).
@@ -210,16 +210,16 @@ table(F) ->
                 {St1,R} = call(StAcc,F,E,undefined),
                 {St1,maps:put(I,R,M)}
             end,
-            {St2,Result} = maps:fold(Table,{St0,#{}},X#v.r),
-            {St2,arr(Result,X#v.sh)};
-        (St0,#v{r=Xr,sh=Xsh},#v{r=Wr,sh=Wsh}) ->
+            {St2,Result} = maps:fold(Table,{St0,#{}},X#a.r),
+            {St2,arr(Result,X#a.sh)};
+        (St0,#a{r=Xr,sh=Xsh},#a{r=Wr,sh=Wsh}) -> %TODO fixme
             InitSize =  ebqn_array:new(maps:size(Xr)*maps:size(Wr)),
             Xs = maps:size(Xr),
             arr(maps:fold(fun(J,D,A1) -> maps:fold(fun(I,E,A2) -> ebqn_array:set(J*Xs+I,call(St0,F,E,D),A2) end, A1, Xr) end,InitSize, Wr),flatten(Wsh ++ Xsh))
     end).
 scan(F) ->
     m(fun
-        (St0,#v{r=X,sh=S},undefined) when length(S) > 0 ->
+        (St0,#a{r=X,sh=S},undefined) when length(S) > 0 -> %TODO fixme & add dyadic scan
             L = maps:size(X),
             R = ebqn_array:new(L),
             H = fun
@@ -257,4 +257,5 @@ cases(F,G) ->
 fns() -> [fun type/2,fun fill/2,fun log/2,fun group_len/2,fun group_ord/2,
                      assert_fn(""),fun plus/2,fun minus/2,fun times/2,fun divide/2,
                      fun power/2,fun floor/2,fun equals/2,fun lesseq/2,fun shape/2,
-                     fun reshape/2,fun pick/2,fun window/2,m1(fun table/1),m1(fun scan/1),m2(fun fill_by/2),m2(fun cases/2)].
+                     fun reshape/2,fun pick/2,fun window/2,
+                     m1(fun table/1),m1(fun scan/1),m2(fun fill_by/2),m2(fun cases/2)].
