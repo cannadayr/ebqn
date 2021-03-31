@@ -1,0 +1,4 @@
+[workspace]
+members = [
+    "rust_src/ebqn_heap"
+]
