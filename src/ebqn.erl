@@ -197,20 +197,20 @@ stack(St0,B,O,S,E,Stack,{X,Y},22) ->
     {St0,[{T,Y}|Stack]};
 stack(St0,B,O,S,E,Stack,X,25) ->
     1 = length(Stack),
-    {St0,hd(Stack)}.
+    {St0,[hd(Stack)]}.
 
 ctrl(Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22 ->
     cont;
 ctrl(Op) when Op =:= 25 ->
     rtn.
 
-vm(St0,B,O,S,Block,E,P,Stack,rtn) ->
+vm(St0,B,O,S,Block,E,P,[Rtn],rtn) ->
     An0 = St0#st.an,
     % get the number of children for this environment
     Num = maps:size(maps:filter(fun(K,V) -> V =:= E end,An0)),
     %fmt({rtn_pop,Num}),
     St1 = St0#st{rtn=popn(Num,St0#st.rtn)}, % pop this number of slots off the rtn stack
-    {St1,Stack};
+    {St1,Rtn};
 vm(St0,B,O,S,Block,E,P,Stack,cont) ->
     Op = element(1+P,B),
     %fmt({vm,Op,P+1}),
@@ -236,9 +236,10 @@ init_st() ->
 
 run([B,O,S]) ->
     %fmt({run,B}),
-    ebqn:run(list_to_tuple(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
+    {St,Res} = ebqn:run(list_to_tuple(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))),
+    {St,Res}.
 run(B,O,S) ->
     St0 = init_st(),
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
     {St1,Result} = load_vm(St0,B,O,S,Block,St0#st.root,St0#st.root,ebqn_array:new(L)), % set the root environment, and root as its own parent.
-    Result.
+    {St1,Result}.
