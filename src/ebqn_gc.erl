@@ -2,29 +2,11 @@
 
 -include("schema.hrl").
 
-% misc stuff from ebqn.erl
+-export([gc/3,mark/6,sweep/2]).
 
-    % convert stack to a usable data structure for GC
-    %Slots =
-    %    case Ctrl =:= rtn of
-    %        true ->
-    %            [Sn];
-    %        false ->
-    %            queue:to_list(Sn)
-    %    end,
-    % test for GC
-    % currently using hard coded memory total
-    % this should be replaced w/ either a platform specific system cmd or memsup
-    % ((?MEM*1024)-erlang:memory(total)) < 1024*1024*100
-    %case false of
-    %    true ->
-    %        Refs = mark(get(root),get(heap),get(an),get(rtn),E,Slots), % get stale refs
-    %        fmt({memory,process_info(self(),[heap_size,stack_size]),erlang:memory(processes)/(1024*1024),erts_debug:flat_size(get(heap))}),
-    %        put(heap,sweep(get(heap),Refs)),
-    %        put(an,maps:without(sets:to_list(Refs),get(an)));
-    %    false ->
-    %        ok
-    %end,
+gc(St0,E,Slots) ->
+    Refs = ebqn_gc:mark(St0#st.root,St0#st.heap,St0#st.an,St0#st.rtn,E,Slots),
+    St0#st{heap=ebqn_gc:sweep(St0#st.heap,Refs),an=maps:without(sets:to_list(Refs),St0#st.an)}.
 
 trace_env(E,Root,An,Acc) when E =:= Root ->
     [E] ++ Acc;
@@ -33,7 +15,7 @@ trace_env(E,Root,An,Acc) ->
     trace_env(Parent,Root,An,[E]++Acc).
 trace([],Marked,Root,An,Heap) ->
     Marked;
-trace(Todo,Marked,Root,An,Heap) when is_number(hd(Todo)); is_atom(hd(Todo)); is_function(hd(Todo)) ->
+trace(Todo,Marked,Root,An,Heap) when is_number(hd(Todo)); is_atom(hd(Todo)); is_function(hd(Todo)); is_record(hd(Todo),c) ->
     trace(tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_tuple(hd(Todo)),is_reference(element(1,hd(Todo))) ->
     {R,_} = hd(Todo),
@@ -78,13 +60,13 @@ trace(Todo,Marked,Root,An,Heap) when is_reference(hd(Todo)) ->
                 % get env lineage
                 Lineage = trace_env(E,Root,An,[]),
                 % get the slots from the heap
-                Slots = ebqn_array:to_list(maps:get(E,Heap)),
+                Slots = maps:values(ebqn_heap:slots(E,Heap)),
                 {Lineage++Slots++tl(Todo),sets:add_element(E,Marked)}
         end,
     trace(TodoN,MarkedN,Root,An,Heap).
 mark(Root,Heap,An,Rtn,E,Stack) ->
     % initial list of slots & environments to fold over
-    Init = queue:to_list(Rtn)++Stack++[Root,E],
+    Init = Rtn++Stack++[Root,E],
     % trace for references
     Marked = trace(Init,sets:new(),Root,An,Heap),
     % return the unmarked environments
