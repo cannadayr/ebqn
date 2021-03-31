@@ -214,18 +214,19 @@ table(F) ->
             end,
             {St2,Result} = maps:fold(Table,{St0,#{}},X#a.r),
             {St2,arr(Result,X#a.sh)};
-        (St0,#a{r=Xr,sh=Xsh},#a{r=Wr,sh=Wsh}) -> %TODO fixme
+        (St0,#a{r=Xr,sh=Xsh},#a{r=Wr,sh=Wsh}) ->
             InitSize =  ebqn_array:new(maps:size(Xr)*maps:size(Wr)),
             Xs = maps:size(Xr),
-            arr(maps:fold(fun(J,D,A1) -> maps:fold(fun(I,E,A2) -> ebqn_array:set(J*Xs+I,call(St0,F,E,D),A2) end, A1, Xr) end,InitSize, Wr),flatten(Wsh ++ Xsh))
+            Rtn = maps:fold(fun(J,D,{StAcc1,A1}) -> maps:fold(fun(I,E,{StAcc2,A2}) -> {StAcc3,Rtn2} = call(StAcc2,F,E,D),{StAcc2,ebqn_array:set(J*Xs+I,Rtn2,A2)} end, {StAcc1,A1}, Xr) end,{St0,InitSize}, Wr),
+            arr(Rtn,flatten(Wsh ++ Xsh))
     end).
 scan(F) ->
     m(fun
-        (St0,#a{r=X,sh=S},undefined) when length(S) > 0 -> %TODO fixme & add dyadic scan
+        (St0,#a{r=X,sh=S},undefined) when length(S) > 0 ->
             L = maps:size(X),
             R = ebqn_array:new(L),
             H = fun
-                (Ri,Li) when Li > 0 ->
+                (St1,Ri,Li) when Li > 0 ->
                     C = lists:foldl(fun(E,A) -> A*E end,1,tl(S)),
                     G = fun
                         G(I,Ci,Rn) when I =/= Ci ->
@@ -234,16 +235,18 @@ scan(F) ->
                             Rn
                     end,
                     J = fun
-                        J(I,Ci,Rn,Ln) when I =/= Ln ->
-                            J(I+1,Ci,ebqn_array:set(I,call(St0,F,ebqn_array:get(I,X),ebqn_array:get(I-C,Rn)),Rn),Ln);
-                        J(I,_Ci,Rn,Ln) when I =:= Ln ->
-                            Rn
+                        J(I,Ci,Rn,Ln,St2) when I =/= Ln ->
+                            {St3,Rtn} = call(St2,F,ebqn_array:get(I,X),ebqn_array:get(I-C,Rn)),
+                            J(I+1,Ci,ebqn_array:set(I,Rtn,Rn),Ln,St3);
+                        J(I,_Ci,Rn,Ln,St2) when I =:= Ln ->
+                            {St2,Rn}
                     end,
-                    J(C,C,G(0,C,Ri),L);
-                (Ri,_Li) ->
-                    Ri
+                    J(C,C,G(0,C,Ri),L,St1);
+                (St1,Ri,_Li) ->
+                    {St1,Ri}
             end,
-            arr(H(R,L),S)
+            {St4,Rtn2} = H(St0,R,L),
+            {St4,arr(Rtn2,S)}
     end).
 fill_by(F,G) ->
     m(fun(St0,X,W) ->
