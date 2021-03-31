@@ -164,9 +164,11 @@ floor(X,_W) when is_number(X) ->
     floor(X).
 equals(X,undefined) when is_record(X,a) ->
     length(X#a.sh);
-equals(X,W) ->
+equals(X,W) when is_number(X),is_number(W) ->
     % use '==' for float-to-int comparisons
-    case X == W of true -> 1; false -> 0 end.
+    case X == W of true -> 1; false -> 0 end;
+equals(X,W) ->
+    case X =:= W of true -> 1; false -> 0 end.
 lesseq(X,W) when X =:= W ->
     1;
 lesseq(X,inf) when is_record(X,c) ->
@@ -217,8 +219,16 @@ table(F) ->
         (St0,#a{r=Xr,sh=Xsh},#a{r=Wr,sh=Wsh}) ->
             InitSize =  ebqn_array:new(maps:size(Xr)*maps:size(Wr)),
             Xs = maps:size(Xr),
-            Rtn = maps:fold(fun(J,D,{StAcc1,A1}) -> maps:fold(fun(I,E,{StAcc2,A2}) -> {StAcc3,Rtn2} = call(StAcc2,F,E,D),{StAcc2,ebqn_array:set(J*Xs+I,Rtn2,A2)} end, {StAcc1,A1}, Xr) end,{St0,InitSize}, Wr),
-            arr(Rtn,flatten(Wsh ++ Xsh))
+            {RtnSt,Rtn} = maps:fold(
+                fun
+                    (J,D,{StAcc1,A1}) -> maps:fold(
+                        fun
+                            (I,E,{StAcc2,A2}) ->
+                                {StAcc3,Rtn2} = call(StAcc2,F,E,D),
+                                {StAcc3,ebqn_array:set(J*Xs+I,Rtn2,A2)} end,
+                        {StAcc1,A1}, Xr) end,
+                        {St0,InitSize}, Wr),
+                        {RtnSt,arr(Rtn,flatten(Wsh ++ Xsh))}
     end).
 scan(F) ->
     m(fun
