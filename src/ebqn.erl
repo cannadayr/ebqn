@@ -148,12 +148,12 @@ stack(St0,B,O,S,E,Stack,undefined,9) ->
     G = hd(Stack),
     J = hd(tl(Stack)),
     {St0,[#tr{f=undefined,g=G,h=J}|tl(tl(Stack))]};
-stack(St0,B,O,S,E,Stack,X,Op) when Op =:= 11 ->
+stack(St0,B,O,S,E,Stack,X,11) ->
     I = hd(Stack),
     V = hd(tl(Stack)),
     Heap = hset(St0#st.heap,true,I,V),
     {St0#st{heap=Heap},tl(Stack)};
-stack(St0,B,O,S,E,Stack,X,Op) when Op =:= 12 ->
+stack(St0,B,O,S,E,Stack,X,12) ->
     I = hd(Stack),
     V = hd(tl(Stack)),
     Heap = hset(St0#st.heap,false,I,V),
