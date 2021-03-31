@@ -24,7 +24,8 @@ rustler_export_nifs! {
     [("static_atom", 0, static_atom),
      ("native_add", 2, native_add),
      ("tuple_add", 1, tuple_add),
-     ("init_st",0,init_st)],
+     ("init_st",0,init_st),
+     ("alloc",1,alloc)],
     Some(on_load)
 }
 
@@ -75,5 +76,10 @@ impl State {
 
 fn init_st<'a>(env: Env<'a>, _args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let resource = ResourceArc::new(StateResource(Mutex::new(State::new())));
-    Ok((atoms::ok(), resource).encode(env))
+    Ok((atoms::ok(),resource).encode(env))
+}
+
+fn alloc<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    let e: Term = args[0].decode()?;
+    Ok((atoms::ok(),e).encode(env))
 }
