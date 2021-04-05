@@ -59,7 +59,7 @@ call(St0,F,X,W) when is_record(F,bi) ->
     Args = F#bi.args,
     L = ebqn_array:concat([ebqn_array:from_list([F,X,W]),Args,ebqn_array:new(D#bl.l)]),
     Prog = F#bi.prog,
-    #{Prog := #prog{b=B,o=O,s=S} } = St0#st.objs,
+    #prog{b=B,o=O,s=S} = maps:get(Prog,St0#st.objs),
     load_vm(St0,B,O,S,D,make_ref(),F#bi.e,L);
 call(St0,T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
     {St1,R} = call(St0,T#tr.h,X,W),
@@ -71,7 +71,6 @@ call(St0,T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
 call(St0,A,X,W) when is_record(A,a) ->
     {St0,A};
 call(St0,F,X,W) when not (is_record(F,fn) or is_function(F)) ->
-    halt("unexpected fn"),
     {St0,F}.
 call_block(St0,M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
     {St0,M#bi{args=Args,t=0}};
@@ -254,7 +253,7 @@ init_st() ->
 
 run(St0,[B,O,S]) ->
     fmt({run,B}),
-    ebqn:run(list_to_tuple(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
+    ebqn:run(St0,list_to_tuple(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
 run(B,O,S) ->
     run(init_st(),B,O,S).
 run(St0,B,O,S) ->
@@ -278,7 +277,5 @@ set_prim(I,R) when is_record(R,tr) ->
     R#tr{prim=I}.
 load() ->
     {St0,X} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime()),
-    Runtime = ebqn_array:get(0,X#a.r),
-    SetPrims = ebqn_array:get(1,X#a.r),
-    RuntimeAssert = Runtime#a{r=ebqn_array:set(42,ebqn_core:assert_fn("!"),Runtime#a.r)},
-    maps:map(fun set_prim/2,RuntimeAssert#a.r).
+    Rt = ebqn_array:get(0,X#a.r),
+    {St0,Rt}.

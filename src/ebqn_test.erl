@@ -2,7 +2,7 @@
 
 -include("schema.hrl").
 
--import(ebqn,[run/1,char/1,str/1]).
+-import(ebqn,[run/2,char/1,str/1]).
 -export([test/0,bc/0,layer0/1,layer1/1,layer2/1,layer3/1,layer4/1,layer5/1]).
 
 test() ->

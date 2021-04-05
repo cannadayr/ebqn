@@ -5,7 +5,7 @@
 -import(ebqn,[list/1,call/4,fmt/1]).
 
 -export([fns/0]).
--export([arr/2,m1/1,m2/1,type/2,decompose/2,glyph/2,fill/2,log/2,group_len/2,group_ord/2,
+-export([arr/2,m1/1,m2/1,type/2,fill/2,log/2,group_len/2,group_ord/2,
          plus/2,minus/2,times/2,divide/2,power/2,floor/2,equals/2,lesseq/2,shape/2,
          reshape/2,pick/2,window/2,table/1,scan/1,fill_by/2,cases/2,assert_fn/1]).
 -include("schema.hrl").
@@ -36,10 +36,6 @@ type(X,_W) when is_number(X);X =:= inf; X =:= ninf ->
     1;
 type(X,_W) ->
     2.
-decompose(X,W) ->
-    list(ebqn_array:from_list([0,X])).
-glyph(X,W) ->
-    throw("glyph not implemented").
 fill(X,undefined) ->
     0;
 fill(X,W) ->
