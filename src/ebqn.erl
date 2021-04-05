@@ -67,7 +67,7 @@ call(St0,T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
     call(St1,T#tr.g,R,undefined);
 call(St0,A,X,W) when is_record(A,a) ->
     {St0,A};
-call(St0,F,X,W) when not is_record(F,fn) ->
+call(St0,F,X,W) when not is_function(F) ->
     {St0,F}.
 call_block(St0,M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
     {St0,M#bi{args=Args,t=0}};
