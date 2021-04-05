@@ -12,6 +12,8 @@
 
 arr(R,Sh) ->
     #a{r=R,sh=Sh}.
+fn(F) ->
+    #fn{f=F}.
 m(F) ->
     #m{f=F}.
 m1(F) ->
@@ -269,8 +271,8 @@ cases(F,G) ->
         (St0,X,W) ->
             call(St0,G,X,W)
     end).
-fns() -> [fun type/2,fun fill/2,fun log/2,fun group_len/2,fun group_ord/2,
-                     assert_fn(""),fun plus/2,fun minus/2,fun times/2,fun divide/2,
-                     fun power/2,fun floor/2,fun equals/2,fun lesseq/2,fun shape/2,
-                     fun reshape/2,fun pick/2,fun window/2,
+fns() -> [fn(fun type/2),fn(fun fill/2),fn(fun log/2),fn(fun group_len/2),fn(fun group_ord/2),
+                     fn(assert_fn("")),fn(fun plus/2),fn(fun minus/2),fn(fun times/2),fn(fun divide/2),
+                     fun power/2,fn(fun floor/2),fn(fun equals/2),fn(fun lesseq/2),fn(fun shape/2),
+                     fn(fun reshape/2),fn(fun pick/2),fn(fun window/2),
                      m1(fun table/1),m1(fun scan/1),m2(fun fill_by/2),m2(fun cases/2)].

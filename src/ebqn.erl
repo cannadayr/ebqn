@@ -1,6 +1,6 @@
 -module(ebqn).
 
--export([run/1,run/3,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0]).
+-export([run/2,run/3,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,load/0]).
 
 -include("schema.hrl").
 
@@ -34,6 +34,9 @@ call(St0,F,X,W) when is_number(F) ->
     {St0,F};
 call(St0,F,X,W) when is_function(F) ->
     {St0,F(X,W)};
+call(St0,F,X,W) when is_record(F,fn) ->
+    Fn = F#fn.f,
+    {St0,Fn(X,W)};
 call(St0,F,X,W) when is_record(F,m) ->
     Fn = F#m.f,
     Fn(St0,X,W);
@@ -67,7 +70,8 @@ call(St0,T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
     call(St1,T#tr.g,R,undefined);
 call(St0,A,X,W) when is_record(A,a) ->
     {St0,A};
-call(St0,F,X,W) when not is_function(F) ->
+call(St0,F,X,W) when not (is_record(F,fn) or is_function(F)) ->
+    halt("unexpected fn"),
     {St0,F}.
 call_block(St0,M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
     {St0,M#bi{args=Args,t=0}};
@@ -248,12 +252,33 @@ load_block({T,I,ST,L}) ->
 init_st() ->
     #st{root=make_ref(),heap=#{},keys=#{},objs=#{},an=#{},rtn=[]}.
 
-run([B,O,S]) ->
-    %fmt({run,B}),
-    {St,Res} = ebqn:run(list_to_tuple(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))),
-    {St,Res}.
+run(St0,[B,O,S]) ->
+    fmt({run,B}),
+    ebqn:run(list_to_tuple(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
 run(B,O,S) ->
-    St0 = init_st(),
+    run(init_st(),B,O,S).
+run(St0,B,O,S) ->
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
     {St1,Result} = load_vm(St0,B,O,S,Block,St0#st.root,St0#st.root,ebqn_array:new(L)), % set the root environment, and root as its own parent.
-    {St1,Result}.
+    {ebqn_gc:gc(St1,St0#st.root,[Result]),Result}.
+
+set_prim(I,R) when is_function(R) ->
+    #fn{prim=I,f=R};
+set_prim(I,R) when is_record(R,bi) ->
+    R#bi{prim=I};
+set_prim(I,R) when is_record(R,m1) ->
+    R#m1{prim=I};
+set_prim(I,R) when is_record(R,m2) ->
+    R#m2{prim=I};
+set_prim(I,R) when is_record(R,r1) ->
+    R#r1{prim=I};
+set_prim(I,R) when is_record(R,r2) ->
+    R#r2{prim=I};
+set_prim(I,R) when is_record(R,tr) ->
+    R#tr{prim=I}.
+load() ->
+    {St0,X} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime()),
+    Runtime = ebqn_array:get(0,X#a.r),
+    SetPrims = ebqn_array:get(1,X#a.r),
+    RuntimeAssert = Runtime#a{r=ebqn_array:set(42,ebqn_core:assert_fn("!"),Runtime#a.r)},
+    maps:map(fun set_prim/2,RuntimeAssert#a.r).

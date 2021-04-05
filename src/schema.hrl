@@ -13,3 +13,4 @@
 -record(r1,{m,f,prim}).                     % raw 1-modifier (m-fn, f-fn)
 -record(r2,{m,f,g,prim}).                   % raw 2-modifier (m-fn, f-fn, g-fn)
 -record(m,{f}).                             % modifier (f-fn)
+-record(fn,{f,prim}).                       % function
