@@ -1,31 +1,41 @@
 #[macro_use] extern crate rustler;
-#[macro_use] extern crate lazy_static;
+//#[macro_use] extern crate lazy_static;
 
 use std::collections::HashMap;
 use std::sync::Mutex;
-use rustler::{Env, Term, NifResult, Encoder};
+use rustler::{Env, Term, NifResult, Encoder, Binary};
 use rustler::resource::ResourceArc;
 
 pub struct StateResource(Mutex<State>);
 
 #[derive(Debug)]
+enum HeapEntity {
+    E(u8) // m1,m2,r1,r2,bi,bl,fn, etc maybe a box type (ptr to heap)
+}
+
+#[derive(Debug)]
 pub struct State {
-    heap: HashMap<String, Vec<String>>
+    heap: HashMap<Vec<u8>, Vec<HeapEntity>>
+}
+
+#[derive(Debug, PartialEq)]
+pub enum StateResult {
+    Ok
 }
 
 mod atoms {
     rustler_atoms! {
         atom ok;
+        atom error;
+        atom lock_fail;
     }
 }
 
 rustler_export_nifs! {
     "ebqn_heap",
-    [("static_atom", 0, static_atom),
-     ("native_add", 2, native_add),
-     ("tuple_add", 1, tuple_add),
-     ("init_st",0,init_st),
-     ("alloc",1,alloc)],
+    [("init_st",0,init_st),
+     ("init_id",0,init_id),
+     ("alloc",2,alloc)],
     Some(on_load)
 }
 
@@ -34,34 +44,9 @@ fn on_load(env: Env, _info: Term) -> bool {
     true
 }
 
-fn static_atom<'a>(env: Env<'a>, _args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    Ok(atoms::ok().encode(env))
-}
-
-/// Add two integers. `native_add(A,B) -> A+B.`
-fn native_add<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    let num1: i64 = args[0].decode()?;
-    let num2: i64 = args[1].decode()?;
-
-    Ok((num1 + num2).encode(env))
-}
-
-#[derive(NifTuple)]
-struct AddTuple {
-    e1: i32,
-    e2: i32,
-}
-
-/// Add integers provided in a 2-tuple. `tuple_add({A,B}) -> A+B.`
-fn tuple_add<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    let tuple: AddTuple = args[0].decode()?;
-
-    Ok((tuple.e1 + tuple.e2).encode(env))
-}
-
 impl State {
     pub fn empty() -> State {
-        let heap: HashMap<String, Vec<String>> = HashMap::new();
+        let heap: HashMap<Vec<u8>,Vec<HeapEntity>> = HashMap::new();
 
         State {
             heap: heap
@@ -72,6 +57,7 @@ impl State {
         let state = State::empty();
         state
     }
+
 }
 
 fn init_st<'a>(env: Env<'a>, _args: &[Term<'a>]) -> NifResult<Term<'a>> {
@@ -79,7 +65,19 @@ fn init_st<'a>(env: Env<'a>, _args: &[Term<'a>]) -> NifResult<Term<'a>> {
     Ok((atoms::ok(),resource).encode(env))
 }
 
+fn init_id<'a>(env: Env<'a>, _args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    let id = xid::new().as_bytes().to_vec();
+
+    Ok((atoms::ok(),id).encode(env))
+}
+
 fn alloc<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    let e: Term = args[0].decode()?;
-    Ok((atoms::ok(),e).encode(env))
+    let resource: ResourceArc<StateResource> = args[0].decode()?;
+
+    let mut state = match resource.0.try_lock() {
+        Err(_) => return Ok((atoms::error(), atoms::lock_fail()).encode(env)),
+        Ok(guard) => guard,
+    };
+
+    Ok((atoms::ok()).encode(env))
 }
