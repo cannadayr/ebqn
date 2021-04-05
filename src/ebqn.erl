@@ -55,7 +55,9 @@ call(St0,F,X,W) when is_record(F,bi) ->
     D = F#bi.d,
     Args = F#bi.args,
     L = ebqn_array:concat([ebqn_array:from_list([F,X,W]),Args,ebqn_array:new(D#bl.l)]),
-    load_vm(St0,F#bi.b,F#bi.o,F#bi.s,D,make_ref(),F#bi.e,L);
+    Prog = F#bi.prog,
+    #{Prog := #prog{b=B,o=O,s=S} } = St0#st.objs,
+    load_vm(St0,B,O,S,D,make_ref(),F#bi.e,L);
 call(St0,T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
     {St1,R} = call(St0,T#tr.h,X,W),
     {St2,L} = call(St1,T#tr.f,X,W),
@@ -65,14 +67,16 @@ call(St0,T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
     call(St1,T#tr.g,R,undefined);
 call(St0,A,X,W) when is_record(A,a) ->
     {St0,A};
-call(St0,F,X,W) when not is_function(F) ->
+call(St0,F,X,W) when not is_record(F,fn) ->
     {St0,F}.
 call_block(St0,M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
     {St0,M#bi{args=Args,t=0}};
 call_block(St0,M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
     D = M#bi.d,
     L = ebqn_array:concat([Args,ebqn_array:new(D#bl.l - maps:size(Args))]),
-    load_vm(St0,M#bi.b,M#bi.o,M#bi.s,D,make_ref(),M#bi.e,L).
+    Prog = M#bi.prog,
+    #{Prog := #prog{b=B,o=O,s=S} } = St0#st.objs,
+    load_vm(St0,B,O,S,D,make_ref(),M#bi.e,L).
 call1(St0,M,F) when is_record(M,bi) ->
     true = (1 =:= M#bi.t),
     call_block(St0,M,ebqn_array:from_list([M,F]));
@@ -114,10 +118,20 @@ popn(N,Q) when N =:= 0 ->
 popn(N,Q) when N =/= 0 ->
     popn(N-1,tl(Q)).
 
+persist_prog(St0,Hash,Prog,Block,E,Exists) when Exists =:= true ->
+    Ref = maps:get(Hash,St0#st.keys),
+    {St0,#bi{prog=Ref,t=Block#bl.t,d=Block,args=#{},e=E}};
+persist_prog(St0,Hash,Prog,Block,E,Exists) when Exists =/= true ->
+    Ref = make_ref(),
+    {St0#st{keys=maps:put(Hash,Ref,St0#st.keys),objs=maps:put(Ref,Prog,St0#st.objs)},#bi{prog=Ref,t=Block#bl.t,d=Block,args=#{},e=E}}.
 derive(St0,B,O,S,#bl{t=0,i=1} = Block,E) ->
     load_vm(St0,B,O,S,Block,make_ref(),E,ebqn_array:new(Block#bl.l));
 derive(St0,B,O,S,Block,E) ->
-    {St0,#bi{b=B,o=O,s=S,t=Block#bl.t,d=Block,args=#{},e=E}}.
+    % hash the program so we don't store duplicate copies
+    % store a reference to the program so we don't store the full hash in every block instance
+    Prog = #prog{b=B,o=O,s=S},
+    Hash = erlang:phash2(Prog),
+    persist_prog(St0,Hash,Prog,Block,E,maps:is_key(Hash,St0#st.keys)).
 
 args(B,P,Op) when Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 25 ->
     {undefined,P};
