@@ -7,7 +7,7 @@
 -export([fns/0]).
 -export([arr/2,m1/1,m2/1,type/2,decompose/2,glyph/2,fill/2,log/2,group_len/2,group_ord/2,
          plus/2,minus/2,times/2,divide/2,power/2,floor/2,equals/2,lesseq/2,shape/2,
-         reshape/2,pick/2,window/2,table/1,scan/1,fill_by/2,cases/2]).
+         reshape/2,pick/2,window/2,table/1,scan/1,fill_by/2,cases/2,assert_fn/1]).
 -include("schema.hrl").
 
 arr(R,Sh) ->
