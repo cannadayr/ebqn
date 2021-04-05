@@ -246,7 +246,7 @@ load_block({T,I,ST,L}) ->
     #bl{t=T,i=I,st=ST,l=L}.
 
 init_st() ->
-    #st{root=make_ref(),heap=#{},an=#{},rtn=[]}.
+    #st{root=make_ref(),heap=#{},keys=#{},objs=#{},an=#{},rtn=[]}.
 
 run([B,O,S]) ->
     %fmt({run,B}),
