@@ -1,6 +1,6 @@
 -module(ebqn).
 
--export([run/2,run/3,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,load/0]).
+-export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,load/0]).
 
 -include("schema.hrl").
 
@@ -249,17 +249,17 @@ load_block({T,I,ST,L}) ->
     #bl{t=T,i=I,st=ST,l=L}.
 
 init_st() ->
-    #st{root=make_ref(),heap=#{},keys=#{},objs=#{},an=#{},rtn=[]}.
+    Root = make_ref(),
+    #st{root=Root,heap=#{},keys=#{},objs=#{},an=#{Root => Root},rtn=[]}.
 
 run(St0,[B,O,S]) ->
     fmt({run,B}),
     ebqn:run(St0,list_to_tuple(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
-run(B,O,S) ->
-    run(init_st(),B,O,S).
 run(St0,B,O,S) ->
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
-    {St1,Result} = load_vm(St0,B,O,S,Block,St0#st.root,St0#st.root,ebqn_array:new(L)), % set the root environment, and root as its own parent.
-    {ebqn_gc:gc(St1,St0#st.root,[Result]),Result}.
+    {St1,Result} = load_vm(St0,B,O,S,Block,make_ref(),St0#st.root,ebqn_array:new(L)), % set the root environment, and root as its own parent.
+    %{ebqn_gc:gc(St1,St0#st.root,[Result]),Result}.
+    {St1,Result}.
 
 set_prim(I,R) when is_function(R) ->
     #fn{prim=I,f=R};
