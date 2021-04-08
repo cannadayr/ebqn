@@ -24,7 +24,9 @@ is_array(X,_W) when is_record(X,a) ->
     1;
 is_array(_X,_W) ->
     0.
-type(X,_W) when is_function(X);is_record(X,bi) ->
+type(X,_W) when is_record(X,bi) ->
+    3 + X#bi.t;
+type(X,_W) when is_function(X);is_record(X,tr) ->
     3;
 type(X,_W) when is_record(X,m1);is_record(X,r1) ->
     4;
@@ -34,7 +36,7 @@ type(X,_W) when is_record(X,a) ->
     0;
 type(X,_W) when is_number(X);X =:= inf; X =:= ninf ->
     1;
-type(X,_W) ->
+type(X,_W) when is_record(X,c) ->
     2.
 fill(X,undefined) ->
     0;
