@@ -46,8 +46,15 @@ log(X,undefined) ->
     log(X);
 log(X,W) ->
     log(X) / log(W).
-group_len(X,_W) ->
+group_len(X,undefined) ->
     L = ebqn_array:foldl(fun(_I,V,A) -> max(A,V) end,-1,X#a.r),
+    R = ebqn_array:new(L+1,0),
+    F = fun (_I,E,A) when E >= 0 -> ebqn_array:set(E,1+ebqn_array:get(E,A),A);
+            (_I,_E,A)            -> A
+    end,
+    ebqn:list(ebqn_array:foldl(F,R,X#a.r));
+group_len(X,W) ->
+    L = ebqn_array:foldl(fun(_I,V,A) -> max(A,V) end,W-1,X#a.r),
     R = ebqn_array:new(L+1,0),
     F = fun (_I,E,A) when E >= 0 -> ebqn_array:set(E,1+ebqn_array:get(E,A),A);
             (_I,_E,A)            -> A
