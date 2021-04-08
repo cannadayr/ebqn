@@ -1,6 +1,6 @@
 -module(ebqn).
 
--export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,load/0]).
+-export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,load/0,compile/1]).
 
 -include("schema.hrl").
 
@@ -279,3 +279,7 @@ load() ->
     {St0,X} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime()),
     Rt = ebqn_array:get(0,X#a.r),
     {St0,Rt}.
+compile(Fn) ->
+    {St0,Rt} = load(),
+    {St1,Ct} = run(St0,ebqn_bc:compiler(Rt)),
+    ebqn:call(St1,Ct,str(Fn),Rt).
