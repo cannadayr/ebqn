@@ -16,10 +16,10 @@ foreach($lines as $line) {
         $cmd = "$compiler ".$arg;
         $out = shell_exec($cmd);
         if (!is_int(strpos($line,'%'))) {
-            print_r("1 = ebqn:run(".trim($out)."), %".$bqn."\n");
+            print_r("{_,1} = ebqn:run(St0,".trim($out)."), %".$bqn."\n");
         }
         else {
-            print_r("ok = try ebqn:run(".trim($out).") %".$bqn."\n\tcatch _ -> ok\nend,\n");
+            print_r("ok = try ebqn:run(St0,".trim($out).") %".$bqn."\n\tcatch _ -> ok\nend,\n");
         }
     }
     else {
