@@ -254,6 +254,41 @@ scan(F) ->
                     {St1,Ri}
             end,
             {St4,Rtn2} = H(St0,R,L),
+            {St4,arr(Rtn2,S)};
+        (St0,#a{r=X,sh=S},W) when length(S) > 0,is_record(W,a),is_list(W#a.sh) ->
+            R = W#a.sh,
+            Wr = length(R),
+            case 1+Wr =/= length(S) of
+                true ->
+                    throw("`: rank of 𝕨 must be cell rank of 𝕩");
+                false ->
+                    ok
+            end,
+            L = maps:size(X),
+            R = ebqn_array:new(L),
+            H = fun
+                (St1,Ri,Li) when Li > 0 ->
+                    C = lists:foldl(fun(E,A) -> A*E end,1,tl(S)),
+                    G = fun
+                        G(St6,I,Ci,Rn) when I =/= Ci ->
+                            {St7,K1} = call(St6,F,ebqn_array:get(I,X),ebqn_array:get(I,W)),
+                            G(St7,I+1,Ci,ebqn_array:set(I,K1,Rn));
+                        G(St6,I,Ci,Rn) when I =:= Ci ->
+                            Rn
+                    end,
+                    J = fun
+                        J(I,Ci,Rn,Ln,St2) when I =/= Ln ->
+                            {St3,Rtn} = call(St2,F,ebqn_array:get(I,X),ebqn_array:get(I-C,Rn)),
+                            J(I+1,Ci,ebqn_array:set(I,Rtn,Rn),Ln,St3);
+                        J(I,_Ci,Rn,Ln,St2) when I =:= Ln ->
+                            {St2,Rn}
+                    end,
+                    {St5,K} = G(St1,0,C,Ri),
+                    J(C,C,K,L,St5);
+                (St1,Ri,_Li) ->
+                    {St1,Ri}
+            end,
+            {St4,Rtn2} = H(St0,R,L),
             {St4,arr(Rtn2,S)}
     end).
 fill_by(F,G) ->
