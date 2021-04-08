@@ -249,7 +249,7 @@ table(F) ->
                 {St1,R} = call(StAcc,F,E,undefined),
                 {St1,maps:put(I,R,M)}
             end,
-            {St2,Result} = maps:fold(Table,{St0,#{}},X#a.r),
+            {St2,Result} = ebqn_array:foldl(Table,{St0,#{}},X#a.r),
             {St2,arr(Result,X#a.sh)};
         (St0,#a{r=Xr,sh=Xsh},#a{r=Wr,sh=Wsh}) ->
             InitSize =  ebqn_array:new(maps:size(Xr)*maps:size(Wr)),
