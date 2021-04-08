@@ -26,7 +26,7 @@ char([C]) ->
 str(S) ->
     list(ebqn_array:from_list(lists:map(fun(P) -> #c{p=P} end,S))).
 strings(#a{r=X}) ->
-            io_lib:format("~ts~n",[lists:map(fun(E) -> E#c.p end,ebqn_array:to_list(X))]).
+            lists:map(fun(E) -> E#c.p end,ebqn_array:to_list(X)).
 
 call(St0,_F,undefined,_W) ->
     {St0,undefined};
