@@ -1,6 +1,6 @@
 -module(ebqn).
 
--export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,load/0,compile/1]).
+-export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,set_prim/2,load/0,compile/1,decompose/2,has_prim/2]).
 
 -include("schema.hrl").
 
@@ -261,6 +261,24 @@ run(St0,B,O,S) ->
     %{ebqn_gc:gc(St1,St0#st.root,[Result]),Result}.
     {St1,Result}.
 
+has_prim(R,undefined) when is_function(R) ->
+    62;
+has_prim(R,undefined) when is_record(R,fn) and is_number(R#fn.prim) ->
+    R#fn.prim;
+has_prim(R,undefined) when is_record(R,bi) and is_number(R#bi.prim) ->
+    R#bi.prim;
+has_prim(R,undefined) when is_record(R,m1) and is_number(R#m1.prim) ->
+    R#m1.prim;
+has_prim(R,undefined) when is_record(R,m2) and is_number(R#m2.prim) ->
+    R#m2.prim;
+has_prim(R,undefined) when is_record(R,r1) and is_number(R#r1.prim) ->
+    R#r1.prim;
+has_prim(R,undefined) when is_record(R,r2) and is_number(R#r2.prim) ->
+    R#r2.prim;
+has_prim(R,undefined) when is_record(R,tr) and is_number(R#tr.prim) ->
+    R#tr.prim;
+has_prim(R,undefined) ->
+    62.
 set_prim(I,R) when is_function(R) ->
     #fn{prim=I,f=R};
 set_prim(I,R) when is_record(R,bi) ->
@@ -275,10 +293,28 @@ set_prim(I,R) when is_record(R,r2) ->
     R#r2{prim=I};
 set_prim(I,R) when is_record(R,tr) ->
     R#tr{prim=I}.
+decompose(X,undefined) when is_record(X,a);is_record(X,c);is_number(X);is_atom(X) ->
+    list(ebqn_array:from_list([-1,X]));
+decompose(X,undefined) when
+        (is_record(X,fn) and is_number(X#fn.prim));
+		(is_record(X,tr) and is_number(X#tr.prim));
+		(is_record(X,m1) and is_number(X#m1.prim));
+		(is_record(X,r1) and is_number(X#r1.prim));
+        (is_record(X,m2) and is_number(X#m2.prim));
+		(is_record(X,r2) and is_number(X#r2.prim));
+		(is_record(X,bi) and is_number(X#bi.prim))
+    ->
+    list(ebqn_array:from_list([0,X]));
+decompose(X,undefined) -> % no repr
+    list(ebqn_array:from_list([1,X])).
+
 load() ->
     {St0,X} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime()),
     Rt = ebqn_array:get(0,X#a.r),
-    {St0,Rt}.
+    Sp0 = ebqn_array:get(1,X#a.r),
+    Ri = Rt#a{r=maps:map(fun ebqn:set_prim/2,Rt#a.r)},
+    {St1,_} = call(St0,Sp0,list(ebqn_array:from_list([fun ebqn:decompose/2,fun ebqn:has_prim/2])),undefined),
+    {St1,Ri}.
 compile(Fn) ->
     {St0,Rt} = load(),
     {St1,Ct} = run(St0,ebqn_bc:compiler(Rt)),
