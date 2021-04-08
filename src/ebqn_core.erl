@@ -90,6 +90,12 @@ plus(X,W) when is_record(W,c),not is_record(X,c) ->
     #c{p=W#c.p + X};
 plus(inf,W) when is_number(W) ->
     inf;
+plus(ninf,W) when is_number(W) ->
+    ninf;
+plus(X,inf) when is_number(X) ->
+    inf;
+plus(X,ninf) when is_number(X) ->
+    ninf;
 plus(X,W)  ->
     W + X.
 minus(inf,undefined) ->
@@ -126,7 +132,21 @@ times(X,undefined) when X =:= 0 ->
     0;
 times(X,undefined) when X > 0 ->
     1;
+times(X,inf) when X > 0 ->
+    inf;
+times(X,inf) when X < 0 ->
+    ninf;
+times(X,ninf) when X > 0 ->
+    ninf;
+times(X,ninf) when X < 0 ->
+    inf;
 times(inf,W) when W > 0 ->
+    inf;
+times(inf,W) when W < 0 ->
+    ninf;
+times(ninf,W) when W > 0 ->
+    ninf;
+times(ninf,W) when W < 0 ->
     inf;
 times(X,W) when is_record(X,c);is_record(W,c) ->
     throw("×: Arguments must be numbers");
@@ -146,6 +166,14 @@ divide(X,W) when is_record(X,c);is_record(W,c) ->
     throw("÷: Arguments must be numbers");
 divide(X,undefined) ->
     1 / X;
+divide(0,W) when is_number(W),W > 0->
+    inf;
+divide(0,W) when is_number(W),W < 0->
+    ninf;
+divide(inf,W) when is_number(W) ->
+    0;
+divide(ninf,W) when is_number(W) ->
+    0;
 divide(X,W) ->
     W / X.
 power(X,W) when is_record(X,c);is_record(W,c) ->
