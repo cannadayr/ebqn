@@ -15,11 +15,15 @@ foreach($lines as $line) {
         }
         $cmd = "$compiler ".$arg;
         $out = shell_exec($cmd);
-        if (!is_int(strpos($line,'%'))) {
-            print_r("{_,1} = ebqn:run(St0,".trim($out)."), %".$bqn."\n");
+        if (is_int(strpos($line,'%')) && is_int(strpos($line,"!"))) {
+            print_r("ok = try ebqn:run(St0,".trim($out).") %".$bqn."\n\tcatch _ -> ok\nend,\n");
+        }
+        else if (is_int(strpos($line,'%')) && strpos($line,"!")!==0) {
+            $exp = trim(substr($line,0,strpos($line,"%",0)));
+            print_r("{_,$exp} = ebqn:run(St0,".trim($out)."), %".$bqn."\n");
         }
         else {
-            print_r("ok = try ebqn:run(St0,".trim($out).") %".$bqn."\n\tcatch _ -> ok\nend,\n");
+            print_r("{_,1} = ebqn:run(St0,".trim($out)."), %".$bqn."\n");
         }
     }
     else {
