@@ -4,7 +4,7 @@
 
 -import(ebqn,[run/2,char/1,str/1]).
 -export([test/0,bc/0,layer0/2,layer1/2,layer2/2,layer3/2,layer4/2,layer5/2,layer6/2]).
--export([undo/2,identity/2]).
+-export([undo/2,identity/2,under/2]).
 
 test() ->
     % used when testing one-off programs
@@ -998,4 +998,63 @@ identity(St0,#a{r=Runtime}) ->
     ok = try ebqn:run(St0,[[3,0,0,0,0,3,0,4,3,2,17,0,2,0,1,7,16,25],[ebqn_array:get(22,Runtime),ebqn_array:get(30,Runtime),ebqn_array:get(50,Runtime),0,3],[[0,1,0,0]]]) % ⌽˝0‿3⥊⟨⟩
         catch _ -> ok
     end,
+    ok.
+
+under(St0,Rt) ->
+    % # Invertible
+    {_,1} = ebqn:run(St0,[[0,6,0,3,16,0,7,0,8,0,0,16,3,3,0,2,0,5,0,4,8,0,1,0,4,19,16,25],[ebqn_array:get(12,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(21,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(36,Rt#a.r),ebqn_array:get(56,Rt#a.r),3,2,ebqn:str("abc")],[[0,1,0,0]]]), %(⊑≡⊑⌾⊢) ⟨↕3,2,<"abc"⟩
+    {_,1} = ebqn:run(St0,[[0,5,0,2,0,3,0,0,8,0,1,0,0,19,0,4,17,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(20,Rt#a.r),ebqn_array:get(56,Rt#a.r),3,4],[[0,1,0,0]]]), %3 (+≡+⌾⊣) 4
+    {_,1} = ebqn:run(St0,[[0,8,0,2,16,0,3,0,5,0,1,0,4,0,7,8,8,0,0,0,1,0,4,0,6,8,19,16,25],[ebqn_array:get(18,Rt#a.r),ebqn_array:get(26,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(30,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),-2,2,6],[[0,1,0,0]]]), %(¯2⊸↓ ≡ 2⊸↓⌾⌽) ↕6
+    {_,1} = ebqn:run(St0,[[0,8,0,8,3,2,0,2,16,0,4,0,1,0,5,0,7,8,7,0,0,0,3,0,6,0,1,0,5,0,7,8,8,19,16,25],[ebqn_array:get(18,Rt#a.r),ebqn_array:get(26,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(31,Rt#a.r),ebqn_array:get(45,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),1,3],[[0,1,0,0]]]), %(1⊸↓⌾⍉ ≡ 1⊸↓˘) ↕3‿3
+    {_,1} = ebqn:run(St0,[[0,10,0,3,16,0,2,0,9,0,9,3,2,17,0,4,0,0,7,0,6,0,2,8,0,5,0,4,0,0,7,7,9,0,1,0,4,0,0,7,0,7,0,2,8,19,0,8,17,25],[ebqn_array:get(12,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(22,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(45,Rt#a.r),ebqn_array:get(48,Rt#a.r),ebqn_array:get(55,Rt#a.r),ebqn_array:get(56,Rt#a.r),7,3,9],[[0,1,0,0]]]), %7(⥊⌾(<˘)≡·<˘⁼⥊⟜(<˘))3‿3⥊↕9
+    {_,1} = ebqn:run(St0,[[0,6,0,3,16,0,2,0,5,0,4,8,0,0,0,1,19,0,7,17,25],[ebqn_array:get(18,Rt#a.r),ebqn_array:get(20,Rt#a.r),ebqn_array:get(24,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(29,Rt#a.r),ebqn_array:get(56,Rt#a.r),4,ebqn:str("abcd")],[[0,1,0,0]]]), %"abcd" (⊣≡»⌾≍) ↕4
+    ok = try ebqn:run(St0,[[0,3,0,0,0,2,0,1,8,16,25],[ebqn_array:get(24,Rt#a.r),ebqn_array:get(31,Rt#a.r),ebqn_array:get(56,Rt#a.r),ebqn:str("abc")],[[0,1,0,0]]]) % ⍉⌾≍ "abc"
+        catch _ -> ok
+    end,
+    {_,1} = ebqn:run(St0,[[0,13,0,4,16,0,5,0,8,0,12,8,0,9,0,0,0,8,0,2,0,7,0,4,8,8,8,16,0,3,0,10,0,11,3,2,0,6,0,8,0,1,0,7,0,5,8,8,16,17,25],[ebqn_array:get(1,Rt#a.r),ebqn_array:get(8,Rt#a.r),ebqn_array:get(14,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(30,Rt#a.r),ebqn_array:get(32,Rt#a.r),ebqn_array:get(52,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),4,-3,3,7],[[0,1,0,0]]]), %(⌽∘|⊸/4‿¯3) ≡ ↕∘≠⊸-⌾(3⊸⌽)↕7
+    %
+    % # Structural
+    % # Monad
+    {_,1} = ebqn:run(St0,[[0,7,0,2,0,4,0,0,0,3,0,5,8,8,16,0,1,0,6,17,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(36,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),1,ebqn:str("bbcd"),ebqn:str("abcd")],[[0,1,0,0]]]), %"bbcd" ≡ 1⊸+⌾⊑ "abcd"
+    {_,1} = ebqn:run(St0,[[0,6,0,3,0,5,0,0,8,0,2,0,0,0,4,0,1,8,19,16,25],[ebqn_array:get(1,Rt#a.r),ebqn_array:get(12,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(36,Rt#a.r),ebqn_array:get(52,Rt#a.r),ebqn_array:get(56,Rt#a.r),4],[[0,1,0,0]]]), %(<∘- ≡ -⌾⊑) 4
+    {_,1} = ebqn:run(St0,[[0,8,0,1,0,7,17,0,4,0,1,0,5,0,2,8,7,0,0,0,3,0,6,0,2,8,19,16,25],[ebqn_array:get(18,Rt#a.r),ebqn_array:get(24,Rt#a.r),ebqn_array:get(30,Rt#a.r),ebqn_array:get(35,Rt#a.r),ebqn_array:get(50,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),ebqn:str("abc"),ebqn:str("def")],[[0,1,0,0]]]), %(⌽⌾⊏ ≡ ⌽⊸≍˝) "abc"≍"def"
+    ok = try ebqn:run(St0,[[0,3,0,1,0,2,0,0,8,16,25],[ebqn_array:get(1,Rt#a.r),ebqn_array:get(35,Rt#a.r),ebqn_array:get(56,Rt#a.r),4],[[0,1,0,0]]]) % -⌾⊏ 4
+        catch _ -> ok
+    end,
+    {_,1} = ebqn:run(St0,[[0,7,0,0,0,4,0,2,0,3,0,6,0,7,3,2,8,8,16,0,1,0,5,17,25],[ebqn_array:get(12,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(37,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),1,ebqn:str("cd"),ebqn:str("ab")],[[0,1,0,0]]]), %1 ≡ "cd"‿"ab"⊸⊐⌾< "ab"
+    {_,1} = ebqn:run(St0,[[0,13,0,3,0,12,17,0,2,0,7,0,4,0,6,0,4,8,8,16,0,1,0,8,0,10,0,11,3,3,0,5,0,0,7,0,8,0,9,3,2,17,17,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(22,Rt#a.r),ebqn_array:get(24,Rt#a.r),ebqn_array:get(33,Rt#a.r),ebqn_array:get(47,Rt#a.r),ebqn_array:get(52,Rt#a.r),ebqn_array:get(56,Rt#a.r),0,1,4,2,ebqn:str("apl"),ebqn:str("bqn")],[[0,1,0,0]]]), %(0‿1+⌜0‿4‿2) ≡ ⍋∘⍋⌾⥊ "apl"≍"bqn"
+    {_,1} = ebqn:run(St0,[[0,12,0,10,3,2,0,7,0,1,7,0,5,9,0,8,0,4,8,16,0,0,0,2,0,11,19,0,3,0,4,0,9,0,6,8,19,0,10,17,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(2,Rt#a.r),ebqn_array:get(8,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(22,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(30,Rt#a.r),ebqn_array:get(49,Rt#a.r),ebqn_array:get(55,Rt#a.r),ebqn_array:get(56,Rt#a.r),2,12,6],[[0,1,0,0]]]), %2 (⌽⌾⥊ ≡ 12|+) ⥊⟜(↕×´)6‿2
+    {_,1} = ebqn:run(St0,[[0,9,15,1,0,0,0,7,0,1,0,6,0,4,8,8,7,16,25,0,3,0,8,0,5,21,0,1,7,8,0,2,21,0,1,19,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(14,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(25,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(46,Rt#a.r),ebqn_array:get(52,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),ebqn:str("abcde")],[[0,1,0,0],[1,1,19,2]]]), %↕∘≠⊸+{𝔽≡𝔽¨⌾↑} "abcde"
+    {_,1} = ebqn:run(St0,[[0,7,15,1,0,0,0,4,0,6,8,7,16,25,0,2,0,5,0,3,21,0,1,7,8,0,1,21,0,1,19,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(26,Rt#a.r),ebqn_array:get(46,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),2,ebqn:str("abcde")],[[0,1,0,0],[1,1,14,2]]]), %2⊸+{𝔽≡𝔽¨⌾↓} "abcde"
+    % # Dyad
+    ok = try ebqn:run(St0,[[0,8,0,3,16,0,2,0,5,0,7,8,0,6,0,0,0,5,0,1,0,4,0,3,8,8,8,16,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(14,Rt#a.r),ebqn_array:get(22,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(52,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),10,6],[[0,1,0,0]]]) % ↕∘≠⊸+⌾(10⊸⥊)↕6
+        catch _ -> ok
+    end,
+    {_,1} = ebqn:run(St0,[[0,12,0,5,16,0,3,0,4,0,1,0,11,3,2,19,0,10,0,9,0,6,7,8,16,0,2,0,12,0,5,16,0,8,0,0,7,0,11,17,0,1,16,0,7,16,0,6,16,17,25],[ebqn_array:get(3,Rt#a.r),ebqn_array:get(6,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(21,Rt#a.r),ebqn_array:get(22,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(30,Rt#a.r),ebqn_array:get(34,Rt#a.r),ebqn_array:get(44,Rt#a.r),ebqn_array:get(45,Rt#a.r),ebqn_array:get(56,Rt#a.r),2,7],[[0,1,0,0]]]), %(⌽⍒⌊2÷˜↕7) ≡ ⌽˘⌾(⌊‿2⥊⊢)↕7
+    {_,1} = ebqn:run(St0,[[0,15,0,6,16,0,5,0,8,0,14,8,0,10,0,3,0,2,0,7,0,0,7,19,0,9,0,1,8,8,16,0,4,0,11,0,12,0,13,0,14,3,4,17,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(1,Rt#a.r),ebqn_array:get(3,Rt#a.r),ebqn_array:get(14,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(25,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(49,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(55,Rt#a.r),ebqn_array:get(56,Rt#a.r),-1,0,1,3,4],[[0,1,0,0]]]), %¯1‿0‿1‿3 ≡ -⟜(+´÷≠)⌾(3⊸↑)↕4
+    {_,1} = ebqn:run(St0,[[0,7,0,1,0,3,0,5,8,0,4,0,2,8,16,0,0,0,6,17,25],[ebqn_array:get(18,Rt#a.r),ebqn_array:get(26,Rt#a.r),ebqn_array:get(30,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),1,ebqn:str("adcb"),ebqn:str("abcd")],[[0,1,0,0]]]), %"adcb" ≡ ⌽⌾(1⊸↓)"abcd"
+    {_,1} = ebqn:run(St0,[[0,13,0,4,16,0,0,0,15,17,0,15,0,17,3,2,0,10,0,1,0,7,0,6,0,0,7,8,8,0,14,0,3,0,16,0,13,3,2,17,0,5,0,8,0,14,0,14,3,2,8,0,9,0,11,0,13,0,15,3,3,8,16,17,0,2,0,11,0,12,0,13,0,14,3,4,17,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(2,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(22,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(31,Rt#a.r),ebqn_array:get(49,Rt#a.r),ebqn_array:get(52,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),ebqn_array:get(59,Rt#a.r),5,6,3,0,1,4,inf],[[0,1,0,0]]]), %5‿6‿3‿0 ≡ (5‿3‿1⌾(0‿0⊸⍉)4‿3⥊0) +´∘×⎉1‿∞ 1+↕3
+    {_,1} = ebqn:run(St0,[[0,11,0,3,0,4,0,6,0,7,0,7,0,6,3,4,8,0,5,0,0,0,4,0,9,0,1,0,8,17,8,8,16,0,2,0,10,17,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(1,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(32,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),1,0,ebqn:char("A"),ebqn:char("a"),ebqn:str("AbcD"),ebqn:str("abcd")],[[0,1,0,0]]]), %"AbcD" ≡ ('A'-'a')⊸+⌾(1‿0‿0‿1⊸/)"abcd"
+    {_,1} = ebqn:run(St0,[[0,9,0,2,0,3,0,5,0,6,0,6,0,5,3,4,8,0,4,0,1,8,0,8,17,0,0,0,7,17,25],[ebqn_array:get(18,Rt#a.r),ebqn_array:get(20,Rt#a.r),ebqn_array:get(32,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),1,0,ebqn:str("AbcD"),ebqn:str("ABCD"),ebqn:str("abcd")],[[0,1,0,0]]]), %"AbcD" ≡ "ABCD"⊣⌾(1‿0‿0‿1⊸/)"abcd"
+    ok = try ebqn:run(St0,[[0,8,0,2,16,0,3,0,5,0,7,8,0,6,0,0,0,5,0,1,0,4,0,2,8,8,8,16,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(14,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(32,Rt#a.r),ebqn_array:get(52,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),2,5],[[0,1,0,0]]]) % ↕∘≠⊸+⌾(2⊸/)↕5
+        catch _ -> ok
+    end,
+    {_,1} = ebqn:run(St0,[[0,8,0,1,16,0,3,0,4,0,7,8,0,5,0,2,0,4,0,7,8,8,0,0,0,2,0,4,0,6,8,19,16,25],[ebqn_array:get(18,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(30,Rt#a.r),ebqn_array:get(32,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),1,2,5],[[0,1,0,0]]]), %(1⊸⌽ ≡ 2⊸⌽⌾(2⊸/)) ↕5
+    {_,1} = ebqn:run(St0,[[0,9,0,2,0,3,0,5,0,6,0,7,3,3,8,0,4,0,1,0,3,0,5,8,8,16,0,0,0,8,17,25],[ebqn_array:get(18,Rt#a.r),ebqn_array:get(30,Rt#a.r),ebqn_array:get(35,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),1,3,0,ebqn:str("bdca"),ebqn:str("abcd")],[[0,1,0,0]]]), %"bdca" ≡ 1⊸⌽⌾(1‿3‿0⊸⊏)"abcd"
+    ok = try ebqn:run(St0,[[0,7,0,1,0,2,0,4,0,5,0,5,0,6,3,4,8,0,3,0,0,0,2,0,4,8,8,16,25],[ebqn_array:get(30,Rt#a.r),ebqn_array:get(35,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),1,3,0,ebqn:str("abcd")],[[0,1,0,0]]]) % 1⊸⌽⌾(1‿3‿3‿0⊸⊏)"abcd"
+        catch _ -> ok
+    end,
+    {_,1} = ebqn:run(St0,[[0,15,0,17,3,2,0,7,16,0,6,0,9,0,18,0,15,3,2,19,0,13,0,0,8,0,5,0,1,0,12,0,17,0,7,0,4,0,16,19,0,8,9,0,11,0,10,0,3,7,8,0,15,17,0,2,0,14,17,8,19,16,25],[ebqn_array:get(1,Rt#a.r),ebqn_array:get(2,Rt#a.r),ebqn_array:get(4,Rt#a.r),ebqn_array:get(10,Rt#a.r),ebqn_array:get(15,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(21,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(30,Rt#a.r),ebqn_array:get(36,Rt#a.r),ebqn_array:get(47,Rt#a.r),ebqn_array:get(53,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),-1,2,0,3,1],[[0,1,0,0]]]), %((¯1⋆2∧⌜○(⌽0=↕)3)⊸× ≡ -⌾(1‿2⊑⊢))↕2‿3
+    {_,1} = ebqn:run(St0,[[0,10,0,10,3,2,0,3,16,0,4,0,5,0,9,0,7,3,2,0,9,0,9,3,2,0,7,0,9,3,2,3,2,3,2,8,0,6,0,0,0,5,0,9,0,10,0,8,3,2,3,2,8,8,0,1,0,0,0,5,0,9,0,10,3,2,0,2,0,7,0,8,3,2,17,8,19,16,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(24,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(36,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),0,3,1,2],[[0,1,0,0]]]), %((0‿3≍1‿2)⊸+ ≡ ⟨1,2‿3⟩⊸+⌾(⟨1‿0,⟨1‿1,0‿1⟩⟩⊸⊑))↕2‿2
+    % # Compound
+    {_,1} = ebqn:run(St0,[[0,11,0,5,16,0,1,0,6,9,0,3,0,12,19,0,8,0,4,0,7,0,9,8,8,16,0,2,0,10,0,5,16,0,0,0,9,17,17,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(12,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(21,Rt#a.r),ebqn_array:get(26,Rt#a.r),ebqn_array:get(27,Rt#a.r),ebqn_array:get(36,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),1,3,4,ebqn:char("\0")],[[0,1,0,0]]]), %(1+↕3) ≡ 1⊸↓⌾(@⊢·⊑<)↕4
+    {_,1} = ebqn:run(St0,[[0,10,0,3,0,6,0,1,0,5,0,0,7,0,8,19,8,0,7,0,4,8,16,0,2,0,9,17,25],[ebqn_array:get(3,Rt#a.r),ebqn_array:get(14,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(25,Rt#a.r),ebqn_array:get(30,Rt#a.r),ebqn_array:get(44,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),2,ebqn:str("210abc"),ebqn:str("012abc")],[[0,1,0,0]]]), %"210abc" ≡ ⌽⌾((2÷˜≠)⊸↑)"012abc"
+    {_,1} = ebqn:run(St0,[[0,8,0,6,3,2,0,3,0,1,0,5,19,0,4,0,2,8,16,0,0,0,7,0,6,3,2,17,25],[ebqn_array:get(18,Rt#a.r),ebqn_array:get(25,Rt#a.r),ebqn_array:get(30,Rt#a.r),ebqn_array:get(36,Rt#a.r),ebqn_array:get(56,Rt#a.r),2,ebqn:char("d"),ebqn:str("bac"),ebqn:str("abc")],[[0,1,0,0]]]), %"bac"‿'d' ≡ ⌽⌾(2↑⊑)"abc"‿'d'
+    {_,1} = ebqn:run(St0,[[0,9,0,3,0,5,0,7,0,8,3,2,8,0,6,0,2,8,0,1,0,3,0,5,0,7,0,8,3,2,8,0,0,9,0,6,0,4,0,2,7,8,19,16,25],[ebqn_array:get(12,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(30,Rt#a.r),ebqn_array:get(35,Rt#a.r),ebqn_array:get(46,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),2,3,ebqn:str("abcdef")],[[0,1,0,0]]]), %(⌽¨⌾(<2‿3⊸⊏) ≡ ⌽⌾(2‿3⊸⊏)) "abcdef"
+    %
+    % # Computational
+    {_,3} = ebqn:run(St0,[[0,5,0,1,0,3,0,0,0,2,0,4,8,8,16,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(1,Rt#a.r),ebqn_array:get(54,Rt#a.r),ebqn_array:get(56,Rt#a.r),1,4],[[0,1,0,0]]]), % 1⊸+⌾-4
+    {_,2} = ebqn:run(St0,[[0,3,0,2,0,1,0,0,8,16,25],[ebqn_array:get(21,Rt#a.r),ebqn_array:get(56,Rt#a.r),2,3],[[0,1,0,0]]]), % ⊢⌾2 3
+    {_,-2} = ebqn:run(St0,[[0,5,0,0,0,2,0,4,8,0,3,0,1,8,16,25],[ebqn_array:get(1,Rt#a.r),ebqn_array:get(21,Rt#a.r),ebqn_array:get(52,Rt#a.r),ebqn_array:get(56,Rt#a.r),2,3],[[0,1,0,0]]]), % ⊢⌾(2∘-) 3
+    {_,1} = ebqn:run(St0,[[0,5,0,3,0,0,3,2,0,4,0,2,8,16,0,1,0,3,0,0,3,2,17,25],[ebqn_array:get(0,Rt#a.r),ebqn_array:get(18,Rt#a.r),ebqn_array:get(21,Rt#a.r),ebqn_array:get(52,Rt#a.r),ebqn_array:get(56,Rt#a.r),1],[[0,1,0,0]]]), %∘‿+ ≡ ⊢⌾∘‿+ 1
     ok.
