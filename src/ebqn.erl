@@ -1,6 +1,7 @@
 -module(ebqn).
 
--export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,set_prim/2,load/0,compile/1,decompose/2,has_prim/2]).
+-import(ebqn_core,[fn/1]).
+-export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,set_prim/2,load/0,compile/1,decompose/3,has_prim/3]).
 
 -include("schema.hrl").
 
@@ -32,28 +33,20 @@ call(St0,_F,undefined,_W) ->
     {St0,undefined};
 call(St0,F,X,W) when is_number(F) ->
     {St0,F};
-call(St0,F,X,W) when is_function(F) ->
-    {St0,F(X,W)};
 call(St0,F,X,W) when is_record(F,fn) ->
     Fn = F#fn.f,
-    {St0,Fn(X,W)};
-call(St0,F,X,W) when is_record(F,dl1) ->
-    Fn = F#dl1.f,
-    Fn(St0,X,W);
-call(St0,F,X,W) when is_record(F,dl2) ->
-    Fn = F#dl2.f,
     Fn(St0,X,W);
 call(St0,R,X,W) when is_record(R,r1) ->
     M = R#r1.m,
     F = R#r1.f,
-    Fn = M#m1.f,
+    Fn = M#d1.f,
     D = Fn(F),
     call(St0,D,X,W);
 call(St0,R,X,W) when is_record(R,r2) ->
     M = R#r2.m,
     F = R#r2.f,
     G = R#r2.g,
-    Fn = M#m2.f,
+    Fn = M#d2.f,
     D = Fn(F,G),
     call(St0,D,X,W);
 call(St0,F,X,W) when is_record(F,bi) ->
@@ -73,7 +66,7 @@ call(St0,T,X,W) when is_record(T,tr), undefined =:= T#tr.f ->
     call(St1,T#tr.g,R,undefined);
 call(St0,A,X,W) when is_record(A,a) ->
     {St0,A};
-call(St0,F,X,W) when not (is_record(F,fn) or is_function(F)) ->
+call(St0,F,X,W) when not is_record(F,fn) ->
     {St0,F}.
 call_block(St0,M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
     {St0,M#bi{args=Args,t=0}};
@@ -86,12 +79,12 @@ call_block(St0,M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
 call1(St0,M,F) when is_record(M,bi) ->
     true = (1 =:= M#bi.t),
     call_block(St0,M,ebqn_array:from_list([M,F]));
-call1(St0,M,F) when is_record(M,m1) ->
+call1(St0,M,F) when is_record(M,d1) ->
     {St0,#r1{m=M,f=F}}.
 call2(St0,M,F,G) when is_record(M,bi) ->
     true = (2 =:= M#bi.t),
     call_block(St0,M,ebqn_array:from_list([M,F,G]));
-call2(St0,M,F,G) when is_record(M,m2) ->
+call2(St0,M,F,G) when is_record(M,d2) ->
     {St0,#r2{m=M,f=F,g=G}}.
 
 ge(I,E,An) when I =:= 0 ->
@@ -264,61 +257,57 @@ run(St0,B,O,S) ->
     %{ebqn_gc:gc(St1,St0#st.root,[Result]),Result}.
     {St1,Result}.
 
-has_prim(R,undefined) when is_function(R) ->
-    62;
-has_prim(R,undefined) when is_record(R,fn) and is_number(R#fn.prim) ->
-    R#fn.prim;
-has_prim(R,undefined) when is_record(R,bi) and is_number(R#bi.prim) ->
-    R#bi.prim;
-has_prim(R,undefined) when is_record(R,m1) and is_number(R#m1.prim) ->
-    R#m1.prim;
-has_prim(R,undefined) when is_record(R,m2) and is_number(R#m2.prim) ->
-    R#m2.prim;
-has_prim(R,undefined) when is_record(R,r1) and is_number(R#r1.prim) ->
-    R#r1.prim;
-has_prim(R,undefined) when is_record(R,r2) and is_number(R#r2.prim) ->
-    R#r2.prim;
-has_prim(R,undefined) when is_record(R,tr) and is_number(R#tr.prim) ->
-    R#tr.prim;
-has_prim(R,undefined) ->
-    62.
-%set_prim(I,R) when is_function(R) ->
-%    #fn{prim=I,f=R};
+has_prim(St0,R,undefined) when is_record(R,fn) and is_number(R#fn.prim) ->
+    {St0,R#fn.prim};
+has_prim(St0,R,undefined) when is_record(R,bi) and is_number(R#bi.prim) ->
+    {St0,R#bi.prim};
+has_prim(St0,R,undefined) when is_record(R,d1) and is_number(R#d1.prim) ->
+    {St0,R#d1.prim};
+has_prim(St0,R,undefined) when is_record(R,d2) and is_number(R#d2.prim) ->
+    {St0,R#d2.prim};
+has_prim(St0,R,undefined) when is_record(R,r1) and is_number(R#r1.prim) ->
+    {St0,R#r1.prim};
+has_prim(St0,R,undefined) when is_record(R,r2) and is_number(R#r2.prim) ->
+    {St0,R#r2.prim};
+has_prim(St0,R,undefined) when is_record(R,tr) and is_number(R#tr.prim) ->
+    {St0,R#tr.prim};
+has_prim(St0,R,undefined) ->
+    {St0,62}.
 set_prim(I,R) when is_record(R,fn) ->
     R#fn{prim=I};
 set_prim(I,R) when is_record(R,bi) ->
     R#bi{prim=I};
-set_prim(I,R) when is_record(R,m1) ->
-    R#m1{prim=I};
-set_prim(I,R) when is_record(R,m2) ->
-    R#m2{prim=I};
+set_prim(I,R) when is_record(R,d1) ->
+    R#d1{prim=I};
+set_prim(I,R) when is_record(R,d2) ->
+    R#d2{prim=I};
 set_prim(I,R) when is_record(R,r1) ->
     R#r1{prim=I};
 set_prim(I,R) when is_record(R,r2) ->
     R#r2{prim=I};
 set_prim(I,R) when is_record(R,tr) ->
     R#tr{prim=I}.
-decompose(X,undefined) when is_record(X,a);is_record(X,c);is_number(X);is_atom(X) ->
-    list(ebqn_array:from_list([-1,X]));
-decompose(X,undefined) when
+decompose(St0,X,undefined) when is_record(X,a);is_record(X,c);is_number(X);is_atom(X) ->
+    {St0,list(ebqn_array:from_list([-1,X]))};
+decompose(St0,X,undefined) when
         (is_record(X,fn) and is_number(X#fn.prim));
 		(is_record(X,tr) and is_number(X#tr.prim));
-		(is_record(X,m1) and is_number(X#m1.prim));
+		(is_record(X,d1) and is_number(X#d1.prim));
+        (is_record(X,d2) and is_number(X#d2.prim));
 		(is_record(X,r1) and is_number(X#r1.prim));
-        (is_record(X,m2) and is_number(X#m2.prim));
 		(is_record(X,r2) and is_number(X#r2.prim));
 		(is_record(X,bi) and is_number(X#bi.prim))
     ->
-    list(ebqn_array:from_list([0,X]));
-decompose(X,undefined) -> % no repr
-    list(ebqn_array:from_list([1,X])).
+    {St0,list(ebqn_array:from_list([0,X]))};
+decompose(St0,X,undefined) -> % no repr
+    {St0,list(ebqn_array:from_list([1,X]))}.
 
 load() ->
     {St0,X} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime()),
     Rt = ebqn_array:get(0,X#a.r),
     Sp0 = ebqn_array:get(1,X#a.r),
     Ri = Rt#a{r=maps:map(fun ebqn:set_prim/2,Rt#a.r)},
-    {St1,_} = call(St0,Sp0,list(ebqn_array:from_list([fun ebqn:decompose/2,fun ebqn:has_prim/2])),undefined),
+    {St1,_} = call(St0,Sp0,list(ebqn_array:from_list([fn(fun ebqn:decompose/3),fn(fun ebqn:has_prim/3)])),undefined),
     {St1,Ri}.
 compile(Fn) ->
     {St0,Rt} = load(),

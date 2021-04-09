@@ -4,65 +4,57 @@
 -import(math,[log/1,exp/1,pow/2]).
 -import(ebqn,[list/1,call/4,fmt/1]).
 
--export([fns/0]).
--export([arr/2,m1/1,m2/1,type/2,fill/2,log/2,group_len/2,group_ord/2,
-         plus/2,minus/2,times/2,divide/2,power/2,floor/2,equals/2,lesseq/2,shape/2,
-         reshape/2,pick/2,window/2,table/1,scan/1,fill_by/2,cases/2,assert_fn/1]).
+-export([fns/0,fn/1]).
+-export([arr/2,d1/1,d2/1,type/3,fill/3,log/3,group_len/3,group_ord/3,
+         plus/3,minus/3,times/3,divide/3,power/3,floor/3,equals/3,lesseq/3,shape/3,
+         reshape/3,pick/3,window/3,table/1,scan/1,fill_by/2,cases/2,assert_fn/1]).
 -include("schema.hrl").
 
 arr(R,Sh) ->
     #a{r=R,sh=Sh}.
 fn(F) ->
     #fn{f=F}.
-dl1(F) ->
-    #dl1{f=F}.
-dl2(F) ->
-    #dl2{f=F}.
-m1(F) ->
-    #m1{f=F}.
-m2(F) ->
-    #m2{f=F}.
-is_array(X,_W) when is_record(X,a) ->
-    1;
-is_array(_X,_W) ->
-    0.
-type(X,_W) when is_record(X,bi) ->
-    3 + X#bi.t;
-type(X,_W) when is_function(X);is_record(X,fn);is_record(X,tr);is_record(X,r1);is_record(X,dl1);is_record(X,r2);is_record(X,dl2) ->
-    3;
-type(X,_W) when is_record(X,m1) ->
-    4;
-type(X,_W) when is_record(X,m2) ->
-    5;
-type(X,_W) when is_record(X,a) ->
-    0;
-type(X,_W) when is_number(X);X =:= inf; X =:= ninf ->
-    1;
-type(X,_W) when is_record(X,c) ->
-    2.
-fill(X,undefined) ->
-    0;
-fill(X,W) ->
-    X.
-log(X,undefined) ->
-    log(X);
-log(X,W) ->
-    log(X) / log(W).
-group_len(X,undefined) ->
+d1(F) ->
+    #d1{f=F}.
+d2(F) ->
+    #d2{f=F}.
+type(St0,X,_W) when is_record(X,bi) ->
+    {St0,3 + X#bi.t};
+type(St0,X,_W) when is_record(X,fn);is_record(X,tr);is_record(X,d1);is_record(X,d2) ->
+    {St0,3};
+type(St0,X,_W) when is_record(X,r1) ->
+    {St0,4};
+type(St0,X,_W) when is_record(X,r2) ->
+    {St0,5};
+type(St0,X,_W) when is_record(X,a) ->
+    {St0,0};
+type(St0,X,_W) when is_number(X);X =:= inf; X =:= ninf ->
+    {St0,1};
+type(St0,X,_W) when is_record(X,c) ->
+    {St0,2}.
+fill(St0,X,undefined) ->
+    {St0,0};
+fill(St0,X,W) ->
+    {St0,X}.
+log(St0,X,undefined) ->
+    {St0,log(X)};
+log(St0,X,W) ->
+    {St0,log(X) / log(W)}.
+group_len(St0,X,undefined) ->
     L = ebqn_array:foldl(fun(_I,V,A) -> max(A,V) end,-1,X#a.r),
     R = ebqn_array:new(L+1,0),
     F = fun (_I,E,A) when E >= 0 -> ebqn_array:set(E,1+ebqn_array:get(E,A),A);
             (_I,_E,A)            -> A
     end,
-    ebqn:list(ebqn_array:foldl(F,R,X#a.r));
-group_len(X,W) ->
+    {St0,ebqn:list(ebqn_array:foldl(F,R,X#a.r))};
+group_len(St0,X,W) ->
     L = ebqn_array:foldl(fun(_I,V,A) -> max(A,V) end,W-1,X#a.r),
     R = ebqn_array:new(L+1,0),
     F = fun (_I,E,A) when E >= 0 -> ebqn_array:set(E,1+ebqn_array:get(E,A),A);
             (_I,_E,A)            -> A
     end,
-    ebqn:list(ebqn_array:foldl(F,R,X#a.r)).
-group_ord(X,W) ->
+    {St0,ebqn:list(ebqn_array:foldl(F,R,X#a.r))}.
+group_ord(St0,X,W) ->
     {S,L} = ebqn_array:foldl(fun(_I,V,{Si,Li}) -> {ebqn_array:concat(Si,ebqn_array:from_list([Li])),Li+V} end,{#{},0},W#a.r),
     R = ebqn_array:new(L),
     F = fun
@@ -73,56 +65,56 @@ group_ord(X,W) ->
             A
     end,
     {_, O} = ebqn_array:foldl(F,{S,R},X#a.r),
-    list(O).
+    {St0,list(O)}.
 assert_fn(Pre) ->
     fun
-        (X,W) when X =/= 1 ->
+        (_St0,X,W) when X =/= 1 ->
             case W =/= undefined of
                 true ->
                     throw({assert_fn,ebqn:strings(W)});
                 false ->
                     throw({assert_fn,Pre})
             end;
-        (X,W) ->
-            X
+        (St0,X,W) ->
+            {St0,X}
     end.
-plus(X,undefined) ->
-    X;
-plus(X,W) when is_record(X,c),is_record(W,c) ->
+plus(St0,X,undefined) ->
+    {St0,X};
+plus(_St0,X,W) when is_record(X,c),is_record(W,c) ->
     throw("+: Cannot add two characters");
-plus(X,W) when (is_record(X,tr) or is_record(X,bi) or is_record(X,m1) or is_record(X,m2) or is_function(X))  or
-               (is_record(W,tr) or is_record(W,bi) or is_record(W,m1) or is_record(W,m2) or is_function(W)) ->
+plus(_St0,X,W) when (is_record(X,tr) or is_record(X,bi) or is_record(X,d1) or is_record(X,d2) or is_function(X))  or
+               (is_record(W,tr) or is_record(W,bi) or is_record(W,d1) or is_record(W,d2) or is_function(W)) ->
     throw("+: Cannot add non-data values");
-plus(X,W) when is_record(X,c),not is_record(W,c) ->
-    #c{p=X#c.p + W};
-plus(X,W) when is_record(W,c),not is_record(X,c) ->
-    #c{p=W#c.p + X};
-plus(inf,W) when is_number(W) ->
-    inf;
-plus(ninf,W) when is_number(W) ->
-    ninf;
-plus(X,inf) when is_number(X) ->
-    inf;
-plus(X,ninf) when is_number(X) ->
-    ninf;
-plus(X,W)  ->
-    W + X.
-minus(inf,undefined) ->
-    ninf;
-minus(ninf,undefined) ->
-    inf;
-minus(inf,W) ->
-    ninf;
-minus(X,undefined) when not is_number(X) ->
+plus(St0,X,W) when is_record(X,c),not is_record(W,c) ->
+    {St0,#c{p=X#c.p + W}};
+plus(St0,X,W) when is_record(W,c),not is_record(X,c) ->
+    {St0,#c{p=W#c.p + X}};
+plus(St0,inf,W) when is_number(W) ->
+    {St0,inf};
+plus(St0,ninf,W) when is_number(W) ->
+    {St0,ninf};
+plus(St0,X,inf) when is_number(X) ->
+    {St0,inf};
+plus(St0,X,ninf) when is_number(X) ->
+    {St0,ninf};
+plus(St0,X,W)  ->
+    {St0,W + X}.
+minus(St0,inf,undefined) ->
+    {St0,ninf};
+minus(St0,ninf,undefined) ->
+    {St0,inf};
+minus(St0,inf,W) ->
+    {St0,ninf};
+minus(_St0,X,undefined) when not is_number(X) ->
     throw("-: Can only negate numbers");
-minus(X,undefined) ->
-    -1*X;
-minus(X,W) when (is_record(X,tr) or is_record(X,bi) or is_record(X,m1) or is_record(X,m2) or is_function(X))  or
-                (is_record(W,tr) or is_record(W,bi) or is_record(W,m1) or is_record(W,m2) or is_function(W)) ->
+minus(St0,X,undefined) ->
+    {St0,-1*X};
+minus(_St0,X,W) when (is_record(X,tr) or is_record(X,bi) or is_record(X,d1) or is_record(X,d2) or is_function(X))  or
+                (is_record(W,tr) or is_record(W,bi) or is_record(W,d1) or is_record(W,d2) or is_function(W)) ->
     throw("-: Can only negate numbers");
-minus(X,W) when is_record(X,c),is_record(W,c) ->
-    W#c.p - X#c.p;
-minus(X,W) when not is_record(X,c),is_record(W,c) ->
+minus(St0,X,W) when is_record(X,c),is_record(W,c) ->
+    {St0,W#c.p - X#c.p};
+minus(St0,X,W) when not is_record(X,c),is_record(W,c) ->
     P = W#c.p - X,
     case P < 0 of
         true ->
@@ -130,95 +122,95 @@ minus(X,W) when not is_record(X,c),is_record(W,c) ->
         false ->
             ok
     end,
-    #c{p=P};
-minus(X,W) when is_record(X,c),not is_record(W,c) ->
+    {St0,#c{p=P}};
+minus(_St0,X,W) when is_record(X,c),not is_record(W,c) ->
     throw("-: Can only negate numbers");
-minus(X,W) when is_number(X),is_number(W) ->
-    W-X.
-times(X,undefined) when X < 0 ->
-    -1;
-times(X,undefined) when X =:= 0 ->
-    0;
-times(X,undefined) when X > 0 ->
-    1;
-times(X,inf) when X > 0 ->
-    inf;
-times(X,inf) when X < 0 ->
-    ninf;
-times(X,ninf) when X > 0 ->
-    ninf;
-times(X,ninf) when X < 0 ->
-    inf;
-times(inf,W) when W > 0 ->
-    inf;
-times(inf,W) when W < 0 ->
-    ninf;
-times(ninf,W) when W > 0 ->
-    ninf;
-times(ninf,W) when W < 0 ->
-    inf;
-times(X,W) when is_record(X,c);is_record(W,c) ->
+minus(St0,X,W) when is_number(X),is_number(W) ->
+    {St0,W-X}.
+times(St0,X,undefined) when X < 0 ->
+    {St0,-1};
+times(St0,X,undefined) when X =:= 0 ->
+    {St0,0};
+times(St0,X,undefined) when X > 0 ->
+    {St0,1};
+times(St0,X,inf) when X > 0 ->
+    {St0,inf};
+times(St0,X,inf) when X < 0 ->
+    {St0,ninf};
+times(St0,X,ninf) when X > 0 ->
+    {St0,ninf};
+times(St0,X,ninf) when X < 0 ->
+    {St0,inf};
+times(St0,inf,W) when W > 0 ->
+    {St0,inf};
+times(St0,inf,W) when W < 0 ->
+    {St0,ninf};
+times(St0,ninf,W) when W > 0 ->
+    {St0,ninf};
+times(St0,ninf,W) when W < 0 ->
+    {St0,inf};
+times(_St0,X,W) when is_record(X,c);is_record(W,c) ->
     throw("×: Arguments must be numbers");
-times(X,W) when not is_number(X),is_number(W) ->
+times(_St0,X,W) when not is_number(X),is_number(W) ->
     throw("×: Arguments must be numbers");
-times(X,W) when is_number(X),not is_number(W) ->
+times(_St0,X,W) when is_number(X),not is_number(W) ->
     throw("×: Arguments must be numbers");
-times(X,W) ->
-    X*W.
-divide(0,undefined) ->
-    inf;
-divide(inf,undefined) ->
-    0;
-divide(X,W) when is_record(X,bi);is_record(X,tr);is_function(X) ->
+times(St0,X,W) ->
+    {St0,X*W}.
+divide(St0,0,undefined) ->
+    {St0,inf};
+divide(St0,inf,undefined) ->
+    {St0,0};
+divide(_St0,X,W) when is_record(X,bi);is_record(X,tr);is_function(X) ->
     throw("÷: Arguments must be numbers");
-divide(X,W) when is_record(X,c);is_record(W,c) ->
+divide(_St0,X,W) when is_record(X,c);is_record(W,c) ->
     throw("÷: Arguments must be numbers");
-divide(X,undefined) ->
-    1 / X;
-divide(0,W) when is_number(W),W > 0->
-    inf;
-divide(0,W) when is_number(W),W < 0->
-    ninf;
-divide(inf,W) when is_number(W) ->
-    0;
-divide(ninf,W) when is_number(W) ->
-    0;
-divide(X,W) ->
-    W / X.
-power(X,W) when is_record(X,c);is_record(W,c) ->
+divide(St0,X,undefined) ->
+    {St0,1 / X};
+divide(St0,0,W) when is_number(W),W > 0->
+    {St0,inf};
+divide(St0,0,W) when is_number(W),W < 0->
+    {St0,ninf};
+divide(St0,inf,W) when is_number(W) ->
+    {St0,0};
+divide(St0,ninf,W) when is_number(W) ->
+    {St0,0};
+divide(St0,X,W) ->
+    {St0,W / X}.
+power(_St0,X,W) when is_record(X,c);is_record(W,c) ->
     throw("⋆: Arguments must be numbers");
-power(X,undefined) ->
-    exp(X);
-power(X,W) ->
-    pow(W,X).
-floor(inf,_W) ->
-    inf;
-floor(ninf,_W) ->
-    ninf;
-floor(X,_W) when not is_number(X),not is_record(X,c) ->
+power(St0,X,undefined) ->
+    {St0,exp(X)};
+power(St0,X,W) ->
+    {St0,pow(W,X)}.
+floor(St0,inf,_W) ->
+    {St0,inf};
+floor(St0,ninf,_W) ->
+    {St0,ninf};
+floor(_St0,X,_W) when not is_number(X),not is_record(X,c) ->
     throw("⌊: Cannot compare operations");
-floor(X,_W) when is_number(X) ->
-    floor(X).
-equals(X,undefined) when is_record(X,a) ->
-    length(X#a.sh);
-equals(X,W) when is_number(X),is_number(W) ->
+floor(St0,X,_W) when is_number(X) ->
+    {St0,floor(X)}.
+equals(St0,X,undefined) when is_record(X,a) ->
+    {St0,length(X#a.sh)};
+equals(St0,X,W) when is_number(X),is_number(W) ->
     % use '==' for float-to-int comparisons
-    case X == W of true -> 1; false -> 0 end;
-equals(X,W) ->
-    case X =:= W of true -> 1; false -> 0 end.
-lesseq(X,W) when X =:= W ->
-    1;
-lesseq(X,inf) when is_record(X,c) ->
-    1;
-lesseq(X,ninf) ->
-    1;
-lesseq(X,inf) ->
-    0;
-lesseq(X,W) when is_record(X,bi);is_record(W,bi);is_record(X,tr);is_record(W,tr);is_function(X);is_function(W) ->
+    case X == W of true -> {St0,1}; false -> {St0,0} end;
+equals(St0,X,W) ->
+    case X =:= W of true -> {St0,1}; false -> {St0,0} end.
+lesseq(St0,X,W) when X =:= W ->
+    {St0,1};
+lesseq(St0,X,inf) when is_record(X,c) ->
+    {St0,1};
+lesseq(St0,X,ninf) ->
+    {St0,1};
+lesseq(St0,X,inf) ->
+    {St0,0};
+lesseq(_St0,X,W) when is_record(X,bi);is_record(W,bi);is_record(X,tr);is_record(W,tr);is_function(X);is_function(W) ->
     throw("𝕨≤𝕩: Cannot compare operations");
-lesseq(X,W) ->
-    T = type(X,undefined),
-    S = type(W,undefined),
+lesseq(St0,X,W) ->
+    {St0,T} = type(St0,X,undefined),
+    {St0,S} = type(St0,W,undefined),
     R =
         case S =/= T of
             true ->
@@ -231,28 +223,29 @@ lesseq(X,W) ->
                         W =< X
                 end
         end,
-    case R of true -> 1; false -> 0 end.
-shape(X,undefined) ->
-    list(ebqn_array:from_list(X#a.sh)).
-reshape(X,undefined) ->
-    arr(X#a.r,[maps:size(X#a.r)]);
-reshape(X,W) when is_record(W,a) ->
-    arr(X#a.r,ebqn_array:to_list(W#a.r));
-reshape(X,W) ->
-    arr(X#a.r,W).
-pick(X,W) ->
-    ebqn_array:get(trunc(W),X#a.r).
-window(X,undefined) ->
-    list(ebqn_array:from_list(seq(0,trunc(X)-1))).
+    case R of true -> {St0,1}; false -> {St0,0} end.
+shape(St0,X,undefined) ->
+    {St0,list(ebqn_array:from_list(X#a.sh))}.
+reshape(St0,X,undefined) ->
+    {St0,arr(X#a.r,[maps:size(X#a.r)])};
+reshape(St0,X,W) when is_record(W,a) ->
+    {St0,arr(X#a.r,ebqn_array:to_list(W#a.r))};
+reshape(St0,X,W) ->
+    {St0,arr(X#a.r,W)}.
+pick(St0,X,W) ->
+    %fmt({pick,X,W}),
+    {St0,ebqn_array:get(trunc(W),X#a.r)}.
+window(St0,X,undefined) ->
+    {St0,list(ebqn_array:from_list(seq(0,trunc(X)-1)))}.
 table(F) ->
-    dl1(fun
+    fn(fun
         (St0,X,undefined) ->
             Table = fun (I,E,{StAcc,M}) ->
                 {St1,R} = call(StAcc,F,E,undefined),
                 {St1,maps:put(I,R,M)}
             end,
-            {St2,Result} = ebqn_array:foldl(Table,{St0,#{}},X#a.r),
-            {St2,arr(Result,X#a.sh)};
+            {St3,Result} = ebqn_array:foldl(Table,{St0,#{}},X#a.r),
+            {St3,arr(Result,X#a.sh)};
         (St0,#a{r=Xr,sh=Xsh},#a{r=Wr,sh=Wsh}) ->
             InitSize =  ebqn_array:new(maps:size(Xr)*maps:size(Wr)),
             Xs = maps:size(Xr),
@@ -268,7 +261,7 @@ table(F) ->
                         {RtnSt,arr(Rtn,flatten(Wsh ++ Xsh))}
     end).
 scan(F) ->
-    dl1(fun
+    fn(fun
         (St0,X,undefined) when not is_record(X,a) ->
             throw("`: 𝕩 must have rank at least 1");
         (St0,X,undefined) when is_record(X,a),length(X#a.sh) =:= 0 ->
@@ -376,18 +369,18 @@ scan(F) ->
             {St4,arr(Rtn2,S)}
     end).
 fill_by(F,G) ->
-    dl2(fun(St0,X,W) ->
+    fn(fun(St0,X,W) ->
         call(St0,F,X,W)
     end).
 cases(F,G) ->
-    dl2(fun
+    fn(fun
         (St0,X,undefined) ->
             call(St0,F,X,undefined);
         (St0,X,W) ->
             call(St0,G,X,W)
     end).
-fns() -> [fn(fun type/2),fn(fun fill/2),fn(fun log/2),fn(fun group_len/2),fn(fun group_ord/2),
-                     fn(assert_fn("")),fn(fun plus/2),fn(fun minus/2),fn(fun times/2),fn(fun divide/2),
-                     fun power/2,fn(fun floor/2),fn(fun equals/2),fn(fun lesseq/2),fn(fun shape/2),
-                     fn(fun reshape/2),fn(fun pick/2),fn(fun window/2),
-                     m1(fun table/1),m1(fun scan/1),m2(fun fill_by/2),m2(fun cases/2)].
+fns() -> [fn(fun type/3),fn(fun fill/3),fn(fun log/3),fn(fun group_len/3),fn(fun group_ord/3),
+                     fn(assert_fn("")),fn(fun plus/3),fn(fun minus/3),fn(fun times/3),fn(fun divide/3),
+                     fn(fun power/3),fn(fun floor/3),fn(fun equals/3),fn(fun lesseq/3),fn(fun shape/3),
+                     fn(fun reshape/3),fn(fun pick/3),fn(fun window/3),
+                     d1(fun table/1),d1(fun scan/1),d2(fun fill_by/2),d2(fun cases/2)].

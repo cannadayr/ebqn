@@ -29,12 +29,12 @@ trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),tr) ->
     G = Tr#tr.g,
     H = Tr#tr.h,
     trace([F,G,H]++tl(Todo),Marked,Root,An,Heap);
-trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),m1) ->
+trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),d1) ->
     D = hd(Todo),
-    trace([D#m1.f]++tl(Todo),Marked,Root,An,Heap);
-trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),m2) ->
+    trace([D#d1.f]++tl(Todo),Marked,Root,An,Heap);
+trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),d2) ->
     D = hd(Todo),
-    trace([D#m2.f]++tl(Todo),Marked,Root,An,Heap);
+    trace([D#d2.f]++tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),r1) ->
     D = hd(Todo),
     M = D#r1.m,
