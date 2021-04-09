@@ -20,11 +20,11 @@ r2(F) ->
     #r2{f=F}.
 type(St0,X,_W) when is_record(X,bi) ->
     {St0,3 + X#bi.t};
-type(St0,X,_W) when is_record(X,fn);is_record(X,tr);is_record(X,r1);is_record(X,r2) ->
+type(St0,X,_W) when is_record(X,fn);is_record(X,tr);is_record(X,d1);is_record(X,d2) ->
     {St0,3};
-type(St0,X,_W) when is_record(X,d1) ->
+type(St0,X,_W) when is_record(X,r1) ->
     {St0,4};
-type(St0,X,_W) when is_record(X,d2) ->
+type(St0,X,_W) when is_record(X,r2) ->
     {St0,5};
 type(St0,X,_W) when is_record(X,a) ->
     {St0,0};
