@@ -36,6 +36,10 @@ fill(St0,X,undefined) ->
     {St0,0};
 fill(St0,X,W) ->
     {St0,X}.
+log(St0,0,undefined) ->
+    {St0,ninf};
+log(St0,inf,undefined) ->
+    {St0,inf};
 log(St0,X,undefined) ->
     {St0,log(X)};
 log(St0,X,W) ->
@@ -175,6 +179,10 @@ divide(St0,inf,W) when is_number(W) ->
     {St0,0};
 divide(St0,ninf,W) when is_number(W) ->
     {St0,0};
+divide(St0,X,ninf) when is_number(X),X >= 0 ->
+    {St0,ninf};
+divide(St0,X,ninf) when is_number(X),X < 1 ->
+    {St0,inf};
 divide(St0,X,W) ->
     {St0,W / X}.
 power(_St0,X,W) when is_record(X,c);is_record(W,c) ->
