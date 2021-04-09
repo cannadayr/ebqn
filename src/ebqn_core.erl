@@ -28,7 +28,7 @@ type(St0,X,_W) when is_record(X,r2) ->
     {St0,5};
 type(St0,X,_W) when is_record(X,a) ->
     {St0,0};
-type(St0,X,_W) when is_number(X);X =:= inf; X =:= ninf ->
+type(St0,X,_W) when is_number(X);X =:= inf;X =:= ninf ->
     {St0,1};
 type(St0,X,_W) when is_record(X,c) ->
     {St0,2}.
@@ -181,6 +181,12 @@ power(_St0,X,W) when is_record(X,c);is_record(W,c) ->
     throw("⋆: Arguments must be numbers");
 power(St0,X,undefined) ->
     {St0,exp(X)};
+power(St0,0,inf) ->
+    {St0,1};
+power(St0,X,inf) when X > 0 ->
+    {St0,inf};
+power(St0,X,inf) when X < 0 ->
+    {St0,0};
 power(St0,X,W) ->
     {St0,pow(W,X)}.
 floor(St0,inf,_W) ->
