@@ -4,7 +4,7 @@
 
 -import(ebqn,[run/2,char/1,str/1]).
 -export([test/0,bc/0,layer0/2,layer1/2,layer2/2,layer3/2,layer4/2,layer5/2,layer6/2]).
--export([undo_data/2,undo_prim/2]).
+-export([undo_data/2,undo_prim/2,identity/2]).
 
 test() ->
     % used when testing one-off programs
@@ -897,4 +897,40 @@ undo_prim(St0,#a{r=Runtime}) ->
     {_,1} = ebqn:run(St0,[[0,7,0,2,16,0,2,16,0,1,0,3,0,6,19,0,0,0,5,0,4,7,0,1,9,19,16,25],[ebqn_array:get(18,Runtime),ebqn_array:get(19,Runtime),ebqn_array:get(27,Runtime),ebqn_array:get(30,Runtime),ebqn_array:get(31,Runtime),ebqn_array:get(48,Runtime),-1,4],[[0,1,0,0]]]), %((≢⍉⁼)≡¯1⌽≢)↕↕4
     {_,1} = ebqn:run(St0,[[0,9,0,10,0,10,3,3,0,5,0,0,7,0,3,9,0,6,0,2,8,16,0,8,0,9,3,2,0,7,0,4,8,16,0,5,0,1,7,16,25],[ebqn_array:get(2,Runtime),ebqn_array:get(18,Runtime),ebqn_array:get(22,Runtime),ebqn_array:get(27,Runtime),ebqn_array:get(31,Runtime),ebqn_array:get(49,Runtime),ebqn_array:get(55,Runtime),ebqn_array:get(61,Runtime),-1,2,3],[[0,1,0,0]]]), %≡´⍉⍟¯1‿2⥊⟜(↕×´)2‿3‿3
     {_,1} = ebqn:run(St0,[[0,10,0,12,0,11,0,13,3,4,0,8,0,0,7,0,5,9,0,9,0,4,8,16,0,7,0,6,7,0,6,0,2,19,0,1,0,3,19,0,10,0,11,3,2,17,25],[ebqn_array:get(2,Runtime),ebqn_array:get(18,Runtime),ebqn_array:get(20,Runtime),ebqn_array:get(21,Runtime),ebqn_array:get(22,Runtime),ebqn_array:get(27,Runtime),ebqn_array:get(31,Runtime),ebqn_array:get(48,Runtime),ebqn_array:get(49,Runtime),ebqn_array:get(55,Runtime),2,1,3,4],[[0,1,0,0]]]), %2‿1(⊢≡⊣⍉⍉⁼)⥊⟜(↕×´)2‿3‿1‿4
+    ok.
+
+identity(St0,#a{r=Runtime}) ->
+    % # Fold
+    {_,1} = ebqn:run(St0,[[0,0,0,9,3,2,0,1,0,9,3,2,0,2,0,10,3,2,0,3,0,10,3,2,0,5,0,9,3,2,0,4,0,10,3,2,3,6,0,7,0,8,15,1,7,7,16,0,8,0,4,7,16,25,3,0,0,8,21,0,2,7,16,0,6,21,0,1,17,25],[ebqn_array:get(0,Runtime),ebqn_array:get(1,Runtime),ebqn_array:get(2,Runtime),ebqn_array:get(3,Runtime),ebqn_array:get(10,Runtime),ebqn_array:get(11,Runtime),ebqn_array:get(18,Runtime),ebqn_array:get(46,Runtime),ebqn_array:get(49,Runtime),0,1],[[0,1,0,0],[0,0,54,3]]]), %∧´ {𝕩≡𝕎´⟨⟩}´¨ ⟨+‿0,-‿0,×‿1,÷‿1,∨‿0,∧‿1⟩
+    {_,1} = ebqn:run(St0,[[0,0,0,8,3,2,0,3,0,8,3,2,0,1,0,9,3,2,0,2,0,10,3,2,3,4,0,6,0,7,15,1,7,7,16,0,7,0,4,7,16,25,3,0,0,7,21,0,2,7,16,0,5,21,0,1,17,25],[ebqn_array:get(4,Runtime),ebqn_array:get(6,Runtime),ebqn_array:get(7,Runtime),ebqn_array:get(9,Runtime),ebqn_array:get(10,Runtime),ebqn_array:get(18,Runtime),ebqn_array:get(46,Runtime),ebqn_array:get(49,Runtime),1,inf,ninf],[[0,1,0,0],[0,0,42,3]]]), %∧´ {𝕩≡𝕎´⟨⟩}´¨ ⟨⋆‿1,¬‿1,⌊‿∞,⌈‿¯∞⟩
+    {_,1} = ebqn:run(St0,[[0,2,0,8,3,2,0,3,0,9,3,2,0,1,0,8,3,2,0,4,0,9,3,2,3,4,0,6,0,7,15,1,7,7,16,0,7,0,0,7,16,25,3,0,0,7,21,0,2,7,16,0,5,21,0,1,17,25],[ebqn_array:get(10,Runtime),ebqn_array:get(13,Runtime),ebqn_array:get(14,Runtime),ebqn_array:get(15,Runtime),ebqn_array:get(17,Runtime),ebqn_array:get(18,Runtime),ebqn_array:get(46,Runtime),ebqn_array:get(49,Runtime),0,1],[[0,1,0,0],[0,0,42,3]]]), %∧´ {𝕩≡𝕎´⟨⟩}´¨ ⟨≠‿0,=‿1,>‿0,≥‿1⟩
+    ok = try ebqn:run(St0,[[0,3,0,1,16,0,2,0,0,7,16,25],[ebqn_array:get(5,Runtime),ebqn_array:get(27,Runtime),ebqn_array:get(49,Runtime),0],[[0,1,0,0]]]) % √´↕0
+        catch _ -> ok
+    end,
+    ok = try ebqn:run(St0,[[0,3,0,1,16,0,2,0,0,7,16,25],[ebqn_array:get(8,Runtime),ebqn_array:get(27,Runtime),ebqn_array:get(49,Runtime),0],[[0,1,0,0]]]) % |´↕0
+        catch _ -> ok
+    end,
+    ok = try ebqn:run(St0,[[0,2,0,1,0,0,7,16,25],[ebqn_array:get(21,Runtime),ebqn_array:get(49,Runtime),str("")],[[0,1,0,0]]]) % ⊢´""
+        catch _ -> ok
+    end,
+    ok = try ebqn:run(St0,[[0,2,0,1,0,0,7,16,25],[ebqn_array:get(20,Runtime),ebqn_array:get(49,Runtime),str("")],[[0,1,0,0]]]) % ⊣´""
+        catch _ -> ok
+    end,
+    ok = try ebqn:run(St0,[[3,0,0,1,0,0,7,16,25],[ebqn_array:get(23,Runtime),ebqn_array:get(49,Runtime)],[[0,1,0,0]]]) % ∾´⟨⟩
+        catch _ -> ok
+    end,
+    ok = try ebqn:run(St0,[[3,0,0,1,0,0,7,16,25],[ebqn_array:get(24,Runtime),ebqn_array:get(49,Runtime)],[[0,1,0,0]]]) % ≍´⟨⟩
+        catch _ -> ok
+    end,
+    %
+    % # Insert
+    {_,1} = ebqn:run(St0,[[0,0,0,21,3,2,0,1,0,21,3,2,0,2,0,20,3,2,0,3,0,20,3,2,0,9,0,21,3,2,0,8,0,20,3,2,0,4,0,20,3,2,0,7,0,20,3,2,0,5,0,22,3,2,0,6,0,23,3,2,0,11,0,21,3,2,0,12,0,20,3,2,0,10,0,21,3,2,0,13,0,20,3,2,3,14,0,16,0,17,15,1,7,7,16,0,17,0,8,7,16,25,0,24,0,15,0,21,0,19,0,20,3,3,17,0,18,21,0,2,7,16,0,14,21,0,1,0,15,0,19,0,20,3,2,17,17,25],[ebqn_array:get(0,Runtime),ebqn_array:get(1,Runtime),ebqn_array:get(2,Runtime),ebqn_array:get(3,Runtime),ebqn_array:get(4,Runtime),ebqn_array:get(6,Runtime),ebqn_array:get(7,Runtime),ebqn_array:get(9,Runtime),ebqn_array:get(10,Runtime),ebqn_array:get(11,Runtime),ebqn_array:get(13,Runtime),ebqn_array:get(14,Runtime),ebqn_array:get(15,Runtime),ebqn_array:get(17,Runtime),ebqn_array:get(18,Runtime),ebqn_array:get(22,Runtime),ebqn_array:get(46,Runtime),ebqn_array:get(49,Runtime),ebqn_array:get(50,Runtime),3,1,0,inf,ninf,str("")],[[0,1,0,0],[0,0,102,3]]]), %∧´ {(3‿1⥊𝕩)≡𝕎˝0‿3‿1⥊""}´¨ ⟨+‿0,-‿0,×‿1,÷‿1,∨‿0,∧‿1,⋆‿1,¬‿1,⌊‿∞,⌈‿¯∞,≠‿0,=‿1,>‿0,≥‿1⟩
+    ok = try ebqn:run(St0,[[0,2,0,1,0,0,7,16,25],[ebqn_array:get(23,Runtime),ebqn_array:get(50,Runtime),str("")],[[0,1,0,0]]]) % ∾˝""
+        catch _ -> ok
+    end,
+    {_,1} = ebqn:run(St0,[[0,11,0,2,0,9,0,4,16,0,5,0,7,0,10,0,8,0,0,8,8,16,17,0,1,0,11,0,2,0,9,0,4,16,17,0,6,0,3,7,16,17,25],[ebqn_array:get(14,Runtime),ebqn_array:get(18,Runtime),ebqn_array:get(22,Runtime),ebqn_array:get(23,Runtime),ebqn_array:get(27,Runtime),ebqn_array:get(32,Runtime),ebqn_array:get(50,Runtime),ebqn_array:get(54,Runtime),ebqn_array:get(55,Runtime),5,1,str("")],[[0,1,0,0]]]), %(∾˝(↕5)⥊"") ≡ (≠⟜1⊸/↕5)⥊""
+    {_,1} = ebqn:run(St0,[[0,9,0,10,0,11,3,3,0,5,0,7,0,4,0,9,7,0,1,0,3,19,7,7,16,0,6,0,1,7,0,0,0,6,0,8,0,2,7,7,19,16,25],[ebqn_array:get(18,Runtime),ebqn_array:get(22,Runtime),ebqn_array:get(23,Runtime),ebqn_array:get(24,Runtime),ebqn_array:get(43,Runtime),ebqn_array:get(44,Runtime),ebqn_array:get(46,Runtime),ebqn_array:get(47,Runtime),ebqn_array:get(50,Runtime),0,2,5],[[0,1,0,0]]]), %(∾˝¨≡⥊¨) (≍⥊0˙)⌜˜0‿2‿5
+    ok = try ebqn:run(St0,[[3,0,0,0,0,3,0,4,3,2,17,0,2,0,1,7,16,25],[ebqn_array:get(22,Runtime),ebqn_array:get(30,Runtime),ebqn_array:get(50,Runtime),0,3],[[0,1,0,0]]]) % ⌽˝0‿3⥊⟨⟩
+        catch _ -> ok
+    end,
     ok.
