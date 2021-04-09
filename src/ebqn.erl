@@ -297,7 +297,15 @@ decompose(St0,X,undefined) when
 		(is_record(X,bi) and is_number(X#bi.prim))
     ->
     {St0,list(ebqn_array:from_list([0,X]))};
-decompose(St0,X,undefined) -> % no repr
+decompose(St0,X,undefined) when is_record(X,tr),X#tr.f =:= undefined ->
+    {St0,list(ebqn_array:from_list([2,X]))};
+decompose(St0,X,undefined) when is_record(X,tr),X#tr.f =/= undefined ->
+    {St0,list(ebqn_array:from_list([3,X]))};
+decompose(St0,X,undefined) when is_record(X,d1) ->
+    {St0,list(ebqn_array:from_list([4,X]))};
+decompose(St0,X,undefined) when is_record(X,d2) ->
+    {St0,list(ebqn_array:from_list([5,X]))};
+decompose(St0,X,undefined) ->
     {St0,list(ebqn_array:from_list([1,X]))}.
 
 load() ->
