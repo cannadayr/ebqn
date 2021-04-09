@@ -14,8 +14,10 @@ arr(R,Sh) ->
     #a{r=R,sh=Sh}.
 fn(F) ->
     #fn{f=F}.
-m(F) ->
-    #m{f=F}.
+dl1(F) ->
+    #dl1{f=F}.
+dl2(F) ->
+    #dl2{f=F}.
 m1(F) ->
     #m1{f=F}.
 m2(F) ->
@@ -26,11 +28,11 @@ is_array(_X,_W) ->
     0.
 type(X,_W) when is_record(X,bi) ->
     3 + X#bi.t;
-type(X,_W) when is_function(X);is_record(X,tr) ->
+type(X,_W) when is_function(X);is_record(X,fn);is_record(X,tr);is_record(X,r1);is_record(X,dl1);is_record(X,r2);is_record(X,dl2) ->
     3;
-type(X,_W) when is_record(X,m1);is_record(X,r1) ->
+type(X,_W) when is_record(X,m1) ->
     4;
-type(X,_W) when is_record(X,m2);is_record(X,r2) ->
+type(X,_W) when is_record(X,m2) ->
     5;
 type(X,_W) when is_record(X,a) ->
     0;
@@ -243,7 +245,7 @@ pick(X,W) ->
 window(X,undefined) ->
     list(ebqn_array:from_list(seq(0,trunc(X)-1))).
 table(F) ->
-    m(fun
+    dl1(fun
         (St0,X,undefined) ->
             Table = fun (I,E,{StAcc,M}) ->
                 {St1,R} = call(StAcc,F,E,undefined),
@@ -266,7 +268,7 @@ table(F) ->
                         {RtnSt,arr(Rtn,flatten(Wsh ++ Xsh))}
     end).
 scan(F) ->
-    m(fun
+    dl1(fun
         (St0,X,undefined) when not is_record(X,a) ->
             throw("`: 𝕩 must have rank at least 1");
         (St0,X,undefined) when is_record(X,a),length(X#a.sh) =:= 0 ->
@@ -374,11 +376,11 @@ scan(F) ->
             {St4,arr(Rtn2,S)}
     end).
 fill_by(F,G) ->
-    m(fun(St0,X,W) ->
+    dl2(fun(St0,X,W) ->
         call(St0,F,X,W)
     end).
 cases(F,G) ->
-    m(fun
+    dl2(fun
         (St0,X,undefined) ->
             call(St0,F,X,undefined);
         (St0,X,W) ->

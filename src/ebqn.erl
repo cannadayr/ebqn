@@ -37,8 +37,11 @@ call(St0,F,X,W) when is_function(F) ->
 call(St0,F,X,W) when is_record(F,fn) ->
     Fn = F#fn.f,
     {St0,Fn(X,W)};
-call(St0,F,X,W) when is_record(F,m) ->
-    Fn = F#m.f,
+call(St0,F,X,W) when is_record(F,dl1) ->
+    Fn = F#dl1.f,
+    Fn(St0,X,W);
+call(St0,F,X,W) when is_record(F,dl2) ->
+    Fn = F#dl2.f,
     Fn(St0,X,W);
 call(St0,R,X,W) when is_record(R,r1) ->
     M = R#r1.m,
@@ -279,8 +282,10 @@ has_prim(R,undefined) when is_record(R,tr) and is_number(R#tr.prim) ->
     R#tr.prim;
 has_prim(R,undefined) ->
     62.
-set_prim(I,R) when is_function(R) ->
-    #fn{prim=I,f=R};
+%set_prim(I,R) when is_function(R) ->
+%    #fn{prim=I,f=R};
+set_prim(I,R) when is_record(R,fn) ->
+    R#fn{prim=I};
 set_prim(I,R) when is_record(R,bi) ->
     R#bi{prim=I};
 set_prim(I,R) when is_record(R,m1) ->

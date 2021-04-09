@@ -12,5 +12,6 @@
 -record(m2,{f,prim}).                       % 2-modifier (f-fn)
 -record(r1,{m,f,prim}).                     % raw 1-modifier (m-fn, f-fn)
 -record(r2,{m,f,g,prim}).                   % raw 2-modifier (m-fn, f-fn, g-fn)
--record(m,{f}).                             % modifier (f-fn)
+-record(dl1,{f}).                           % derived lambda 1 (f-fn)
+-record(dl2,{f}).                           % derived lambda 2 (f-fn)
 -record(fn,{f,prim}).                       % function
