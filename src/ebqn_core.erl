@@ -5,7 +5,7 @@
 -import(ebqn,[list/1,call/4,fmt/1]).
 
 -export([fns/0,fn/1]).
--export([arr/2,d1/1,d2/1,type/3,fill/3,log/3,group_len/3,group_ord/3,
+-export([arr/2,r1/1,r2/1,type/3,fill/3,log/3,group_len/3,group_ord/3,
          plus/3,minus/3,times/3,divide/3,power/3,floor/3,equals/3,lesseq/3,shape/3,
          reshape/3,pick/3,window/3,table/1,scan/1,fill_by/2,cases/2,assert_fn/1]).
 -include("schema.hrl").
@@ -14,17 +14,17 @@ arr(R,Sh) ->
     #a{r=R,sh=Sh}.
 fn(F) ->
     #fn{f=F}.
-d1(F) ->
-    #d1{f=F}.
-d2(F) ->
-    #d2{f=F}.
+r1(F) ->
+    #r1{f=F}.
+r2(F) ->
+    #r2{f=F}.
 type(St0,X,_W) when is_record(X,bi) ->
     {St0,3 + X#bi.t};
-type(St0,X,_W) when is_record(X,fn);is_record(X,tr);is_record(X,d1);is_record(X,d2) ->
+type(St0,X,_W) when is_record(X,fn);is_record(X,tr);is_record(X,r1);is_record(X,r2) ->
     {St0,3};
-type(St0,X,_W) when is_record(X,r1) ->
+type(St0,X,_W) when is_record(X,d1) ->
     {St0,4};
-type(St0,X,_W) when is_record(X,r2) ->
+type(St0,X,_W) when is_record(X,d2) ->
     {St0,5};
 type(St0,X,_W) when is_record(X,a) ->
     {St0,0};
@@ -82,8 +82,8 @@ plus(St0,X,undefined) ->
     {St0,X};
 plus(_St0,X,W) when is_record(X,c),is_record(W,c) ->
     throw("+: Cannot add two characters");
-plus(_St0,X,W) when (is_record(X,tr) or is_record(X,bi) or is_record(X,d1) or is_record(X,d2) or is_function(X))  or
-               (is_record(W,tr) or is_record(W,bi) or is_record(W,d1) or is_record(W,d2) or is_function(W)) ->
+plus(_St0,X,W) when (is_record(X,tr) or is_record(X,bi) or is_record(X,r1) or is_record(X,r2) or is_function(X))  or
+               (is_record(W,tr) or is_record(W,bi) or is_record(W,r1) or is_record(W,r2) or is_function(W)) ->
     throw("+: Cannot add non-data values");
 plus(St0,X,W) when is_record(X,c),not is_record(W,c) ->
     {St0,#c{p=X#c.p + W}};
@@ -109,8 +109,8 @@ minus(_St0,X,undefined) when not is_number(X) ->
     throw("-: Can only negate numbers");
 minus(St0,X,undefined) ->
     {St0,-1*X};
-minus(_St0,X,W) when (is_record(X,tr) or is_record(X,bi) or is_record(X,d1) or is_record(X,d2) or is_function(X))  or
-                (is_record(W,tr) or is_record(W,bi) or is_record(W,d1) or is_record(W,d2) or is_function(W)) ->
+minus(_St0,X,W) when (is_record(X,tr) or is_record(X,bi) or is_record(X,r1) or is_record(X,r2) or is_function(X))  or
+                (is_record(W,tr) or is_record(W,bi) or is_record(W,r1) or is_record(W,r2) or is_function(W)) ->
     throw("-: Can only negate numbers");
 minus(St0,X,W) when is_record(X,c),is_record(W,c) ->
     {St0,W#c.p - X#c.p};
@@ -389,4 +389,4 @@ fns() -> [fn(fun type/3),fn(fun fill/3),fn(fun log/3),fn(fun group_len/3),fn(fun
                      fn(assert_fn("")),fn(fun plus/3),fn(fun minus/3),fn(fun times/3),fn(fun divide/3),
                      fn(fun power/3),fn(fun floor/3),fn(fun equals/3),fn(fun lesseq/3),fn(fun shape/3),
                      fn(fun reshape/3),fn(fun pick/3),fn(fun window/3),
-                     d1(fun table/1),d1(fun scan/1),d2(fun fill_by/2),d2(fun cases/2)].
+                     r1(fun table/1),r1(fun scan/1),r2(fun fill_by/2),r2(fun cases/2)].

@@ -8,8 +8,8 @@
 -record(tr,{f,g,h,prim}).                   % train (f-fn, g-fn, h-fn)
 -record(a,{sh,r}).                          % array (shape, ravel)
 -record(c,{p}).                             % character (point)
--record(d1,{f,prim}).                       % derived 1-modifier (f-fn)
--record(d2,{f,prim}).                       % derived 2-modifier (f-fn)
--record(r1,{m,f,prim}).                     % raw 1-modifier (m-fn, f-fn)
--record(r2,{m,f,g,prim}).                   % raw 2-modifier (m-fn, f-fn, g-fn)
+-record(r1,{f,prim}).                       % raw 1-modifier (f-fn)
+-record(r2,{f,prim}).                       % raw 2-modifier (f-fn)
+-record(d1,{m,f,prim}).                     % derived 1-modifier (m-fn, f-fn)
+-record(d2,{m,f,g,prim}).                   % derived 2-modifier (m-fn, f-fn, g-fn)
 -record(fn,{f,prim}).                       % function

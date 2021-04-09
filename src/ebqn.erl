@@ -36,17 +36,17 @@ call(St0,F,X,W) when is_number(F) ->
 call(St0,F,X,W) when is_record(F,fn) ->
     Fn = F#fn.f,
     Fn(St0,X,W);
-call(St0,R,X,W) when is_record(R,r1) ->
-    M = R#r1.m,
-    F = R#r1.f,
-    Fn = M#d1.f,
+call(St0,R,X,W) when is_record(R,d1) ->
+    M = R#d1.m,
+    F = R#d1.f,
+    Fn = M#r1.f,
     D = Fn(F),
     call(St0,D,X,W);
-call(St0,R,X,W) when is_record(R,r2) ->
-    M = R#r2.m,
-    F = R#r2.f,
-    G = R#r2.g,
-    Fn = M#d2.f,
+call(St0,R,X,W) when is_record(R,d2) ->
+    M = R#d2.m,
+    F = R#d2.f,
+    G = R#d2.g,
+    Fn = M#r2.f,
     D = Fn(F,G),
     call(St0,D,X,W);
 call(St0,F,X,W) when is_record(F,bi) ->
@@ -79,13 +79,13 @@ call_block(St0,M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
 call1(St0,M,F) when is_record(M,bi) ->
     true = (1 =:= M#bi.t),
     call_block(St0,M,ebqn_array:from_list([M,F]));
-call1(St0,M,F) when is_record(M,d1) ->
-    {St0,#r1{m=M,f=F}}.
+call1(St0,M,F) when is_record(M,r1) ->
+    {St0,#d1{m=M,f=F}}.
 call2(St0,M,F,G) when is_record(M,bi) ->
     true = (2 =:= M#bi.t),
     call_block(St0,M,ebqn_array:from_list([M,F,G]));
-call2(St0,M,F,G) when is_record(M,d2) ->
-    {St0,#r2{m=M,f=F,g=G}}.
+call2(St0,M,F,G) when is_record(M,r2) ->
+    {St0,#d2{m=M,f=F,g=G}}.
 
 ge(I,E,An) when I =:= 0 ->
     E;
@@ -261,14 +261,14 @@ has_prim(St0,R,undefined) when is_record(R,fn) and is_number(R#fn.prim) ->
     {St0,R#fn.prim};
 has_prim(St0,R,undefined) when is_record(R,bi) and is_number(R#bi.prim) ->
     {St0,R#bi.prim};
-has_prim(St0,R,undefined) when is_record(R,d1) and is_number(R#d1.prim) ->
-    {St0,R#d1.prim};
-has_prim(St0,R,undefined) when is_record(R,d2) and is_number(R#d2.prim) ->
-    {St0,R#d2.prim};
 has_prim(St0,R,undefined) when is_record(R,r1) and is_number(R#r1.prim) ->
     {St0,R#r1.prim};
 has_prim(St0,R,undefined) when is_record(R,r2) and is_number(R#r2.prim) ->
     {St0,R#r2.prim};
+has_prim(St0,R,undefined) when is_record(R,d1) and is_number(R#d1.prim) ->
+    {St0,R#d1.prim};
+has_prim(St0,R,undefined) when is_record(R,d2) and is_number(R#d2.prim) ->
+    {St0,R#d2.prim};
 has_prim(St0,R,undefined) when is_record(R,tr) and is_number(R#tr.prim) ->
     {St0,R#tr.prim};
 has_prim(St0,R,undefined) ->
@@ -277,14 +277,14 @@ set_prim(I,R) when is_record(R,fn) ->
     R#fn{prim=I};
 set_prim(I,R) when is_record(R,bi) ->
     R#bi{prim=I};
-set_prim(I,R) when is_record(R,d1) ->
-    R#d1{prim=I};
-set_prim(I,R) when is_record(R,d2) ->
-    R#d2{prim=I};
 set_prim(I,R) when is_record(R,r1) ->
     R#r1{prim=I};
 set_prim(I,R) when is_record(R,r2) ->
     R#r2{prim=I};
+set_prim(I,R) when is_record(R,d1) ->
+    R#d1{prim=I};
+set_prim(I,R) when is_record(R,d2) ->
+    R#d2{prim=I};
 set_prim(I,R) when is_record(R,tr) ->
     R#tr{prim=I}.
 decompose(St0,X,undefined) when is_record(X,a);is_record(X,c);is_number(X);is_atom(X) ->
@@ -292,10 +292,10 @@ decompose(St0,X,undefined) when is_record(X,a);is_record(X,c);is_number(X);is_at
 decompose(St0,X,undefined) when
         (is_record(X,fn) and is_number(X#fn.prim));
 		(is_record(X,tr) and is_number(X#tr.prim));
-		(is_record(X,d1) and is_number(X#d1.prim));
-        (is_record(X,d2) and is_number(X#d2.prim));
 		(is_record(X,r1) and is_number(X#r1.prim));
-		(is_record(X,r2) and is_number(X#r2.prim));
+        (is_record(X,r2) and is_number(X#r2.prim));
+		(is_record(X,d1) and is_number(X#d1.prim));
+		(is_record(X,d2) and is_number(X#d2.prim));
 		(is_record(X,bi) and is_number(X#bi.prim))
     ->
     {St0,list(ebqn_array:from_list([0,X]))};
