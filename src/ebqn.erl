@@ -298,13 +298,13 @@ decompose(St0,X,undefined) when
     ->
     {St0,list(ebqn_array:from_list([0,X]))};
 decompose(St0,X,undefined) when is_record(X,tr),X#tr.f =:= undefined ->
-    {St0,list(ebqn_array:from_list([2,X]))};
+    {St0,list(ebqn_array:from_list([2,X#tr.g,X#tr.h]))};
 decompose(St0,X,undefined) when is_record(X,tr),X#tr.f =/= undefined ->
-    {St0,list(ebqn_array:from_list([3,X]))};
+    {St0,list(ebqn_array:from_list([3,X#tr.f,X#tr.g,X#tr.h]))};
 decompose(St0,X,undefined) when is_record(X,d1) ->
-    {St0,list(ebqn_array:from_list([4,X]))};
+    {St0,list(ebqn_array:from_list([4,X#d1.f,X#d1.m]))};
 decompose(St0,X,undefined) when is_record(X,d2) ->
-    {St0,list(ebqn_array:from_list([5,X]))};
+    {St0,list(ebqn_array:from_list([5,X#d2.f,X#d2.m,X#d2.g]))};
 decompose(St0,X,undefined) ->
     {St0,list(ebqn_array:from_list([1,X]))}.
 
