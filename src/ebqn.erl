@@ -1,7 +1,7 @@
 -module(ebqn).
 
 -import(ebqn_core,[fn/1]).
--export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,set_prim/2,load/0,compile/1,decompose/3,has_prim/3]).
+-export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,set_prim/2,load/0,compile/1,decompose/3,prim_ind/3]).
 
 -include("schema.hrl").
 
@@ -255,21 +255,21 @@ run(St0,B,O,S) ->
     %{ebqn_gc:gc(St1,St0#st.root,[Result]),Result}.
     {St1,Result}.
 
-has_prim(St0,R,undefined) when is_record(R,fn) and is_number(R#fn.prim) ->
+prim_ind(St0,R,undefined) when is_record(R,fn) and is_number(R#fn.prim) ->
     {St0,R#fn.prim};
-has_prim(St0,R,undefined) when is_record(R,bi) and is_number(R#bi.prim) ->
+prim_ind(St0,R,undefined) when is_record(R,bi) and is_number(R#bi.prim) ->
     {St0,R#bi.prim};
-has_prim(St0,R,undefined) when is_record(R,r1) and is_number(R#r1.prim) ->
+prim_ind(St0,R,undefined) when is_record(R,r1) and is_number(R#r1.prim) ->
     {St0,R#r1.prim};
-has_prim(St0,R,undefined) when is_record(R,r2) and is_number(R#r2.prim) ->
+prim_ind(St0,R,undefined) when is_record(R,r2) and is_number(R#r2.prim) ->
     {St0,R#r2.prim};
-has_prim(St0,R,undefined) when is_record(R,d1) and is_number(R#d1.prim) ->
+prim_ind(St0,R,undefined) when is_record(R,d1) and is_number(R#d1.prim) ->
     {St0,R#d1.prim};
-has_prim(St0,R,undefined) when is_record(R,d2) and is_number(R#d2.prim) ->
+prim_ind(St0,R,undefined) when is_record(R,d2) and is_number(R#d2.prim) ->
     {St0,R#d2.prim};
-has_prim(St0,R,undefined) when is_record(R,tr) and is_number(R#tr.prim) ->
+prim_ind(St0,R,undefined) when is_record(R,tr) and is_number(R#tr.prim) ->
     {St0,R#tr.prim};
-has_prim(St0,R,undefined) ->
+prim_ind(St0,R,undefined) ->
     {St0,62}.
 set_prim(I,R) when is_record(R,fn) ->
     R#fn{prim=I};
@@ -313,7 +313,7 @@ load() ->
     Rt = ebqn_array:get(0,X#a.r),
     Sp0 = ebqn_array:get(1,X#a.r),
     Ri = Rt#a{r=maps:map(fun ebqn:set_prim/2,Rt#a.r)},
-    {St1,_} = call(St0,Sp0,list(ebqn_array:from_list([fn(fun ebqn:decompose/3),fn(fun ebqn:has_prim/3)])),undefined),
+    {St1,_} = call(St0,Sp0,list(ebqn_array:from_list([fn(fun ebqn:decompose/3),fn(fun ebqn:prim_ind/3)])),undefined),
     {St1,Ri}.
 compile(Fn) ->
     {St0,Rt} = load(),
