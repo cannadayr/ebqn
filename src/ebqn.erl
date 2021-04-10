@@ -287,14 +287,17 @@ set_prim(I,R) when is_record(R,tr) ->
     R#tr{prim=I}.
 decompose(St0,X,undefined) when is_record(X,a);is_record(X,c);is_number(X);is_atom(X) ->
     {St0,list(ebqn_array:from_list([-1,X]))};
+decompose(St0,X,undefined) when is_record(X,bi),X#bi.prim =:= undefined,X#bi.t =/= X#bi.d#bl.t ->
+    T = ebqn_array:from_list([3 + X#bi.d#bl.t]),
+    {St0,list(ebqn_array:concat([T,X#bi.args]))};
 decompose(St0,X,undefined) when
         (is_record(X,fn) and is_number(X#fn.prim));
-		(is_record(X,tr) and is_number(X#tr.prim));
-		(is_record(X,r1) and is_number(X#r1.prim));
+        (is_record(X,tr) and is_number(X#tr.prim));
+        (is_record(X,r1) and is_number(X#r1.prim));
         (is_record(X,r2) and is_number(X#r2.prim));
-		(is_record(X,d1) and is_number(X#d1.prim));
-		(is_record(X,d2) and is_number(X#d2.prim));
-		(is_record(X,bi) and is_number(X#bi.prim))
+        (is_record(X,d1) and is_number(X#d1.prim));
+        (is_record(X,d2) and is_number(X#d2.prim));
+        (is_record(X,bi) and is_number(X#bi.prim))
     ->
     {St0,list(ebqn_array:from_list([0,X]))};
 decompose(St0,X,undefined) when is_record(X,tr),X#tr.f =:= undefined ->
