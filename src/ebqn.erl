@@ -289,7 +289,8 @@ decompose(St0,X,undefined) when is_record(X,a);is_record(X,c);is_number(X);is_at
     {St0,list(ebqn_array:from_list([-1,X]))};
 decompose(St0,X,undefined) when is_record(X,bi),X#bi.prim =:= undefined,X#bi.t =/= X#bi.d#bl.t ->
     T = ebqn_array:from_list([3 + X#bi.d#bl.t]),
-    {St0,list(ebqn_array:concat([T,X#bi.args]))};
+    A = ebqn_array:from_list(lists:reverse(ebqn_array:to_list(X#bi.args))),
+    {St0,list(ebqn_array:concat([T,A]))};
 decompose(St0,X,undefined) when
         (is_record(X,fn) and is_number(X#fn.prim));
         (is_record(X,tr) and is_number(X#tr.prim));
