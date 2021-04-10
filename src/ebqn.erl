@@ -67,7 +67,7 @@ call(St0,A,X,W) when is_record(A,a) ->
 call(St0,F,X,W) when not is_record(F,fn) ->
     {St0,F}.
 call_block(St0,M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
-    {St0,M#bi{args=Args,t=0}};
+    {St0,M#bi{args=Args,t=0,prim=undefined}};
 call_block(St0,M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
     D = M#bi.d,
     L = ebqn_array:concat([Args,ebqn_array:new(D#bl.l - maps:size(Args))]),
