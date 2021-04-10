@@ -142,6 +142,11 @@ args(B,P,Op) when Op =:= 21; Op =:= 22 ->
 % put guard Op matches before atom matches
 stack(St0,B,O,S,E,Stack,X,Op) when Op =:= 3; Op =:= 4 ->
     {St0,llst(X,Stack)};
+stack(St0,B,O,S,E,Stack,{X,Y},Op) when Op =:= 21; Op =:= 31 ->
+    T = ge(X,E,St0#st.an),
+    Z = ebqn_heap:get(T,Y,St0#st.heap),
+    %true = (undefined =/= Z),
+    {St0,[Z|Stack]};
 stack(St0,B,O,S,E,Stack,X,0) ->
     {St0,[element(1+X,O)|Stack]};
 stack(St0,B,O,S,E,Stack,undefined,7) ->
@@ -198,11 +203,6 @@ stack(St0,B,O,S,E,Stack,undefined,19) ->
     G = hd(tl(Stack)),
     H = hd(tl(tl(Stack))),
     {St0,[#tr{f=F,g=G,h=H}|tl(tl(tl(Stack)))]};
-stack(St0,B,O,S,E,Stack,{X,Y},21) ->
-    T = ge(X,E,St0#st.an),
-    Z = ebqn_heap:get(T,Y,St0#st.heap),
-    %true = (undefined =/= Z),
-    {St0,[Z|Stack]};
 stack(St0,B,O,S,E,Stack,{X,Y},22) ->
     T = ge(X,E,St0#st.an),
     {St0,[{T,Y}|Stack]};
