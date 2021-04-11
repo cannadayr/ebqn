@@ -15,9 +15,9 @@ arr(R,Sh) ->
 fn(F) ->
     #fn{f=F}.
 r1(F) ->
-    #r1{f=F}.
+    #r1{f=fn(F)}.
 r2(F) ->
-    #r2{f=F}.
+    #r2{f=fn(F)}.
 type(St0,X,_W) when is_record(X,bi) ->
     {St0,3 + X#bi.t};
 type(St0,X,_W) when is_record(X,fn);is_record(X,tr);is_record(X,d1);is_record(X,d2) ->

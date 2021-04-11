@@ -37,11 +37,11 @@ call(St0,F,X,W) when is_record(F,fn) ->
     Fn = F#fn.f,
     Fn(St0,X,W);
 call(St0,R,X,W) when is_record(R,d1) ->
-    M = R#d1.m,
+    M = R#d1.m#r1.f#fn.f,
     F = R#d1.f,
     M(St0,F,X,W);
 call(St0,R,X,W) when is_record(R,d2) ->
-    M = R#d2.m,
+    M = R#d2.m#r2.f#fn.f,
     F = R#d2.f,
     G = R#d2.g,
     M(St0,F,G,X,W);
@@ -76,12 +76,12 @@ call1(St0,M,F) when is_record(M,bi) ->
     true = (1 =:= M#bi.t),
     call_block(St0,M,ebqn_array:from_list([M,F]));
 call1(St0,M,F) when is_record(M,r1) ->
-    {St0,#d1{m=M#r1.f,f=F}}.
+    {St0,#d1{m=M,f=F}}.
 call2(St0,M,F,G) when is_record(M,bi) ->
     true = (2 =:= M#bi.t),
     call_block(St0,M,ebqn_array:from_list([M,F,G]));
 call2(St0,M,F,G) when is_record(M,r2) ->
-    {St0,#d2{m=M#r2.f,f=F,g=G}}.
+    {St0,#d2{m=M,f=F,g=G}}.
 
 ge(I,E,An) when I =:= 0 ->
     E;
