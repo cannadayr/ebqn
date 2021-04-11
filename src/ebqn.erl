@@ -39,14 +39,12 @@ call(St0,F,X,W) when is_record(F,fn) ->
 call(St0,R,X,W) when is_record(R,d1) ->
     M = R#d1.m,
     F = R#d1.f,
-    D = M(F),
-    call(St0,D,X,W);
+    M(St0,F,X,W);
 call(St0,R,X,W) when is_record(R,d2) ->
     M = R#d2.m,
     F = R#d2.f,
     G = R#d2.g,
-    D = M(F,G),
-    call(St0,D,X,W);
+    M(St0,F,G,X,W);
 call(St0,F,X,W) when is_record(F,bi) ->
     0 = F#bi.t,
     D = F#bi.d,
