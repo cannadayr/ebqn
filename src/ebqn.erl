@@ -132,7 +132,7 @@ args(B,P,Op) when Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13;
     {undefined,P};
 args(B,P,Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 15 ->
     {element(1+P,B),1+P};
-args(B,P,Op) when Op =:= 21; Op =:= 22 ->
+args(B,P,Op) when Op =:= 21; Op =:= 22; Op =:= 31 ->
     X = element(1+P,B),
     Y = element(2+P,B),
     {{X,Y},2+P}.
@@ -208,7 +208,7 @@ stack(St0,B,O,S,E,Stack,X,25) ->
     1 = length(Stack),
     {St0,[hd(Stack)]}.
 
-ctrl(Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22 ->
+ctrl(Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 15; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 21; Op =:= 22; Op =:= 31 ->
     cont;
 ctrl(Op) when Op =:= 25 ->
     rtn.
