@@ -3,10 +3,10 @@
 -include("schema.hrl").
 
 -import(ebqn,[run/2,char/1,str/1]).
--export([test/0,bc/0,layer0/2,layer1/2,layer2/2,layer3/2,layer4/2,layer5/2,layer6/2]).
+-export([test/2,bc/0,layer0/2,layer1/2,layer2/2,layer3/2,layer4/2,layer5/2,layer6/2]).
 -export([undo/2,identity/2,under/2]).
 
-test() ->
+test(St0,Rt) ->
     % used when testing one-off programs
     ok.
 
