@@ -7,8 +7,17 @@
 -export([undo/2,identity/2,under/2]).
 
 test(St0,Rt) ->
-    % used when testing one-off programs
-    ok.
+    ebqn_test:bc(),
+    ebqn_test:undo(St0,Rt),
+    ebqn_test:identity(St0,Rt),
+    ebqn_test:under(St0,Rt),
+    ebqn_test:layer0(St0,Rt),
+    ebqn_test:layer1(St0,Rt),
+    ebqn_test:layer2(St0,Rt),
+    ebqn_test:layer3(St0,Rt),
+    ebqn_test:layer4(St0,Rt),
+    ebqn_test:layer5(St0,Rt),
+    ebqn_test:layer6(St0,Rt).
 
 bc() ->
     % bytecode tests
