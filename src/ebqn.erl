@@ -1,7 +1,8 @@
 -module(ebqn).
 
 -import(ebqn_core,[fn/1]).
--export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,set_prim/2,load/0,compile/1,decompose/3,prim_ind/3]).
+-export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,set_prim/2,decompose/3,prim_ind/3]).
+-export([runtime/0,compiler/2]).
 
 -include("schema.hrl").
 
@@ -242,7 +243,7 @@ load_block({T,I,ST,L}) ->
 
 init_st() ->
     Root = make_ref(),
-    #st{root=Root,heap=#{},keys=#{},objs=#{},an=#{Root => Root},rtn=[]}.
+    #st{root=Root,heap=#{ Root => #{} },keys=#{},objs=#{},an=#{Root => Root},rtn=[]}.
 
 run(St0,[B,O,S]) ->
     fmt({run,B}),
@@ -250,8 +251,7 @@ run(St0,[B,O,S]) ->
 run(St0,B,O,S) ->
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
     {St1,Result} = load_vm(St0,B,O,S,Block,make_ref(),St0#st.root,ebqn_array:new(L)), % set the root environment, and root as its own parent.
-    %{ebqn_gc:gc(St1,St0#st.root,[Result]),Result}.
-    {St1,Result}.
+    {ebqn_gc:gc(St1,St0#st.root,[Result]),Result}.
 
 prim_ind(St0,R,undefined) when is_record(R,fn) and is_number(R#fn.prim) ->
     {St0,R#fn.prim};
@@ -317,14 +317,12 @@ decompose(St0,X,undefined) when is_record(X,d2) ->
 decompose(St0,X,undefined) ->
     {St0,list(ebqn_array:from_list([1,X]))}.
 
-load() ->
+runtime() ->
     {St0,X} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime()),
     Rt = ebqn_array:get(0,X#a.r),
     Sp0 = ebqn_array:get(1,X#a.r),
     Ri = Rt#a{r=maps:map(fun ebqn:set_prim/2,Rt#a.r)},
     {St1,_} = call(St0,Sp0,list(ebqn_array:from_list([fn(fun ebqn:decompose/3),fn(fun ebqn:prim_ind/3)])),undefined),
-    {St1,Ri}.
-compile(Fn) ->
-    {St0,Rt} = load(),
-    {St1,Ct} = run(St0,ebqn_bc:compiler(Rt)),
-    ebqn:call(St1,Ct,str(Fn),Rt).
+    {ebqn_gc:gc(St1,St1#st.root,[Ri]),Ri}.
+compiler(St0,Rt) ->
+    {St1,C} = run(St0,ebqn_bc:compiler(Rt)).
