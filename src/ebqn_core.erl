@@ -283,111 +283,59 @@ table(St0,F,#a{r=Xr,sh=Xsh},#a{r=Wr,sh=Wsh}) ->
                 {StAcc1,A1}, Xr) end,
                 {St0,InitSize}, Wr),
                 {RtnSt,arr(Rtn,flatten(Wsh ++ Xsh))}.
+% monadic scan inner with no modifier
+scan_moni(X,I,C,R) when I =:= C ->
+    R;
+scan_moni(X,I,C,R) when I =/= C ->
+    scan_moni(X,I+1,C,ebqn_array:set(I,ebqn_array:get(I,X#a.r),R)).
+% monadic scan inner with modifier
+scan_moni(St0,F,X,W,I,C,R) when I =:= C ->
+    {St0,R};
+scan_moni(St0,F,X,W,I,C,R) when I =/= C ->
+    {St1,K} = call(St0,F,ebqn_array:get(I,X#a.r),ebqn_array:get(I,W#a.r)),
+    scan_moni(St1,F,X,W,I+1,C,ebqn_array:set(I,K,R)).
+% scan monadic outer
+scan_mono(St0,F,X,I,C,R,L) when I =:= L ->
+    {St0,arr(R,X#a.sh)};
+scan_mono(St0,F,X,I,C,R,L) when I =/= L ->
+    {St1,Rtn} = call(St0,F,ebqn_array:get(I,X#a.r),ebqn_array:get(I-C,R)),
+    scan_mono(St1,F,X,I+1,C,ebqn_array:set(I,Rtn,R),L).
+% scan dyadic inner
+scan_dyi(St0,F,X,undefined,R,L) when L > 0 ->
+    C = lists:foldl(fun(E,A) -> A*E end,1,tl(X#a.sh)),
+    scan_mono(St0,F,X,C,C,scan_moni(X,0,C,R),L);
+scan_dyi(St0,F,X,W,R,L) when L =:= 0 ->
+    {St0,arr(R,X#a.sh)};
+scan_dyi(St0,F,X,W,R,L) when L > 0 ->
+    C = lists:foldl(fun(E,A) -> A*E end,1,tl(X#a.sh)),
+    {St1,K} = scan_moni(St0,F,X,W,0,C,R),
+    scan_mono(St1,F,X,C,C,K,L).
+% scan dyadic outer
+scan_dyo(St0,F,X,W) ->
+    L = maps:size(X#a.r),
+    R = ebqn_array:new(L),
+    scan_dyi(St0,F,X,W,R,L).
 scan(St0,F,X,undefined) when not is_record(X,a) ->
     throw("`: 𝕩 must have rank at least 1");
-scan(St0,F,X,W) when is_record(X,a),length(X#a.sh) =:= 0->
+scan(St0,F,X,W) when is_record(X,a),length(X#a.sh) =:= 0 ->
     throw("`: 𝕩 must have rank at least 1");
-scan(St0,F,#a{r=X,sh=S},undefined) when length(S) > 0 ->
-    L = maps:size(X),
-    R = ebqn_array:new(L),
-    H = fun
-        (St1,Ri,Li) when Li > 0 ->
-            C = lists:foldl(fun(E,A) -> A*E end,1,tl(S)),
-            G = fun
-                G(I,Ci,Rn) when I =/= Ci ->
-                    G(I+1,Ci,ebqn_array:set(I,ebqn_array:get(I,X),Rn));
-                G(I,Ci,Rn) when I =:= Ci ->
-                    Rn
-            end,
-            J = fun
-                J(I,Ci,Rn,Ln,St2) when I =/= Ln ->
-                    {St3,Rtn} = call(St2,F,ebqn_array:get(I,X),ebqn_array:get(I-C,Rn)),
-                    J(I+1,Ci,ebqn_array:set(I,Rtn,Rn),Ln,St3);
-                J(I,_Ci,Rn,Ln,St2) when I =:= Ln ->
-                    {St2,Rn}
-            end,
-            J(C,C,G(0,C,Ri),L,St1);
-        (St1,Ri,_Li) ->
-            {St1,Ri}
-    end,
-    {St4,Rtn2} = H(St0,R,L),
-    {St4,arr(Rtn2,S)};
-scan(St0,F,#a{r=X,sh=S},W) when length(S) > 0,is_record(W,a),is_list(W#a.sh) ->
-    R1 = W#a.sh,
-    Wr = length(R1),
-    case 1+Wr =/= length(S) of
-        true ->
-            throw("`: rank of 𝕨 must be cell rank of 𝕩");
-        false ->
-            ok
-    end,
-    case not lists:all(fun({L,A}) ->  L =:= lists:nth(1+A,S) end,lists:zip(R1,lists:seq(1,length(R1)))) of
+scan(St0,F,X,undefined) when length(X#a.sh) > 0 ->
+    scan_dyo(St0,F,X,undefined);
+scan(St0,F,X,W) when length(X#a.sh) > 0,is_record(W,a),1 + length(W#a.sh) =/= length(X#a.sh) ->
+    throw("`: rank of 𝕨 must be cell rank of 𝕩");
+scan(St0,F,X,W) when length(X#a.sh) > 0,not is_record(W,a),1 =/= length(X#a.sh) ->
+    throw("`: rank of 𝕨 must be cell rank of 𝕩");
+scan(St0,F,X,W) when length(X#a.sh) > 0,is_record(W,a),is_list(W#a.sh) ->
+    case not lists:all(fun({L,A}) ->  L =:= lists:nth(1+A,X#a.sh) end,lists:zip(W#a.sh,lists:seq(1,length(W#a.sh)))) of
         true ->
             throw("`: shape of 𝕨 must be cell shape of 𝕩");
         false ->
             ok
     end,
-    L = maps:size(X),
-    R = ebqn_array:new(L),
-    H = fun
-        (St1,Ri,Li) when Li > 0 ->
-            C = lists:foldl(fun(E,A) -> A*E end,1,tl(S)),
-            G = fun
-                G(St6,I,Ci,Rn) when I =/= Ci ->
-                    {St7,K1} = call(St6,F,ebqn_array:get(I,X),ebqn_array:get(I,W#a.r)),
-                    G(St7,I+1,Ci,ebqn_array:set(I,K1,Rn));
-                G(St6,I,Ci,Rn) when I =:= Ci ->
-                    {St6,Rn}
-            end,
-            J = fun
-                J(I,Ci,Rn,Ln,St2) when I =/= Ln ->
-                    {St3,Rtn} = call(St2,F,ebqn_array:get(I,X),ebqn_array:get(I-C,Rn)),
-                    J(I+1,Ci,ebqn_array:set(I,Rtn,Rn),Ln,St3);
-                J(I,_Ci,Rn,Ln,St2) when I =:= Ln ->
-                    {St2,Rn}
-            end,
-            {St5,K} = G(St1,0,C,Ri),
-            J(C,C,K,L,St5);
-        (St1,Ri,_Li) ->
-            {St1,Ri}
-    end,
-    {St4,Rtn2} = H(St0,R,L),
-    {St4,arr(Rtn2,S)};
-scan(St0,F,#a{r=X,sh=S},W) when length(S) > 0,not is_record(W,a) ->
-    Wr = 0,
-    W2 = ebqn_array:from_list([W]),
-    case 1+Wr =/= length(S) of
-        true ->
-            throw("`: rank of 𝕨 must be cell rank of 𝕩");
-        false ->
-            ok
-    end,
-    L = maps:size(X),
-    R = ebqn_array:new(L),
-    H = fun
-        (St1,Ri,Li) when Li > 0 ->
-            C = lists:foldl(fun(E,A) -> A*E end,1,tl(S)),
-            G = fun
-                G(St6,I,Ci,Rn) when I =/= Ci ->
-                    {St7,K1} = call(St6,F,ebqn_array:get(I,X),ebqn_array:get(I,W2)),
-                    G(St7,I+1,Ci,ebqn_array:set(I,K1,Rn));
-                G(St6,I,Ci,Rn) when I =:= Ci ->
-                    {St6,Rn}
-            end,
-            J = fun
-                J(I,Ci,Rn,Ln,St2) when I =/= Ln ->
-                    {St3,Rtn} = call(St2,F,ebqn_array:get(I,X),ebqn_array:get(I-C,Rn)),
-                    J(I+1,Ci,ebqn_array:set(I,Rtn,Rn),Ln,St3);
-                J(I,_Ci,Rn,Ln,St2) when I =:= Ln ->
-                    {St2,Rn}
-            end,
-            {St5,K} = G(St1,0,C,Ri),
-            J(C,C,K,L,St5);
-        (St1,Ri,_Li) ->
-            {St1,Ri}
-    end,
-    {St4,Rtn2} = H(St0,R,L),
-    {St4,arr(Rtn2,S)}.
+    scan_dyo(St0,F,X,W);
+scan(St0,F,X,W) when length(X#a.sh) > 0,not is_record(W,a) ->
+    W2 = ebqn:list(ebqn_array:from_list([W])),
+    scan_dyo(St0,F,X,W2).
 fill_by(St0,F,G,X,W) ->
     call(St0,F,X,W).
 cases(St0,F,G,X,undefined) ->
