@@ -1,6 +1,5 @@
 -compile([nowarn_unused_function,nowarn_unused_vars]).
 
--define(MEM,7833228).                       % total memory in Kb. Used temporarily for GC.
 -record(st,{root,heap,an,rtn,keys,objs}).   % program state
 -record(prog,{b,o,s}).                      % program (bytecode, objects, sections)
 -record(bl,{t,i,st,l}).                     % block (type, immediacy, start, locals)

@@ -246,7 +246,7 @@ init_st() ->
     #st{root=Root,heap=#{ Root => #{} },keys=#{},objs=#{},an=#{Root => Root},rtn=[]}.
 
 run(St0,[B,O,S]) ->
-    fmt({run,B}),
+    %fmt({run,B}),
     ebqn:run(St0,list_to_tuple(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
 run(St0,B,O,S) ->
     #bl{i=1,l=L} = Block = load_block(element(1,S)),
