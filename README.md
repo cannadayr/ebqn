@@ -1,7 +1,7 @@
 EBQN
 =====
 
-EBQN is an experimental implementation of a (`BQN`)[https://github.com/mlochbaum/BQN] virtual machine in Erlang.
+EBQN is an experimental implementation of a [`BQN`](https://github.com/mlochbaum/BQN) virtual machine in Erlang.
 It can interpret BQN bytecode, and compile source expressions to bytecode via the BQN self-hosted compiler.
 
 It is extremely slow! This seems due to BQN heap operations and Erlang mutability constraints.
@@ -10,17 +10,24 @@ Using the JIT-enabled OTP 24 release is highly recommended.
 There are several mitigations in consideration:
 
 1. Implement some (or all) of the BQN runtime in Erlang.
-2. Change from bytecode interpretation to AST generation via (`erl_syntax`)[http://erlang.org/doc/man/erl_syntax.html]
-3. Implement as a NIF via (`rustler`)[https://github.com/rusterlium/rustler]
+2. Change from bytecode interpretation to AST generation via [`erl_syntax`](http://erlang.org/doc/man/erl_syntax.html)
+3. Implement as a NIF via [`rustler`](https://github.com/rusterlium/rustler)
 
 Each of these strategies have pros and cons, and further investigation will happen.
 
 
+Installation
+------------
+
+It is recommended to use EBQN by generating BQN bytecode with DBQN.
+
+1. Setup [BQN](https://github.com/mlochbaum/BQN)
+2. Setup [DBQN](https://github.com/dzaima/BQN)
+3. Setup `dbqn` as outlined in DBQN documentation.
+
+
 Usage
 -----
-
-    EBQN requires (BQN)[https://github.com/mlochbaum/BQN] and (DBQN)[https://github.com/dzaima/BQN].
-    Setup `dbqn` as outlined in DBQN documentation.
 
     1. Generate BQN bytecode:
 
