@@ -29,21 +29,21 @@ It is recommended to use EBQN by generating BQN bytecode with DBQN.
 Usage
 -----
 
-    1. Generate BQN bytecode:
-
-    $ ./misc/cerl /path/to/mlochbaum/bqn '{𝕩×10}'
-
-    2. From EBQN root directory:
-
-    $ rebar3 shell
-
-    3. Load the bytecode (using the bytecode from step 1):
-
-    1> rr(ebqn).
-    2> {St0,Rt} = ebqn:runtime().
-    3> {St1,F} = ebqn:run(St0,[[15,1,25,0,1,0,0,21,0,1,17,25],[ebqn_array:get(2,Rt#a.r),10],[[0,1,0,0],[0,0,3,3]]]).
-    4> ebqn:call(St1,F,1,undefined).
-
+1. Generate BQN bytecode:
+```
+$ ./misc/cerl /path/to/mlochbaum/bqn '{𝕩×10}'
+```
+2. From EBQN root directory:
+```
+$ rebar3 shell
+```
+3. Load the bytecode (using the bytecode from step 1):
+```
+1> rr(ebqn).
+2> {St0,Rt} = ebqn:runtime().
+3> {St1,F} = ebqn:run(St0,[[15,1,25,0,1,0,0,21,0,1,17,25],[ebqn_array:get(2,Rt#a.r),10],[[0,1,0,0],[0,0,3,3]]]).
+4> ebqn:call(St1,F,1,undefined).
+```
 Build
 -----
 
