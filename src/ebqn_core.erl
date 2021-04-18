@@ -2,7 +2,7 @@
 
 -import(lists,[seq/2,flatten/1]).
 -import(math,[log/1,exp/1,pow/2]).
--import(ebqn,[list/1,call/4,fmt/1]).
+-import(ebqn,[list/1,call/4]).
 
 -export([fns/0,fn/1]).
 -export([arr/2,r1/1,r2/1,type/3,fill/3,log/3,group_len/3,group_ord/3,
@@ -259,30 +259,27 @@ reshape(St0,X,W) when is_record(W,a) ->
 reshape(St0,X,W) ->
     {St0,arr(X#a.r,W)}.
 pick(St0,X,W) ->
-    %fmt({pick,X,W}),
     {St0,ebqn_array:get(trunc(W),X#a.r)}.
 window(St0,X,undefined) ->
     {St0,list(ebqn_array:from_list(seq(0,trunc(X)-1)))}.
 table(St0,F,X,undefined) ->
-    Table = fun (I,E,{StAcc,M}) ->
-        {St1,R} = call(StAcc,F,E,undefined),
-        {St1,maps:put(I,R,M)}
-    end,
+    Table =
+        fun (I,E,{StAcc,M}) ->
+            {St1,R} = call(StAcc,F,E,undefined),
+            {St1,maps:put(I,R,M)}
+        end,
     {St3,Result} = ebqn_array:foldl(Table,{St0,#{}},X#a.r),
     {St3,arr(Result,X#a.sh)};
-table(St0,F,#a{r=Xr,sh=Xsh},#a{r=Wr,sh=Wsh}) ->
-    InitSize =  ebqn_array:new(maps:size(Xr)*maps:size(Wr)),
-    Xs = maps:size(Xr),
-    {RtnSt,Rtn} = maps:fold(
-        fun
-            (J,D,{StAcc1,A1}) -> maps:fold(
-                fun
-                    (I,E,{StAcc2,A2}) ->
-                        {StAcc3,Rtn2} = call(StAcc2,F,E,D),
-                        {StAcc3,ebqn_array:set(J*Xs+I,Rtn2,A2)} end,
-                {StAcc1,A1}, Xr) end,
-                {St0,InitSize}, Wr),
-                {RtnSt,arr(Rtn,flatten(Wsh ++ Xsh))}.
+table(St0,F,X,W) ->
+    Xsize = maps:size(X#a.r),
+    Rsize =  ebqn_array:new(Xsize*maps:size(W#a.r)),
+    {St1,R} =
+        maps:fold(fun (J,D,{StAccmO,AO}) -> maps:fold(fun(I,E,{StAccmI,AI}) ->
+            {StAccm,Rtn} = call(StAccmI,F,E,D),
+            {StAccm,ebqn_array:set(J*Xsize+I,Rtn,AI)} end,
+            {StAccmO,AO},X#a.r)
+        end,{St0,Rsize},W#a.r),
+    {St1,arr(R,flatten(W#a.sh ++ X#a.sh))}.
 % monadic scan inner with no modifier
 scan_moni(X,I,C,R) when I =:= C ->
     R;
