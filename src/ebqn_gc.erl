@@ -15,7 +15,7 @@ trace_env(E,Root,An,Acc) ->
     trace_env(Parent,Root,An,[E]++Acc).
 trace([],Marked,Root,An,Heap) ->
     Marked;
-trace(Todo,Marked,Root,An,Heap) when is_number(hd(Todo)); is_atom(hd(Todo)); is_function(hd(Todo)); is_record(hd(Todo),c) ->
+trace(Todo,Marked,Root,An,Heap) when is_number(hd(Todo)); is_atom(hd(Todo)); is_function(hd(Todo)); is_record(hd(Todo),c); is_record(hd(Todo),fn) ->
     trace(tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_tuple(hd(Todo)),is_reference(element(1,hd(Todo))) ->
     {R,_} = hd(Todo),
@@ -29,22 +29,22 @@ trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),tr) ->
     G = Tr#tr.g,
     H = Tr#tr.h,
     trace([F,G,H]++tl(Todo),Marked,Root,An,Heap);
-trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),m1) ->
-    D = hd(Todo),
-    trace([D#m1.f]++tl(Todo),Marked,Root,An,Heap);
-trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),m2) ->
-    D = hd(Todo),
-    trace([D#m2.f]++tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),r1) ->
     D = hd(Todo),
-    M = D#r1.m,
-    F = D#r1.f,
-    trace([M,F]++tl(Todo),Marked,Root,An,Heap);
+    trace([D#r1.f]++tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),r2) ->
     D = hd(Todo),
-    M = D#r2.m,
-    F = D#r2.f,
-    G = D#r2.g,
+    trace([D#r2.f]++tl(Todo),Marked,Root,An,Heap);
+trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),d1) ->
+    D = hd(Todo),
+    M = D#d1.m,
+    F = D#d1.f,
+    trace([M,F]++tl(Todo),Marked,Root,An,Heap);
+trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),d2) ->
+    D = hd(Todo),
+    M = D#d2.m,
+    F = D#d2.f,
+    G = D#d2.g,
     trace([M,F,G]++tl(Todo),Marked,Root,An,Heap);
 trace(Todo,Marked,Root,An,Heap) when is_record(hd(Todo),bi) ->
     Bi = hd(Todo),

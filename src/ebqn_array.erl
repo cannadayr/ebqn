@@ -20,8 +20,7 @@ new(N,L,A,Default) ->
     new(N+1,L,A#{N=>Default},Default).
 
 get(N,M) ->
-    #{N := V}  = M,
-    V.
+    maps:get(N,M).
 
 set(N,V,M) ->
     M#{N=>V}.
