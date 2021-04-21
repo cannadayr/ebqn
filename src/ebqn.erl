@@ -3,7 +3,7 @@
 -import(ebqn_core,[fn/1]).
 -export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,set_prim/2,decompose/3,prim_ind/3]).
 -export([runtime/0,compiler/2]).
--export([hello/0]).
+-export([init_st2/0]).
 
 -include("schema.hrl").
 -include("crates.hrl").
@@ -13,7 +13,7 @@
 init() ->
     ?load_nif_from_crate(ebqn, ?crate_ebqn, 0).
 
-hello() ->
+init_st2() ->
     exit(nif_not_loaded).
 
 fmt(X) ->
