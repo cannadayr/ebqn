@@ -15,6 +15,9 @@ There are several mitigations in consideration:
 
 Each of these strategies have pros and cons, and further investigation will happen.
 
+For more information on the rationale behind this project, see the following blog post by Gordon Guthrie:
+
+[The BEAM needs an APL-y language](https://medium.com/@gordonguthrie/the-beam-needs-an-apl-y-language-6c5c998ba6d)
 
 Installation
 ------------
