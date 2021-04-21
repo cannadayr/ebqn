@@ -262,14 +262,12 @@ pick(St0,X,W) ->
     {St0,ebqn_array:get(trunc(W),X#a.r)}.
 window(St0,X,undefined) ->
     {St0,list(ebqn_array:from_list(seq(0,trunc(X)-1)))}.
+table_accm(F,I,E,{St0,M}) ->
+    {St1,R} = call(St0,F,E,undefined),
+    {St1,maps:put(I,R,M)}.
 table(St0,F,X,undefined) ->
-    Table =
-        fun (I,E,{StAcc,M}) ->
-            {St1,R} = call(StAcc,F,E,undefined),
-            {St1,maps:put(I,R,M)}
-        end,
-    {St3,Result} = ebqn_array:foldl(Table,{St0,#{}},X#a.r),
-    {St3,arr(Result,X#a.sh)};
+    {St1,Result} = ebqn_array:foldl(fun(I,E,A) -> table_accm(F,I,E,A) end,{St0,#{}},X#a.r),
+    {St1,arr(Result,X#a.sh)};
 table(St0,F,X,W) ->
     Xsize = maps:size(X#a.r),
     Rsize =  ebqn_array:new(Xsize*maps:size(W#a.r)),
