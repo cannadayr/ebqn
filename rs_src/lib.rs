@@ -11,10 +11,13 @@ enum Entity {
     Block
 }
 type Id = i32;
+struct E {
+    slots: Vec<Entity>,
+    parent: Id
+}
 struct State {
     root: Id,
-    heap: Vec<Option<Vec<Entity>>>,
-    an: HashMap<Id,Id>,
+    heap: Vec<Option<E>>,
     rtn: Vec<Id>,
     id: Id,
 }
@@ -37,13 +40,18 @@ rustler_export_nifs! {
 }
 
 fn init_st<'a>(env: Env<'a>, _args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    let state = State {
-        root: 0,
-        heap: Vec::new(),
-        an: HashMap::new(),
-        rtn: Vec::new(),
-        id: 1,
+    let id : Id = 0;
+    let e = E {
+        slots: Vec::new(),
+        parent: id,
     };
-
+    let mut heap = Vec::new();
+    heap.insert(0,Some(e));
+    let state = State {
+        root: id,
+        heap: heap,
+        rtn: Vec::new(),
+        id: id+1,
+    };
     Ok((atoms::ok(),ResourceArc::new(state)).encode(env))
 }
