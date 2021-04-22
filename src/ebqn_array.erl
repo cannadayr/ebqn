@@ -4,7 +4,7 @@
 % https://erlang.org/doc/man/maps.html
 % https://en.wikipedia.org/wiki/Hash_array_mapped_trie
 
--export([new/1,new/2,get/2,set/3,to_list/1,concat/1,concat/2,from_list/1,foldl/3]).
+-export([new/1,new/2,get/2,set/3,to_list/1,concat/1,concat/2,from_list/1,foldl/3,foldr/3,drop/2]).
 
 new(N) when N =:= 0 ->
     #{};
@@ -51,3 +51,14 @@ foldl(I,F,A,S,M) when I =/= S ->
     foldl(I+1,F,F(I,maps:get(I,M),A),S,M);
 foldl(I,F,A,S,M) when I =:= S ->
     A.
+foldr(F,A,M) ->
+    foldr(maps:size(M)-1,F,A,M).
+foldr(I,F,A,M) when I =/= -1 ->
+    foldr(I-1,F,F(I,maps:get(I,M),A),M);
+foldr(I,F,A,M) when I =:= -1 ->
+    A.
+
+drop(N,M) ->
+    Size = maps:size(M),
+    Keys = lists:nthtail(Size-N,lists:seq(0,Size)),
+    maps:without(Keys,M).
