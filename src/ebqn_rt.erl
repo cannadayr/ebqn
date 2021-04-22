@@ -10,5 +10,4 @@ fold(St0,F,X,undefined) ->
     R1 = ebqn_array:get(Size-2,X#a.r),
     RTail = ebqn_array:drop(2,X#a.r),
     Init = ebqn:call(St0,F,R0,R1),
-    ebqn:fmt({fold,R0,R1,Init,RTail}),
-    ebqn_array:foldr(fun(I,E,{StAccm,A}) -> ebqn:call(StAccm,F,A,E) end,ebqn:call(St0,F,R0,R1),RTail).
+    ebqn_array:foldr(fun(I,E,{StAccm,A}) -> ebqn:call(StAccm,F,A,E) end,Init,RTail).
