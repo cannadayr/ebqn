@@ -2,10 +2,12 @@
 
 use rustler::{Env, Term, NifResult, Encoder};
 use rustler::resource::ResourceArc;
-use std::collections::HashMap;
 
 struct Block {
-    typ: u8,
+    t:  u8,
+    i:  u8,
+    st: u8,
+    l:  u8,
 }
 enum Entity {
     Block
@@ -35,7 +37,8 @@ fn on_load<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
 
 rustler_export_nifs! {
     "ebqn",
-    [("init_st2", 0, init_st)],
+    [("init_st2", 0, init_st),
+     ("run2",4,run)],
     Some(on_load)
 }
 
@@ -54,4 +57,25 @@ fn init_st<'a>(env: Env<'a>, _args: &[Term<'a>]) -> NifResult<Term<'a>> {
         id: id+1,
     };
     Ok((atoms::ok(),ResourceArc::new(state)).encode(env))
+}
+
+fn load_block(block: &Vec<u8>) -> Block {
+    Block {
+        t: block[0],
+        i: 1,
+        st: 1,
+        l: 1,
+    }
+}
+fn run<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    let state: ResourceArc<State> = args[0].decode()?;
+    let b: Vec<i64> = args[1].decode()?;
+    let o: Vec<Term> = args[2].decode()?;
+    let s: Vec<Vec<u8>> = args[3].decode()?;
+    let block =
+        match s.get(0) {
+            Some(b) => load_block(b),
+            None => panic!("no initial block!"),
+        };
+    Ok((atoms::ok(),block.t).encode(env))
 }
