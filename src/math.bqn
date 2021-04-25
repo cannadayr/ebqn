@@ -1,5 +1,5 @@
 # Loading
-# )cs •Ex "../bqn-ws/src/math.bqn"
+# )cs •Ex "bqn-ws/src/math.bqn"
 
 keyb ← "
 ┌────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬─────────┐
@@ -21,8 +21,8 @@ keyb ← "
 
 ⟨Mean,Stdev,Skew,Kurt⟩ ← {
     Mean  ← { (+´÷≠) 𝕩}
-    _asop ← { (𝕗 +≠ 𝕩) ÷˜ +´(𝕩 - Mean 𝕩) ⋆ 𝕨    } # adjusted sum of powers
-    _bar  ← { (𝕨 𝔽  𝕩) ÷    (2   𝔽    𝕩) ⋆ 𝕨 ÷ 2} #TODO rewrite using tacit fns
+    _asop ← { (𝕗 +≠ 𝕩) ÷˜ +´(𝕩-Mean𝕩)⋆𝕨}
+    _bar  ← { (𝕨 𝔽 𝕩)÷(2 𝔽 𝕩)⋆ 𝕨 ÷ 2 }
     Stdev ← { √ 2(¯1 _asop)      𝕩}
     Skew  ← {   3( 0 _asop) _bar 𝕩}
     Kurt  ← {   4( 0 _asop) _bar 𝕩}
@@ -50,13 +50,12 @@ keyb ← "
 
 # PRNG
 # xoshiro256ss
-⟨Enc,Dec,Ladd,Badd,Bmult,Prng⟩ ← {
+⟨Enc,Dec,Badd,Prng⟩ ← {
     Enc   ← { (64⥊2) {𝕨|1↓⌊∘÷`⌾⌽𝕨∾<𝕩} 𝕩 }   # Base64 Encode
     Dec   ← { 2 {+⟜(𝕨⊸×)´⌽𝕩} 𝕩 }            # Base64 Decode
     _add  ← { 𝔽 (𝔽𝕨) (2|⌊∘÷⟜2⊸+`∘+) 𝔽𝕩}      # binary adder
     Badd  ← { 𝕨 ⌽ _add 𝕩}                   # big endian adder
     Shl   ← { (𝕨⥊0)∾˜(𝕨-≠𝕩)↑ 𝕩}             # shift left
-    #Bmult ← {Badd´(↕≠𝕨)Shl¨⌽(<⎉1) 𝕨×⌜𝕩}     # big endian multiply
 
     # usage
     # rng ← Prng Enc¨60‿120‿240‿480
@@ -76,7 +75,7 @@ keyb ← "
         }
     }
 
-    ⟨Enc,Dec,Ladd,Badd,Bmult,Prng⟩
+    ⟨Enc,Dec,Badd,Prng⟩
 }
 
 ⍎
