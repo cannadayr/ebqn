@@ -320,9 +320,9 @@ decompose(St0,X,undefined) ->
 runtime() ->
     {St0,X} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime()),
     Rt0 = ebqn_array:get(0,X#a.r),
-    Rt1 = Rt0#a{r=maps:update(49,r1(fun ebqn_rt:fold/4),Rt0#a.r)},
+    %Rt1 = Rt0#a{r=maps:update(49,r1(fun ebqn_rt:fold/4),Rt0#a.r)},
     Sp0 = ebqn_array:get(1,X#a.r),
-    Ri = Rt1#a{r=maps:map(fun ebqn:set_prim/2,Rt1#a.r)},
+    Ri = Rt0#a{r=maps:map(fun ebqn:set_prim/2,Rt0#a.r)},
     {St1,_} = call(St0,Sp0,list(ebqn_array:from_list([fn(fun ebqn:decompose/3),fn(fun ebqn:prim_ind/3)])),undefined),
     {ebqn_gc:gc(St1,St1#st.root,[Ri]),Ri}.
 compiler(St0,Rt) ->
