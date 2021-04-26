@@ -337,8 +337,16 @@ cases(St0,F,G,X,undefined) ->
     call(St0,F,X,undefined);
 cases(St0,F,G,X,W) ->
     call(St0,G,X,W).
+catches(St0,F,G,X,W) ->
+    try call(St0,F,X,W) of
+        Rtn ->
+            Rtn
+    catch
+        _:_ ->
+            call(St0,G,X,W)
+    end.
 fns() -> [fn(fun type/3),fn(fun fill/3),fn(fun log/3),fn(fun group_len/3),fn(fun group_ord/3),
                      fn(assert_fn("")),fn(fun plus/3),fn(fun minus/3),fn(fun times/3),fn(fun divide/3),
                      fn(fun power/3),fn(fun floor/3),fn(fun equals/3),fn(fun lesseq/3),fn(fun shape/3),
                      fn(fun reshape/3),fn(fun pick/3),fn(fun window/3),
-                     r1(fun table/4),r1(fun scan/4),r2(fun fill_by/5),r2(fun cases/5)].
+                     r1(fun table/4),r1(fun scan/4),r2(fun fill_by/5),r2(fun cases/5),r2(fun catches/5)].
