@@ -1,6 +1,12 @@
 <?php
-$test = "/path/to/bqn/test/cases/prim.bqn";
-$compiler = "../misc/cerl.bqn";
+if (count($argv) !== 3) {
+    print("usage: php misc/bcerl.php /path/to/mlochbaum/bqn testsname\n");
+    exit;
+};
+$mbqn = $argv[1];
+$testname = $argv[2];
+$test = "$mbqn/test/cases/$testname.bqn";
+$compiler = "./misc/cerl.bqn";
 $lines = explode("\n", file_get_contents($test));
 foreach($lines as $line) {
     if (!is_int(strpos($line,"#")) && ! $line == '') {
@@ -13,7 +19,7 @@ foreach($lines as $line) {
             $bqn = substr($line,1+$pos);
             $arg = escapeshellarg($bqn);
         }
-        $cmd = "$compiler ".$arg;
+        $cmd = "$compiler $mbqn ".$arg;
         $out = shell_exec($cmd);
         if (is_int(strpos($line,'%')) && is_int(strpos($line,"!"))) {
             print_r("ok = try ebqn:run(St0,".trim($out).") %".$bqn."\n\tcatch _ -> ok\nend,\n");
