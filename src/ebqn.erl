@@ -327,3 +327,7 @@ runtime() ->
     {ebqn_gc:gc(St1,St1#st.root,[Ri]),Ri}.
 compiler(St0,Rt) ->
     {St1,C} = run(St0,ebqn_bc:compiler(Rt)).
+compile(St0,C,Rt,Fn) ->
+    % TODO either include fns to convert to a usable form
+    % or modify all run fns to accept this type of input
+    ebqn:call(St0,C,ebqn:str(Fn),Rt).
