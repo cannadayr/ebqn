@@ -179,7 +179,7 @@ stack(St0,B,O,S,E,Stack,X,13) ->
     G = hd(tl(tl(Stack))),
     {St1,Result} = call(St0,F,G,hget(St0#st.heap,I)),
     Heap = hset(St1#st.heap,false,I,Result),
-    {St1#st{heap=Heap},tl(tl(Stack))};
+    {St1#st{heap=Heap},[Result|tl(tl(tl(Stack)))]};
 stack(St0,B,O,S,E,Stack,X,14) ->
     {St0,tl(Stack)};
 stack(St0,B,O,S,E,Stack,X,15) ->
