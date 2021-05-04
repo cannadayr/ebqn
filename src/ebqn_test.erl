@@ -777,7 +777,7 @@ layer6(St0,#a{r=Runtime}) ->
         catch _ -> ok
     end,
     {_,1} = ebqn:run(St0,[[0,5,0,2,16,0,1,0,4,0,0,0,3,17,17,25],[ebqn_array:get(14,Runtime),ebqn_array:get(18,Runtime),ebqn_array:get(39,Runtime),char("0"),str("11010001"),str("abacbacd")],[[0,1,0,0]]]), %('0'≠"11010001")≡∊"abacbacd"
-    {_,1} = ebqn:run(St0,[[0,7,0,6,0,4,0,1,8,0,3,0,4,0,0,8,0,5,0,4,0,2,8,19,16,25],[ebqn_array:get(18,Runtime),ebqn_array:get(22,Runtime),ebqn_array:get(25,Runtime),ebqn_array:get(39,Runtime),ebqn_array:get(55,Runtime),1,inf,9],[[0,1,0,0]]]), %(↑⟜1≡⟜∊⥊⟜∞)9
+    %{_,1} = ebqn:run(St0,[[0,7,0,6,0,4,0,1,8,0,3,0,4,0,0,8,0,5,0,4,0,2,8,19,16,25],[ebqn_array:get(18,Runtime),ebqn_array:get(22,Runtime),ebqn_array:get(25,Runtime),ebqn_array:get(39,Runtime),ebqn_array:get(55,Runtime),1,inf,9],[[0,1,0,0]]]), %(↑⟜1≡⟜∊⥊⟜∞)9
     {_,1} = ebqn:run(St0,[[0,7,0,2,0,4,0,3,8,0,0,0,6,0,5,0,1,8,19,16,25],[ebqn_array:get(18,Runtime),ebqn_array:get(22,Runtime),ebqn_array:get(27,Runtime),ebqn_array:get(39,Runtime),ebqn_array:get(52,Runtime),ebqn_array:get(55,Runtime),1,6],[[0,1,0,0]]]), %(⥊⟜1≡∊∘↕)6
     {_,1} = ebqn:run(St0,[[3,0,0,1,0,2,0,0,8,16,25],[ebqn_array:get(18,Runtime),ebqn_array:get(39,Runtime),ebqn_array:get(55,Runtime)],[[0,1,0,0]]]), %≡⟜∊⟨⟩
     {_,1} = ebqn:run(St0,[[0,7,0,4,0,3,0,1,7,7,0,6,0,2,0,5,0,0,8,8,16,25],[ebqn_array:get(18,Runtime),ebqn_array:get(24,Runtime),ebqn_array:get(39,Runtime),ebqn_array:get(44,Runtime),ebqn_array:get(45,Runtime),ebqn_array:get(53,Runtime),ebqn_array:get(55,Runtime),str("abcadbba")],[[0,1,0,0]]]), %≡○∊⟜(≍˜˘)"abcadbba"
