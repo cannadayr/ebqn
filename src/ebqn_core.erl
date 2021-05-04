@@ -117,6 +117,8 @@ minus(St0,ninf,undefined) ->
     {St0,inf};
 minus(St0,inf,W) ->
     {St0,ninf};
+minus(St0,ninf,W) ->
+    {St0,inf};
 minus(_St0,X,undefined) when not is_number(X) ->
     throw("-: Can only negate numbers");
 minus(St0,X,undefined) ->
