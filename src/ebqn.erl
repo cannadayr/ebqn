@@ -2,7 +2,7 @@
 
 -import(ebqn_core,[fn/1]).
 -export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,set_prim/2,decompose/3,prim_ind/3]).
--export([runtime/0,compiler/2]).
+-export([runtime/0,compiler/2,compile/4]).
 
 -include("schema.hrl").
 
@@ -326,7 +326,7 @@ runtime() ->
     {St1,_} = call(St0,Sp0,list(ebqn_array:from_list([fn(fun ebqn:decompose/3),fn(fun ebqn:prim_ind/3)])),undefined),
     {ebqn_gc:gc(St1,St1#st.root,[Ri]),Ri}.
 compiler(St0,Rt) ->
-    {St1,C} = run(St0,ebqn_bc:compiler(Rt)).
+    run(St0,ebqn_bc:compiler(Rt)).
 compile(St0,C,Rt,Fn) ->
     % TODO either include fns to convert to a usable form
     % or modify all run fns to accept this type of input
