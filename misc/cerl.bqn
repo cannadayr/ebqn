@@ -31,18 +31,25 @@ FChars ← {𝕨•FChars path∾𝕩}
 FLines ← {𝕨•FLines path∾𝕩}
 
 glyphs ← Import "glyphs.bqn"
-compile ← glyphs Import "c.bqn"
+_getComp ← { (3+useInd) ↑ (𝕗 Import "c.bqn"){𝔽} }
 useInd ← "-i"≡⊑args ⋄ args↓˜↩useInd
-Comp ← (3+useInd) ↑ ((<"Rt#a.r" Ind ⍕)¨↕62)⊸Compile
+Comp ← ((<"Rt#a.r" Ind ⍕)¨↕62) glyphs _getComp ⊢
 J ← ∾∾⟜\n¨
 Fconst ← ≡◶⟨@⊸≤◶Num‿Char, Str, ⊑⟩
 Fout ← (≠↑⟨F,Fconst,L F¨,F⟩˙) {L𝕎¨𝕩}¨ ⊢
 Frun ← ""⊸Cat⌾(1⊸⊑) Fout
 Long ← ∾ (≠↑1‿3/⟨"  "⊸∾⋄((@+10)∾" ,")⊸∾⟩˙) {𝕎𝕩}¨ ⊢
-LFC ← Long∘Fout∘Comp
+
+RT ← {
+  src‿need‿inputs←𝕩Import"pr.bqn"
+  pr←"runtime_0"‿"Pr"{(∾𝕨<⊸(<∘{∾"ebqn_array:get("‿𝕩‿","‿𝕨‿"#a.r"‿")"}⟜F¨)⟜(↕≠)¨𝕩)⊏˜(∾𝕩)⊐∾need}○((-1+1=𝕩)⊸↑)inputs
+  Long Fout pr need _getComp src
+}
 CArg ← {J (¯5⊸↓∾𝕩˙)⌾⊑ FLines "c.bqn"}
-•Out⍟(¬return) (⊑"r"‿"c"‿"f"⊐⊏)◶⟨
-  {𝕩⋄ref‿len←Import"pr.bqn"⋄Long Frun len⊸↓⌾(1⊸⊑)Comp ref}
+LFC ← Long∘Fout∘Comp
+
+•Out⍟(¬return) (⊑"r"‿"r0"‿"r1"‿"c"‿"f"⊐⊏)◶⟨
+  RT∘2, RT∘0, RT∘1
   {𝕩⋄LFC CArg "⟨"∾"⟩"«∾","⊸∾¨'"'(⊣∾∾˜)¨glyphs}
   {𝕩⋄LFC FChars "f.bqn"}
   ¯1 ↓ · J L∘Fout∘Comp¨
