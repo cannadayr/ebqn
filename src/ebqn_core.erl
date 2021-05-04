@@ -254,11 +254,13 @@ lesseq(St0,X,W) ->
     case R of true -> {St0,1}; false -> {St0,0} end.
 shape(St0,X,undefined) ->
     {St0,list(ebqn_array:from_list(X#a.sh))}.
-reshape(St0,X,undefined) ->
+reshape(St0,X,undefined) when not is_record(X,a) ->
+    {St0,arr(#{ 0 => X },[1])};
+reshape(St0,X,undefined) when is_record(X,a) ->
     {St0,arr(X#a.r,[maps:size(X#a.r)])};
-reshape(St0,X,W) when is_record(W,a) ->
+reshape(St0,X,W) when is_record(X,a),is_record(W,a) ->
     {St0,arr(X#a.r,ebqn_array:to_list(W#a.r))};
-reshape(St0,X,W) ->
+reshape(St0,X,W) when is_record(X,a),not is_record(W,a) ->
     {St0,arr(X#a.r,W)}.
 pick(St0,X,W) ->
     {St0,ebqn_array:get(trunc(W),X#a.r)}.
