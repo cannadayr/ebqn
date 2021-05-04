@@ -1,6 +1,6 @@
 -module(ebqn).
 
--import(ebqn_core,[fn/1,r1/1]).
+-import(ebqn_core,[fn/1]).
 -export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,set_prim/2,decompose/3,prim_ind/3]).
 -export([runtime/0,compiler/2]).
 
@@ -318,7 +318,7 @@ decompose(St0,X,undefined) ->
     {St0,list(ebqn_array:from_list([1,X]))}.
 
 runtime() ->
-    {St0,X} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime()),
+    {St0,X} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime(ebqn:list(ebqn_array:from_list(ebqn_core:fns())))),
     Rt0 = ebqn_array:get(0,X#a.r),
     %Rt1 = Rt0#a{r=maps:update(49,r1(fun ebqn_rt:fold/4),Rt0#a.r)},
     Sp0 = ebqn_array:get(1,X#a.r),
