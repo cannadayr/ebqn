@@ -319,8 +319,9 @@ decompose(St0,X,undefined) ->
 
 runtime() ->
     Pr = ebqn:list(ebqn_array:from_list(ebqn_core:fns())),
-    {St0,Rt0} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime_0(Pr)),
-    {St1,Rtn} = ebqn:run(St0,ebqn_bc:runtime_1(Pr,ebqn:list(Rt0))),
+    {St0,Rt0_pre} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime_0(Pr)),
+    Rt0_pst = ebqn_array:set(7,fn(fun ebqn_rt0:right/3),Rt0_pre#a.r),
+    {St1,Rtn} = ebqn:run(St0,ebqn_bc:runtime_1(Pr,ebqn:list(Rt0_pst))),
     Rt_pre = ebqn_array:get(0,Rtn#a.r),
     Sp = ebqn_array:get(1,Rtn#a.r),
     Rt_pst = Rt_pre#a{r=maps:map(fun ebqn:set_prim/2,Rt_pre#a.r)},
