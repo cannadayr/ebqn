@@ -318,13 +318,14 @@ decompose(St0,X,undefined) ->
     {St0,list(ebqn_array:from_list([1,X]))}.
 
 runtime() ->
-    {St0,X} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime(ebqn:list(ebqn_array:from_list(ebqn_core:fns())))),
-    Rt0 = ebqn_array:get(0,X#a.r),
-    %Rt1 = Rt0#a{r=maps:update(49,r1(fun ebqn_rt:fold/4),Rt0#a.r)},
-    Sp0 = ebqn_array:get(1,X#a.r),
-    Ri = Rt0#a{r=maps:map(fun ebqn:set_prim/2,Rt0#a.r)},
-    {St1,_} = call(St0,Sp0,list(ebqn_array:from_list([fn(fun ebqn:decompose/3),fn(fun ebqn:prim_ind/3)])),undefined),
-    {ebqn_gc:gc(St1,St1#st.root,[Ri]),Ri}.
+    Pr = ebqn:list(ebqn_array:from_list(ebqn_core:fns())),
+    {St0,Rt0} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime_0(Pr)),
+    {St1,Rtn} = ebqn:run(St0,ebqn_bc:runtime_1(Pr,ebqn:list(Rt0))),
+    Rt_pre = ebqn_array:get(0,Rtn#a.r),
+    Sp = ebqn_array:get(1,Rtn#a.r),
+    Rt_pst = Rt_pre#a{r=maps:map(fun ebqn:set_prim/2,Rt_pre#a.r)},
+    {St2,_} = call(St1,Sp,list(ebqn_array:from_list([fn(fun ebqn:decompose/3),fn(fun ebqn:prim_ind/3)])),undefined),
+    {ebqn_gc:gc(St2,St2#st.root,[Rt_pst]),Rt_pst}.
 compiler(St0,Rt) ->
     run(St0,ebqn_bc:compiler(Rt)).
 compile(St0,C,Rt,Fn) ->
