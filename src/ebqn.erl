@@ -317,10 +317,14 @@ decompose(St0,X,undefined) when is_record(X,d2) ->
 decompose(St0,X,undefined) ->
     {St0,list(ebqn_array:from_list([1,X]))}.
 
+rt_up(I,E,Accm) when E =/= undefined ->
+    ebqn_array:set(I,E,Accm);
+rt_up(I,E,Accm) when E =:= undefined ->
+    Accm.
 runtime() ->
     Pr = ebqn:list(ebqn_array:from_list(ebqn_core:fns())),
     {St0,Rt0_pre} = ebqn:run(ebqn:init_st(),ebqn_bc:runtime_0(Pr)),
-    Rt0_pst = ebqn_array:set(7,fn(fun ebqn_rt0:right/3),Rt0_pre#a.r),
+    Rt0_pst = ebqn_array:foldl(fun rt_up/3,Rt0_pre#a.r,ebqn_array:from_list(ebqn_rt0:fns())),
     {St1,Rtn} = ebqn:run(St0,ebqn_bc:runtime_1(Pr,ebqn:list(Rt0_pst))),
     Rt_pre = ebqn_array:get(0,Rtn#a.r),
     Sp = ebqn_array:get(1,Rtn#a.r),

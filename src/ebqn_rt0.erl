@@ -8,4 +8,9 @@
 right(St0,X,_W) ->
     {St0,X}.
 
-fns() -> [fn(fun right/3)].
+fns() -> [undefined,undefined,undefined,undefined,
+          undefined,undefined,undefined,fn(fun right/3),
+          undefined,undefined,undefined,undefined,
+          undefined,undefined,undefined,undefined,
+          undefined,undefined,undefined,undefined,
+          undefined,undefined,undefined].
