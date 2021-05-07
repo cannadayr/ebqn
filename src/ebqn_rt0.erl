@@ -3,7 +3,7 @@
 -include("schema.hrl").
 -import(ebqn_core,[fn/1,r1/1,r2/1]).
 -import(ebqn,[call/4]).
--export([right/3,left/3,greater/3,not_eq/3,greater_eq/3,join/3]).
+-export([right/3,left/3,greater/3,not_eq/3,greater_eq/3,join/3,fold/4]).
 -export([fns/0]).
 
 right(St0,X,_W) ->
@@ -41,13 +41,13 @@ fold_fn(I,St0,F,R0,X) when I =/= -1 ->
     {St1,R1} = call(St0,F,R0,ebqn_array:get(I,X#a.r)),
     fold_fn(I-1,St1,F,R1,X).
 fold(St0,F,X,undefined) ->
-    L = hd(X#a.sh)-1,
-    R = ebqn_array:get(L,X#a.r),
-    fold_fn(L,St0,F,R,X);
+    L = hd(X#a.sh),
+    R = ebqn_array:get(L-1,X#a.r),
+    fold_fn(L-2,St0,F,R,X);
 fold(St0,F,X,W) ->
     L = hd(X#a.sh),
-    R = W#a.r,
-    fold_fn(L,St0,F,R,X).
+    R = W,
+    fold_fn(L-1,St0,F,W,X).
 
 fns() -> [undefined,undefined,undefined,undefined,
           undefined,undefined,undefined,fn(fun right/3),
