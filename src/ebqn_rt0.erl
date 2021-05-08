@@ -49,9 +49,9 @@ fold(St0,F,X,W) ->
     R = W,
     fold_fn(L-1,St0,F,W,X).
 
-fns() -> [undefined,undefined,undefined,undefined,
-          undefined,undefined,undefined,fn(fun right/3),
-          undefined,undefined,undefined,undefined,
-          undefined,undefined,undefined,undefined,
-          undefined,undefined,undefined,undefined,
-          undefined,undefined,undefined].
+fns() -> [undefined,undefined,undefined,undefined, % 0
+          fn(fun greater/3),undefined,fn(fun greater_eq/3),fn(fun right/3), % 4
+          fn(fun left/3),fn(fun join/3),undefined,undefined, % 8
+          undefined,r1(fun constant/4),r1(fun swap/4),r1(fun each/4), % 12
+          r1(fun fold/4),r2(fun atop/5),undefined,undefined, % 16
+          undefined,undefined,undefined]. % 20
