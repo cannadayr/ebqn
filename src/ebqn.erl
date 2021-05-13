@@ -2,7 +2,7 @@
 
 -import(ebqn_core,[fn/1]).
 -export([run/2,run/4,call/4,list/1,load_block/1,char/1,str/1,strings/1,fmt/1,perf/1,init_st/0,set_prim/2,decompose/3,prim_ind/3]).
--export([runtime/0,compiler/2,compile/4]).
+-export([runtime/0,compiler/2,compile/4,conv/1]).
 
 -include("schema.hrl").
 
@@ -132,10 +132,10 @@ derive(St0,B,O,S,Block,E) ->
 args(B,P,Op) when Op =:= 7; Op =:= 8; Op =:= 9; Op =:= 11; Op =:= 12; Op =:= 13; Op =:= 14; Op =:= 16; Op =:= 17; Op =:= 19; Op =:= 25 ->
     {undefined,P};
 args(B,P,Op) when Op =:= 0; Op =:= 3; Op =:= 4; Op =:= 15 ->
-    {element(1+P,B),1+P};
+    {ebqn_array:get(P,B),1+P};
 args(B,P,Op) when Op =:= 21; Op =:= 22; Op =:= 31 ->
-    X = element(1+P,B),
-    Y = element(2+P,B),
+    X = ebqn_array:get(P,B),
+    Y = ebqn_array:get(1+P,B),
     {{X,Y},2+P}.
 
 % put guard Op matches before atom matches
@@ -147,7 +147,7 @@ stack(St0,B,O,S,E,Stack,{X,Y},Op) when Op =:= 21; Op =:= 31 ->
     %true = (undefined =/= Z),
     {St0,[Z|Stack]};
 stack(St0,B,O,S,E,Stack,X,0) ->
-    {St0,[element(1+X,O)|Stack]};
+    {St0,[ebqn_array:get(X,O)|Stack]};
 stack(St0,B,O,S,E,Stack,undefined,7) ->
     F = hd(Stack),
     M = hd(tl(Stack)),
@@ -183,7 +183,7 @@ stack(St0,B,O,S,E,Stack,X,13) ->
 stack(St0,B,O,S,E,Stack,X,14) ->
     {St0,tl(Stack)};
 stack(St0,B,O,S,E,Stack,X,15) ->
-    Block = load_block(element(1+X,S)),
+    Block = load_block(ebqn_array:get(X,S)),
     {St1,D} = derive(St0,B,O,S,Block,E),
     {St1,[D|Stack]};
 stack(St0,B,O,S,E,Stack,undefined,16) ->
@@ -222,7 +222,7 @@ vm(St0,B,O,S,Block,E,P,[Rtn],rtn) ->
     St1 = St0#st{rtn=popn(Num,St0#st.rtn)}, % pop this number of slots off the rtn stack
     {St1,Rtn};
 vm(St0,B,O,S,Block,E,P,Stack,cont) ->
-    Op = element(1+P,B),
+    Op = ebqn_array:get(P,B),
     %fmt({vm,Op,P+1}),
     %fmt({stack,Stack}),
     {Arg,Pn} = args(B,1+P,Op), % advances the ptr and reads the args
@@ -238,7 +238,10 @@ load_vm(St0,B,O,S,Block,E,Parent,V) ->
     St1 = St0#st{heap=Heap,an=An1,rtn=Rtn},
     vm(St1,B,O,S,Block,E,Block#bl.st,[],cont). % run vm w/ empty stack
 
-load_block({T,I,ST,L}) ->
+unload_block(Bl) ->
+    #{0:=T,1:=I,2:=ST,3:=L} = Bl#a.r,
+    #{0=>T,1=>I,2=>ST,3=>L}.
+load_block(#{0:=T,1:=I,2:=ST,3:=L}) ->
     #bl{t=T,i=I,st=ST,l=L}.
 
 init_st() ->
@@ -247,9 +250,9 @@ init_st() ->
 
 run(St0,[B,O,S]) ->
     %fmt({run,B}),
-    ebqn:run(St0,list_to_tuple(B),list_to_tuple(O),list_to_tuple(lists:map(fun list_to_tuple/1,S))).
+    ebqn:run(St0,ebqn_array:from_list(B),ebqn_array:from_list(O),ebqn_array:from_list(lists:map(fun ebqn_array:from_list/1,S))).
 run(St0,B,O,S) ->
-    #bl{i=1,l=L} = Block = load_block(element(1,S)),
+    #bl{i=1,l=L} = Block = load_block(ebqn_array:get(0,S)),
     {St1,Result} = load_vm(St0,B,O,S,Block,make_ref(),St0#st.root,ebqn_array:new(L)), % set the root environment, and root as its own parent.
     {ebqn_gc:gc(St1,St0#st.root,[Result]),Result}.
 
@@ -337,10 +340,8 @@ compile(St0,C,Rt,Fn) ->
     % TODO either include fns to convert to a usable form
     % or modify all run fns to accept this type of input
     ebqn:call(St0,C,ebqn:str(Fn),Rt).
-persist(St0,C,Rt,Fns) ->
-    file:write_file("prog.bin",erlang:term_to_binary({St0,C,Rt,Fns})).
 conv(Prog) ->
     B = ebqn_array:get(0,Prog#a.r),
     O = ebqn_array:get(1,Prog#a.r),
     S = ebqn_array:get(2,Prog#a.r),
-    [ebqn_array:to_list(B#a.r),ebqn_array:to_list(O#a.r),lists:map(fun (E) -> lists:reverse(tl(tl(lists:reverse(ebqn_array:to_list(E#a.r))))) end,ebqn_array:to_list(S#a.r))].
+    [B#a.r,O#a.r,maps:map(fun (_,E) -> unload_block(E) end,S#a.r)].
