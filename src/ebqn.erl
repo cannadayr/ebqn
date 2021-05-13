@@ -337,3 +337,10 @@ compile(St0,C,Rt,Fn) ->
     % TODO either include fns to convert to a usable form
     % or modify all run fns to accept this type of input
     ebqn:call(St0,C,ebqn:str(Fn),Rt).
+persist(St0,C,Rt,Fns) ->
+    file:write_file("prog.bin",erlang:term_to_binary({St0,C,Rt,Fns})).
+conv(Prog) ->
+    B = ebqn_array:get(0,Prog#a.r),
+    O = ebqn_array:get(1,Prog#a.r),
+    S = ebqn_array:get(2,Prog#a.r),
+    [ebqn_array:to_list(B#a.r),ebqn_array:to_list(O#a.r),lists:map(fun (E) -> lists:reverse(tl(tl(lists:reverse(ebqn_array:to_list(E#a.r))))) end,ebqn_array:to_list(S#a.r))].
