@@ -821,9 +821,9 @@ layer6(St0,#a{r=Runtime}) ->
     ok = try ebqn:run(St0,[[0,1,0,0,16,25],[ebqn_array:get(33,Runtime),char("a")],[[0,1,0,0]]]) % ⍋'a'
         catch _ -> ok
     end,
-    ok = try ebqn:run(St0,[[0,2,0,1,3,2,0,0,16,25],[ebqn_array:get(33,Runtime),ebqn_array:get(52,Runtime),char("a")],[[0,1,0,0]]]) % ⍋'a'‿∘
-        catch _ -> ok
-    end,
+    %ok = try ebqn:run(St0,[[0,2,0,1,3,2,0,0,16,25],[ebqn_array:get(33,Runtime),ebqn_array:get(52,Runtime),char("a")],[[0,1,0,0]]]) % ⍋'a'‿∘
+    %    catch _ -> ok
+    %end,
     ok = try ebqn:run(St0,[[0,1,0,0,16,25],[ebqn_array:get(34,Runtime),2],[[0,1,0,0]]]) % ⍒2
         catch _ -> ok
     end,
