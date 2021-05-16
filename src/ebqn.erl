@@ -50,10 +50,10 @@ call(St0,F,X,W) when is_record(F,bi) ->
     0 = F#bi.t,
     D = F#bi.d,
     Args = F#bi.args,
-    L = ebqn_array:concat([ebqn_array:from_list([F,X,W]),Args,ebqn_array:new(D#bl.l)]),
+    V = ebqn_array:concat([ebqn_array:from_list([F,X,W]),Args]),
     Prog = F#bi.prog,
     #prog{b=B,o=O,s=S} = maps:get(Prog,St0#st.objs),
-    load_vm(St0,B,O,S,D,make_ref(),F#bi.e,L);
+    load_vm(St0,B,O,S,D,F#bi.e,V);
 call(St0,T,X,W) when is_record(T,tr), undefined =/= T#tr.f ->
     {St1,R} = call(St0,T#tr.h,X,W),
     {St2,L} = call(St1,T#tr.f,X,W),
@@ -69,10 +69,9 @@ call_block(St0,M,Args) when is_record(M,bi), 0 =:= M#bi.d#bl.i ->
     {St0,M#bi{args=Args,t=0,prim=undefined}};
 call_block(St0,M,Args) when is_record(M,bi), 1 =:= M#bi.d#bl.i ->
     D = M#bi.d,
-    L = ebqn_array:concat([Args,ebqn_array:new(D#bl.l - maps:size(Args))]),
     Prog = M#bi.prog,
     #{Prog := #prog{b=B,o=O,s=S} } = St0#st.objs,
-    load_vm(St0,B,O,S,D,make_ref(),M#bi.e,L).
+    load_vm(St0,B,O,S,D,M#bi.e,Args).
 call1(St0,M,F) when is_record(M,bi) ->
     true = (1 =:= M#bi.t),
     call_block(St0,M,ebqn_array:from_list([M,F]));
@@ -120,8 +119,8 @@ persist_prog(St0,Hash,Prog,Block,E,Exists) when Exists =:= true ->
 persist_prog(St0,Hash,Prog,Block,E,Exists) when Exists =/= true ->
     Ref = make_ref(),
     {St0#st{keys=maps:put(Hash,Ref,St0#st.keys),objs=maps:put(Ref,Prog,St0#st.objs)},#bi{prog=Ref,t=Block#bl.t,d=Block,args=#{},e=E}}.
-derive(St0,B,O,S,#bl{t=0,i=1} = Block,E) ->
-    load_vm(St0,B,O,S,Block,make_ref(),E,ebqn_array:new(Block#bl.l));
+derive(St0,B,O,S,#bl{t=0,i=1} = D,E) ->
+    load_vm(St0,B,O,S,D,E,#{});
 derive(St0,B,O,S,Block,E) ->
     % hash the program so we don't store duplicate copies
     % store a reference to the program so we don't store the full hash in every block instance
@@ -230,8 +229,10 @@ vm(St0,B,O,S,Block,E,P,Stack,cont) ->
     Ctrl = ctrl(Op), % set ctrl atom
     vm(St1,B,O,S,Block,E,Pn,Sn,Ctrl). % call itself with new state
 
-load_vm(St0,B,O,S,Block,E,Parent,V) ->
-    Heap = ebqn_heap:alloc(E,V,St0#st.heap),
+load_vm(St0,B,O,S,Block,Parent,V) ->
+    L = Block#bl.l,
+    E = ebqn_mut:new(L),
+    Heap = ebqn_heap:alloc(E,L,V,St0#st.heap),
     An0 = St0#st.an,
     An1 = An0#{E => Parent},
     Rtn = [E|St0#st.rtn],
@@ -246,15 +247,16 @@ load_block(#{0:=T,1:=I,2:=ST,3:=L}) ->
 
 init_st() ->
     Root = make_ref(),
-    #st{root=Root,heap=#{ Root => #{} },keys=#{},objs=#{},an=#{Root => Root},rtn=[]}.
+    #st{root=Root,heap=#{},keys=#{},objs=#{},an=#{Root => Root},rtn=[],id=0}.
 
 run(St0,[B,O,S]) ->
     %fmt({run,B}),
     ebqn:run(St0,ebqn_array:from_list(B),ebqn_array:from_list(O),ebqn_array:from_list(lists:map(fun ebqn_array:from_list/1,S))).
 run(St0,B,O,S) ->
     #bl{i=1,l=L} = Block = load_block(ebqn_array:get(0,S)),
-    {St1,Result} = load_vm(St0,B,O,S,Block,make_ref(),St0#st.root,ebqn_array:new(L)), % set the root environment, and root as its own parent.
-    {ebqn_gc:gc(St1,St0#st.root,[Result]),Result}.
+    {St1,Result} = load_vm(St0,B,O,S,Block,St0#st.root,#{}), % set the root environment, and root as its own parent.
+    %{ebqn_gc:gc(St1,St0#st.root,[Result]),Result}.
+    {St1,Result}.
 
 prim_ind(St0,R,undefined) when is_record(R,fn) and is_number(R#fn.prim) ->
     {St0,R#fn.prim};
@@ -333,7 +335,8 @@ runtime() ->
     Sp = ebqn_array:get(1,Rtn#a.r),
     Rt_pst = Rt_pre#a{r=maps:map(fun ebqn:set_prim/2,Rt_pre#a.r)},
     {St2,_} = call(St1,Sp,list(ebqn_array:from_list([fn(fun ebqn:decompose/3),fn(fun ebqn:prim_ind/3)])),undefined),
-    {ebqn_gc:gc(St2,St2#st.root,[Rt_pst]),Rt_pst}.
+    %{ebqn_gc:gc(St2,St2#st.root,[Rt_pst]),Rt_pst}.
+    {St2,Rt_pst}.
 compiler(St0,Rt) ->
     run(St0,ebqn_bc:compiler(Rt)).
 compile(St0,C,Rt,Fn) ->

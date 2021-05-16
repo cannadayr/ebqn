@@ -1,17 +1,25 @@
 -module(ebqn_heap).
 
--export([alloc/3,get/3,set/4,slots/2]).
+-export([alloc/4,get/3,set/4,slots/2]).
 
-alloc(E,Slots,Heap) ->
-    maps:put(E,Slots,Heap).
+alloc(E,L,Slots,Heap) ->
+    Offset = maps:size(Heap),
+    Size = maps:size(Slots),
+    ok = ebqn_mut:flip(E,L),
+    ok = ebqn_mut:init(E,Offset,Size),
+    ebqn_array:concat(Heap,Slots).
 
-get(E,N,Heap) ->
-    Slots = maps:get(E,Heap),
-    ebqn_array:get(N,Slots).
+get(E,I,Heap) ->
+    Id = ebqn_mut:get(E,I),
+    Max = (1 bsl 64) - 1,
+    case Id of
+        Max -> undefined;
+        _ -> ebqn_array:get(Id,Heap)
+    end.
 
-set(E,N,V,Heap) ->
-    #{E:=Slots} = Heap,
-    Heap#{E=>ebqn_array:set(N,V,Slots)}.
+set(E,I,V,Heap) ->
+    ebqn_mut:put(E,I,maps:size(Heap)),
+    ebqn_array:concat(Heap,#{ 0 => V }).
 
 slots(E,Heap) ->
     maps:get(E,Heap).

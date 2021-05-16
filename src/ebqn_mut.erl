@@ -4,6 +4,8 @@
 -export([new/1,get/2,put/3,flip/2,init/3]).
 
 % create a new mutable byte array
+new(0) ->
+    nil;
 new(Size) ->
     atomics:new(Size,[{signed,false}]).
 
