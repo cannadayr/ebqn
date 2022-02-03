@@ -7,17 +7,14 @@ It can interpret BQN bytecode, and compile source expressions to bytecode via th
 It is extremely slow! This seems due to BQN heap operations and Erlang mutability constraints.
 Using the JIT-enabled OTP 24 release is highly recommended.
 
-There are several mitigations in consideration:
-
-1. Implement some (or all) of the BQN runtime in Erlang.
-2. Change from bytecode interpretation to AST generation via [`erl_syntax`](http://erlang.org/doc/man/erl_syntax.html)
-3. Implement as a NIF via [`rustler`](https://github.com/rusterlium/rustler)
-
-Each of these strategies have pros and cons, and further investigation will happen.
-
 For more information on the rationale behind this project, see the following blog post by Gordon Guthrie:
 
 [The BEAM needs an APL-y language](https://medium.com/@gordonguthrie/the-beam-needs-an-apl-y-language-6c5c998ba6d)
+
+STATUS
+------
+
+This project is in archive mode and has been replaced with [rsbqn](https://github.com/cannadayr/rsbqn)
 
 Installation
 ------------
